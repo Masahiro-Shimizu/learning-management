@@ -1,101 +1,188 @@
 /* CSS変数 */
+/* memo 変数で統一することによって後で悩まなくて済む */
 :root {
-    /* ページ全体 */
-    --color-bg-base: hsl(225 15% 10%);
-    /* サイドバー */
-    --color-bg-sidebar: hsl(225 13% 15%);
-    /* カード */
-    --color-bg-card: hsl(225 12% 20%);
-    /* モーダル */
-    --color-bg-modal: hsl(225 11% 25%);
-    /* オーバーレイ */
-    --color-bg-overlay: rgb(0 0 0 / 0.6); /* 透明度のために / を入れている */
-    /* テキスト 見出し */
-    --color-text-primary: hsl(220 20% 92%);
-    /* テキスト 本文 */
-    --color-text-secondary: hsl(220 20% 72%);
-    /* テキスト サブテキスト */
-    --color-text-tertiary: hsl(220 20% 52%);
-    /* アクセントカラー インディゴ */
-    --color-accent-primary: hsl(234 70% 58%);
-    /* アクセントカラー アンバー */
-    --color-accent-secondary: hsl(38 90% 55%);
-    /* アクセントカラー 赤 */
-    --color-accent-danger: hsl(0 65% 55%); /* 赤は危険アクション用なのでdanger */
-    /* ステータス 未着手 */
-    --color-status-todo: hsl(0 0% 50%);
-    /* ステータス 進行中 */
-    --color-status-inprogress: hsl(220 70% 60%);
-    /* ステータス 完了 */
-    --color-status-done: hsl(152 60% 45%);
-    /* スペーシング 4 */
-    --space-4: 4px;
-    /* スペーシング 8 */
-    --space-8: 8px;
-    /* スペーシング 16 */
-    --space-16: 16px;
-    /* スペーシング 24 */
-    --space-24: 24px;
-    /* スペーシング 32 */
-    --space-32: 32px;
-    /* スペーシング 48 */
-    --space-48: 48px;
-    /* スペーシング 64 */
-    --space-64: 64px;
+  /* ページ全体 */
+  --color-bg-base: hsl(225 15% 10%);
+  /* サイドバー */
+  --color-bg-sidebar: hsl(225 13% 15%);
+  /* カード */
+  --color-bg-card: hsl(225 12% 20%);
+  /* モーダル */
+  --color-bg-modal: hsl(225 11% 25%);
+  /* オーバーレイ */
+  --color-bg-overlay: rgb(0 0 0 / 0.6); /* 透明度のために / を入れている */
+  /* テキスト 見出し */
+  --color-text-primary: hsl(220 20% 92%);
+  /* テキスト 本文 */
+  --color-text-secondary: hsl(220 20% 72%);
+  /* テキスト サブテキスト */
+  --color-text-tertiary: hsl(220 20% 52%);
+  /* アクセントカラー インディゴ */
+  --color-accent-primary: hsl(234 70% 58%);
+  /* アクセントカラー アンバー */
+  --color-accent-secondary: hsl(38 90% 55%);
+  /* アクセントカラー 赤 */
+  --color-accent-danger: hsl(0 65% 55%); /* 赤は危険アクション用なのでdanger */
+  /* ステータス 未着手 */
+  --color-status-todo: hsl(0 0% 50%);
+  /* ステータス 進行中 */
+  --color-status-inprogress: hsl(220 70% 60%);
+  /* ステータス 完了 */
+  --color-status-done: hsl(152 60% 45%);
+  /* スペーシング 4 */
+  --space-4: 4px;
+  /* スペーシング 8 */
+  --space-8: 8px;
+  /* スペーシング 16 */
+  --space-16: 16px;
+  /* スペーシング 24 */
+  --space-24: 24px;
+  /* スペーシング 32 */
+  --space-32: 32px;
+  /* スペーシング 48 */
+  --space-48: 48px;
+  /* スペーシング 64 */
+  --space-64: 64px;
 }
 
 /* 全要素リセット */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 /* 背景色 テキストカラー */
 body {
-    background-color: var(--color-bg-base);
-    color: var(--color-text-secondary);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 16px;
+  background-color: var(--color-bg-base);
+  color: var(--color-text-secondary);
+  font-family: "DM Sans", sans-serif;
+  font-size: 16px;
 }
 
 /* syneフォント */
 h1,
 nav a {
-    font-family: 'Syne', sans-serif;
+  font-family: "Syne", sans-serif;
 }
 
 /* Flexbox サイドバーとメイン */
 .container {
-    display: flex;
-    min-height: 100vh;
+  display: flex;
+  min-height: 100vh;
 }
 
 nav {
-    width: 240px;
-    padding: var(--space-24);
-    background-color: var(--color-bg-sidebar);
+  width: 240px;
+  padding: var(--space-24);
+  background-color: var(--color-bg-sidebar);
 }
 
 nav ul {
-    list-style: none;
+  list-style: none;
 }
 
 main {
-    flex: 1;
+  flex: 1;
 }
 
 nav a {
-    text-decoration: none;
-    color: var(--color-text-secondary);
-    transition: color 0.2s;
-    display: block;
-    padding: var(--space-8);
+  text-decoration: none;
+  color: var(--color-text-secondary);
+  transition: all 0.2s;
+  display: block;
+  padding: var(--space-8);
+  border-radius: 6px; /* 角丸にする　これは変数作ってない */
 }
 nav a:hover {
-    color: var(--color-text-primary);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-card);
 }
-/*  これは後で削除する
-nav li {
-    margin-bottom: var(--space-8);
-} */
+
+/* タイトル */
+header a {
+  text-decoration: none;
+  color: var(--color-text-primary);
+}
+header {
+  padding: var(--space-24);
+}
+
+/* ボタン */
+.btn {
+  padding: var(--space-8) var(--space-16);
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-family: "DM Sans", sans-serif;
+  transition: all 0.2s;
+}
+.btn-primary {
+  background-color: var(--color-accent-primary);
+  color: var(--color-text-primary);
+}
+.btn-secondary {
+  background-color: var(--color-bg-card);
+  color: var(--color-text-secondary);
+}
+.btn-danger {
+  background-color: var(--color-accent-danger);
+  color: var(--color-text-primary);
+}
+.btn:hover {
+  filter: brightness(1.1);
+}
+
+/* カード */
+.card {
+  background-color: var(--color-bg-card);
+  border-radius: 6px;
+  padding: var(--space-16);
+  border: 1px solid rgb(255 255 255 / 0.1);
+}
+
+/* カンバン */
+.kanban {
+  display: flex;
+  gap: var(--space-16);
+}
+.kanban-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  flex: 1;
+  background-color: var(--color-bg-sidebar);
+  padding: var(--space-8);
+  border-radius: 6px;
+}
+.kanban-header {
+  display: flex; /* display: flexを当てると、中のspanとbuttonが横並びになる */
+  justify-content: space-between; /* 「タイトルを左端、ボタンを右端」に離して配置 */
+  align-items: center; /* 縦方向の位置を揃える。タイトルとボタンの高さが違っても中央で揃う */
+}
+.kanban-header button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-tertiary);
+  font-size: var(--space-16);
+}
+.kanban-header button:hover {
+  color: var(--color-text-primary);
+}
+.kanban-card p {
+  color: var(--color-text-primary);
+  font-weight: 600;
+  margin-bottom: var(--space-8);
+}
+.task-type {
+  background-color: var(--color-bg-modal);
+  color: var(--color-text-primary);
+  padding: 2px var(--space-8);
+  border-radius: 8px;
+  font-size: 14px;
+}
+.task-time {
+  color: var(--color-text-tertiary);
+  font-size: 14px;
+}

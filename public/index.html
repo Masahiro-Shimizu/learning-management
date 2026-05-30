@@ -1,46 +1,77 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>学習管理アプリ</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Syne:wght@600..700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/tasks.css">
-    <link rel="stylesheet" href="css/books.css">
-    <link rel="stylesheet" href="css/modal.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Syne:wght@600..700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/dashboard.css" />
+    <link rel="stylesheet" href="css/tasks.css" />
+    <link rel="stylesheet" href="css/books.css" />
+    <link rel="stylesheet" href="css/modal.css" />
     <script src="js/app.js" defer></script>
-</head>
-<body>
+    <script src="js/task.js" defer></script>
+  </head>
+  <body>
     <header class="page-header wrapper">
-        <h1><a href="index.html">学習管理記録</a></h1>
+      <h1><a href="index.html">学習管理記録</a></h1>
     </header>
 
     <div class="container">
-        <nav> <!-- divやasideよりnavが適切 -->
-            <ul>
-                <li><a href="#page-dashboard">ダッシュボード</a></li>
-                <li><a href="#page-tasks">タスク一覧</a></li>
-                <li><a href="#page-books">書籍マスタ</a></li>
-            </ul>
-        </nav>
+      <nav>
+        <!-- divやasideよりnavが適切 -->
+        <ul>
+          <li><a href="#page-dashboard">ダッシュボード</a></li>
+          <li><a href="#page-tasks">タスク一覧</a></li>
+          <li><a href="#page-books">書籍マスタ</a></li>
+        </ul>
+      </nav>
 
-        <main> <!-- divやasideよりmainが適切 -->
-            <section id="page-dashboard">ダッシュボード</section>
-            <section id="page-tasks">タスク一覧</section>
-            <section id="page-books">書籍マスタ</section>
-        </main>
+      <main>
+        <!-- divやasideよりmainが適切 -->
+        <section id="page-dashboard">ダッシュボード</section>
+        <section id="page-tasks">
+          タスク一覧
+          <div class="kanban">
+            <div class="kanban-column">
+              <div class="kanban-header">
+                <span>未着手</span>
+                <button>＋</button>
+              </div>
+              <div class="kanban-cards" data-status="未着手"></div>
+            </div>
+            <div class="kanban-column">
+              <div class="kanban-header">
+                <span>進行中</span>
+                <button>＋</button>
+              </div>
+              <div class="kanban-cards" data-status="進行中"></div>
+            </div>
+            <div class="kanban-column">
+              <div class="kanban-header">
+                <span>完了</span>
+                <button>＋</button>
+              </div>
+              <div class="kanban-cards" data-status="完了"></div>
+            </div>
+          </div>
+        </section>
+        <section id="page-books">書籍マスタ</section>
+      </main>
     </div>
 
     <div class="modal">
-        <p>ここにモーダル配置</p>
+      <p>ここにモーダル配置</p>
     </div>
-    
+
     <footer>
-        <p>ここはフッターです</p>
+      <p>ここはフッターです</p>
     </footer>
-</body>
+  </body>
 </html>
