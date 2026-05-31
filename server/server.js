@@ -1,27 +1,29 @@
-'use strict';
+"use strict";
 
-const express = require('express');
-const path    = require('path');
+const express = require("express");
+const path = require("path");
 
-const taskRoutes = require('./routes/tasks');
-const bookRoutes = require('./routes/books');
+const taskRoutes = require("./routes/tasks");
+const bookRoutes = require("./routes/books");
+const groupRoutes = require("./routes/groups");
 
-const app  = express();
+const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(express.static(path.join(__dirname, "..", "public")));
 
-app.use('/api/tasks', taskRoutes);
-app.use('/api/books', bookRoutes);
+app.use("/api/tasks", taskRoutes);
+app.use("/api/books", bookRoutes);
+app.use("/api/groups", groupRoutes);
 
-app.get('/{*path}', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+app.get("/{*path}", (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "public", "index.html"));
 });
 
 app.use((err, req, res, next) => {
-  console.error('🔥 サーバーエラー:', err);
-  res.status(500).json({ error: 'サーバー内部エラーが発生しました' });
+  console.error("🔥 サーバーエラー:", err);
+  res.status(500).json({ error: "サーバー内部エラーが発生しました" });
 });
 
 app.listen(PORT, () => {

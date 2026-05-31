@@ -15,8 +15,9 @@
     <link rel="stylesheet" href="css/tasks.css" />
     <link rel="stylesheet" href="css/books.css" />
     <link rel="stylesheet" href="css/modal.css" />
+    <script src="js/api.js" defer></script>
     <script src="js/app.js" defer></script>
-    <script src="js/task.js" defer></script>
+    <script src="js/tasks.js" defer></script>
   </head>
   <body>
     <header class="page-header wrapper">
@@ -38,25 +39,23 @@
         <section id="page-dashboard">ダッシュボード</section>
         <section id="page-tasks">
           タスク一覧
+          <button id="btn-add-group">+ 親タスク追加</button>
           <div class="kanban">
             <div class="kanban-column">
               <div class="kanban-header">
                 <span>未着手</span>
-                <button>＋</button>
               </div>
               <div class="kanban-cards" data-status="未着手"></div>
             </div>
             <div class="kanban-column">
               <div class="kanban-header">
                 <span>進行中</span>
-                <button>＋</button>
               </div>
               <div class="kanban-cards" data-status="進行中"></div>
             </div>
             <div class="kanban-column">
               <div class="kanban-header">
                 <span>完了</span>
-                <button>＋</button>
               </div>
               <div class="kanban-cards" data-status="完了"></div>
             </div>

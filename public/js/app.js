@@ -1,7 +1,7 @@
 const pages = document.querySelectorAll("main section");
 
 function showPage() {
-  const pageId = location.hash.substring(1);
+  const pageId = location.hash.substring(1) || "page-dashboard";
   const targetPage = document.getElementById(pageId);
 
   /**
