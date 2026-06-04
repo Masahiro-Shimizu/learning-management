@@ -65,8 +65,63 @@
       </main>
     </div>
 
-    <div class="modal">
-      <p>ここにモーダル配置</p>
+    <div id="group-modal" class="modal hidden">
+      <div class="modal-content">
+        <label for="group-title">タイトル</label>
+        <input type="text" id="group-title" />
+        <label for="group-memo">メモ</label>
+        <textarea id="group-memo"></textarea>
+        <div class="modal-actions">
+          <button type="button" id="btn-group-save" class="btn btn-primary">
+            保存
+          </button>
+          <button type="button" id="btn-group-delete" class="btn btn-danger">
+            削除
+          </button>
+          <button type="button" id="btn-group-close" class="btn btn-secondary">
+            閉じる
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="task-modal" class="modal hidden">
+      <div class="modal-content">
+        <label for="task-title">タイトル</label>
+        <input type="text" id="task-title" />
+        <label for="task-type">種別</label>
+        <select id="task-type">
+          <option value="本">本</option>
+          <option value="動画">動画</option>
+          <option value="記事">記事</option>
+          <option value="手を動かす練習">手を動かす練習</option>
+        </select>
+        <label for="task-status">ステータス</label>
+        <select id="task-status">
+          <option value="未着手">未着手</option>
+          <option value="進行中">進行中</option>
+          <option value="完了">完了</option>
+        </select>
+
+        <label for="task-planned-date">予定日</label>
+        <input type="date" id="task-planned-date" />
+
+        <label for="task-study-time">学習時間</label>
+        <input type="number" id="task-study-time" />
+
+        <label for="task-memo">メモ</label>
+        <textarea id="task-memo"></textarea>
+        <div class="task-actions">
+          <button type="button" id="btn-task-save" class="btn btn-primary">
+            保存
+          </button>
+          <button type="button" id="btn-task-delete" class="btn btn-danger">
+            削除
+          </button>
+          <button type="button" id="btn-task-close" class="btn btn-secondary">
+            閉じる
+          </button>
+        </div>
+      </div>
     </div>
 
     <footer>

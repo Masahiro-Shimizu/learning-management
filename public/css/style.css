@@ -170,6 +170,16 @@ header {
 .kanban-header button:hover {
   color: var(--color-text-primary);
 }
+.kanban-card-header {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.kanban-card-header:hover p {
+  color: var(--color-text-primary);
+  opacity: 0.7;
+}
 .kanban-card p {
   color: var(--color-text-primary);
   font-weight: 600;
@@ -185,4 +195,23 @@ header {
 .task-time {
   color: var(--color-text-tertiary);
   font-size: 14px;
+}
+.hidden {
+  display: none;
+}
+.child-task {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-8) 0;
+  border-top: 1px solid rgb(255 255 255 / 0.1);
+}
+.status-未着手 {
+  color: var(--color-status-todo);
+}
+.status-進行中 {
+  color: var(--color-status-improgress);
+}
+.status-完了 {
+  color: var(--color-status-done);
 }
