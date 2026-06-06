@@ -42,7 +42,7 @@ async function renderKanban() {
     const childrenHTML = childTasks
       .map(
         (t) => `
-      <div class="child-task">
+      <div class="child-task" data-task-id="${t.id}">
         <span>${t.title}</span>
         <span class="status-${t.status}">${t.status}</span>
         </div>
@@ -99,6 +99,25 @@ async function renderKanban() {
       document.getElementById("task-modal").classList.remove("hidden");
     });
   });
+
+  document.querySelectorAll(".child-task").forEach((row) => {
+    row.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const taskId = row.dataset.taskId;
+      const task = await api(`/api/tasks/${taskId}`);
+      document.getElementById("task-modal").dataset.taskId = taskId;
+      document.getElementById("task-modal").dataset.groupId = task.group_id;
+      document.getElementById("task-title").value = task.title;
+      document.getElementById("task-type").value = task.type;
+      document.getElementById("task-status").value = task.status;
+      document.getElementById("task-planned-date").value = task.planned_date
+        ? task.planned_date.slice(0, 10)
+        : "";
+      document.getElementById("task-study-time").value = task.study_time || "";
+      document.getElementById("task-memo").value = task.memo || "";
+      document.getElementById("task-modal").classList.remove("hidden");
+    });
+  });
 }
 
 renderKanban();
@@ -113,26 +132,51 @@ document.getElementById("btn-task-close").addEventListener("click", () => {
   document.getElementById("task-modal").classList.add("hidden");
 });
 
+document.getElementById("btn-task-save").addEventListener("click", async () => {
+  const title = document.getElementById("task-title").value;
+  if (!title) {
+    alert("タイトルを入力してください");
+    return;
+  }
+
+  const groupId = document.getElementById("task-modal").dataset.groupId;
+  const taskId = document.getElementById("task-modal").dataset.taskId;
+  const type = document.getElementById("task-type").value;
+  const status = document.getElementById("task-status").value;
+  const plannedDate =
+    document.getElementById("task-planned-date").value || null;
+  const studyTime = document.getElementById("task-study-time").value || null;
+  const memo = document.getElementById("task-memo").value || null;
+
+  const body = {
+    group_id: groupId,
+    title,
+    type,
+    status,
+    planned_date: plannedDate,
+    study_time: studyTime,
+    memo,
+  };
+
+  if (taskId) {
+    await api(`/api/tasks/${taskId}`, "PUT", body);
+  } else {
+    await api("/api/tasks", "POST", body);
+  }
+
+  document.getElementById("task-modal").classList.add("hidden");
+  renderKanban();
+});
+
 document
-  .getElementById("btn-group-save")
+  .getElementById("btn-task-delete")
   .addEventListener("click", async () => {
-    const title = document.getElementById("group-title").value;
-    if (!title) {
-      alert("タイトルを入力してください");
-      return;
-    }
-    const memo = document.getElementById("group-memo").value || null;
-    const groupId = document.getElementById("group-modal").dataset.groupId;
-
-    if (groupId) {
-      await api(`/api/groups/${groupId}`, "PUT", { title, memo });
-    } else {
-      await api("/api/groups", "POST", { title, memo });
-    }
-
-    document.getElementById("group-modal").dataset.groupId = "";
-    console.log(groupId);
-    document.getElementById("group-modal").classList.add("hidden");
+    const taskId = document.getElementById("task-modal").dataset.taskId;
+    if (!taskId) return;
+    if (!confirm("削除しますか？")) return;
+    await api(`/api/tasks/${taskId}`, "DELETE");
+    document.getElementById("task-modal").dataset.taskId = "";
+    document.getElementById("task-modal").classList.add("hidden");
     renderKanban();
   });
 
@@ -144,6 +188,30 @@ document
     if (!confirm("削除しますか？")) return;
     await api(`/api/groups/${groupId}`, "DELETE");
     document.getElementById("group-modal").dataset.groupId = "";
+    document.getElementById("group-modal").classList.add("hidden");
+    renderKanban();
+  });
+
+document
+  .getElementById("btn-group-save")
+  .addEventListener("click", async () => {
+    const title = document.getElementById("group-title").value;
+    if (!title) {
+      alert("タイトルを入力してください");
+      return;
+    }
+
+    const memo = document.getElementById("group-memo").value || null;
+    const groupId = document.getElementById("group-modal").dataset.groupId;
+
+    if (groupId) {
+      await api(`/api/groups/${groupId}`, "PUT", { title, memo });
+    } else {
+      await api("/api/groups", "POST", { title, memo });
+    }
+
+    document.getElementById("group-modal").dataset.groupId = "";
+    console.log(groupId);
     document.getElementById("group-modal").classList.add("hidden");
     renderKanban();
   });

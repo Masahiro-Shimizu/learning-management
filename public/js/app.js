@@ -1,5 +1,7 @@
 const pages = document.querySelectorAll("main section");
 
+let booksInitialized = false;
+
 function showPage() {
   const pageId = location.hash.substring(1) || "page-dashboard";
   const targetPage = document.getElementById(pageId);
@@ -14,6 +16,12 @@ function showPage() {
   });
 
   targetPage.style.display = "block";
+
+  //ページごと初期化
+  if (pageId === "page-books" && !booksInitialized) {
+    initBooks();
+    booksInitialized = true;
+  }
 }
 //function showPage()を実行
 showPage();

@@ -16,8 +16,11 @@
     <link rel="stylesheet" href="css/books.css" />
     <link rel="stylesheet" href="css/modal.css" />
     <script src="js/api.js" defer></script>
-    <script src="js/app.js" defer></script>
     <script src="js/tasks.js" defer></script>
+    <script src="js/config.js" defer></script>
+    <script src="js/books.js" defer></script>
+    <script src="js/books.js" defer></script>
+    <script src="js/app.js" defer></script>
   </head>
   <body>
     <header class="page-header wrapper">
@@ -61,7 +64,21 @@
             </div>
           </div>
         </section>
-        <section id="page-books">書籍マスタ</section>
+        <section id="page-books">
+          <h2>書籍マスタ</h2>
+          <div class="book-search">
+            <input
+              type="text"
+              id="book-search-input"
+              placeholder="書籍を検索..."
+            />
+            <button type="button" id="btn-book-search" class="btn btn-primary">
+              検索
+            </button>
+          </div>
+          <div id="book-search-results"></div>
+          <div id="book-list"></div>
+        </section>
       </main>
     </div>
 
@@ -121,6 +138,25 @@
             閉じる
           </button>
         </div>
+      </div>
+    </div>
+
+    <div id="book-modal" class="modal hidden">
+      <div class="modal-content">
+        <p id="book-modal-title"></p>
+        <p id="book-modal-author"></p>
+        <label for="book-memo">メモ</label>
+        <textarea id="book-memo"></textarea>
+        <div class="book-actions">
+          <button type="button" id="btn-book-save" class="btn btn-primary">
+            保存
+          </button>
+          <button type="button" id="btn-book-delete" class="btn btn-danger">
+            削除
+          </button>
+          <button type="button" id="btn-book-close" class="btn btn-secondary">
+            閉じる
+          </button>
       </div>
     </div>
 
