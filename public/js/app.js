@@ -1,6 +1,7 @@
 const pages = document.querySelectorAll("main section");
 
 let booksInitialized = false;
+let dashboardInitialized = false;
 
 function showPage() {
   const pageId = location.hash.substring(1) || "page-dashboard";
@@ -21,6 +22,11 @@ function showPage() {
   if (pageId === "page-books" && !booksInitialized) {
     initBooks();
     booksInitialized = true;
+  }
+
+  if (pageId === "page-dashboard" && !dashboardInitialized) {
+    initDashboard();
+    initDashboardIntialized = true;
   }
 }
 //function showPage()を実行

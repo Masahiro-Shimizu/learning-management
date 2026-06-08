@@ -15,11 +15,12 @@
     <link rel="stylesheet" href="css/tasks.css" />
     <link rel="stylesheet" href="css/books.css" />
     <link rel="stylesheet" href="css/modal.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="js/api.js" defer></script>
     <script src="js/tasks.js" defer></script>
     <script src="js/config.js" defer></script>
     <script src="js/books.js" defer></script>
-    <script src="js/books.js" defer></script>
+    <script src="js/dashboard.js" defer></script>
     <script src="js/app.js" defer></script>
   </head>
   <body>
@@ -39,7 +40,31 @@
 
       <main>
         <!-- divやasideよりmainが適切 -->
-        <section id="page-dashboard">ダッシュボード</section>
+        <section id="page-dashboard">
+          ダッシュボード
+          <h2>ダッシュボード</h2>
+          <div class="dashboard-summary">
+            <div class="summary-card">
+              <p>今週の学習時間</p>
+              <p id="weekly-study-time">-- 分</p>
+            </div>
+            <div class="summary-card">
+              <p>連続学習日数</p>
+              <p id="streak-days">-- 日</p>
+            </div>
+          </div>
+          <div class="dashboard-charts">
+            <div class="charts-row">
+              <canvas id="chart-daily"></canvas>
+              <canvas id="chart-status"></canvas>
+            </div>
+            <div class="charts-row">
+              <div class="chart-books-wrapper">
+                <canvas id="chart-books"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
         <section id="page-tasks">
           タスク一覧
           <button id="btn-add-group">+ 親タスク追加</button>
@@ -157,6 +182,7 @@
           <button type="button" id="btn-book-close" class="btn btn-secondary">
             閉じる
           </button>
+        </div>
       </div>
     </div>
 
