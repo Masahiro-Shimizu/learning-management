@@ -1,0 +1,30 @@
+#page-tasks {
+  padding: var(--space-24);
+}
+
+#btn-add-group {
+  margin-bottom: var(--space-16);
+}
+
+.kanban {
+  min-height: 400px;
+}
+
+.kanban-card {
+  background-color: var(--color-bg-card);
+  border-radius: 6px;
+  padding: var(--space-16);
+  border: 1px solid rgb(255, 255, 255 / 0.1);
+  margin-bottom: var(--space-8);
+}
+
+.btn-add-child {
+  font-size: 0.85rem;
+  padding: var(--space-4) var(--space-8);
+  margin-top: var(--space-8);
+}
+
+.btn-add-task {
+  font-size: 0.8rem;
+  padding: var(--space-4) var(--space-8);
+}

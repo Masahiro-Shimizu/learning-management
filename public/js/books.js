@@ -6,10 +6,11 @@ async function renderBooks() {
   books.forEach((book) => {
     const bookHtml = `
         <div class="card book-card" data-book-id="${book.id}">
-        <p>${book.title}</p>
-        <p>${book.author}</p>
+            ${book.cover_url ? `<img src="${book.cover_url}" alt="${book.title}">` : ""}
+            <p class="book-card-title">${book.title}</p>
+            <p class="book-card-author">${book.author}</p>
         </div>
-        `;
+    `;
     bookList.insertAdjacentHTML("beforeend", bookHtml);
   });
 

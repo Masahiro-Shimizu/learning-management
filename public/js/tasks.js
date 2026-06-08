@@ -54,10 +54,10 @@ async function renderKanban() {
       <div class="card kanban-card" data-group-id="${group.id}">
         <div class="kanban-card-header">
           <p>${group.title}</p>
-          <button class="btn-edit-group" data-group-id="${group.id}">編集</button>
+          <button class="btn btn-secondary btn-edit-group" data-group-id="${group.id}">編集</button>
         </div>
         <div class="kanban-card-children hidden">
-          <button class="btn-add-task" data-group-id="${group.id}">+ 子タスク追加</button>
+          <button class="btn btn-primary btn-add-task" data-group-id="${group.id}">+ 子タスク追加</button>
           ${childrenHTML}
         </div>
       </div>
