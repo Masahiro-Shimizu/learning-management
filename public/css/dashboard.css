@@ -50,3 +50,18 @@
   max-width: 80%;
   height: 100px;
 }
+
+@media (max-width: 768px) {
+  .charts-row {
+    flex-direction: column;
+  }
+
+  #chart-daily,
+  #chart-status {
+    max-width: 100%;
+  }
+
+  .dashboard-summary {
+    flex-direction: column;
+  }
+}

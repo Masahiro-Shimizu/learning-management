@@ -215,3 +215,33 @@ header {
 .status-完了 {
   color: var(--color-status-done);
 }
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+
+  nav {
+    width: 100%;
+    padding: var(--space-8) var(--space-16);
+  }
+
+  nav ul {
+    display: flex;
+    gap: var(--space-8);
+  }
+
+  nav ul {
+    display: flex;
+    gap: var(--space-8);
+  }
+
+  nav a {
+    padding: var(--space-4) var(--space-8);
+    font-size: 0.85rem;
+  }
+
+  main {
+    padding: var(--space-16);
+  }
+}

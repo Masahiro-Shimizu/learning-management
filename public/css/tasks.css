@@ -28,3 +28,9 @@
   font-size: 0.8rem;
   padding: var(--space-4) var(--space-8);
 }
+
+@media (max-width: 768px) {
+  .kanban {
+    flex-direction: column;
+  }
+}
