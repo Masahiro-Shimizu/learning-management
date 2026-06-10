@@ -39,3 +39,18 @@ showPage();
  * showPage → 起きたときに実行する関数
  */
 window.addEventListener("hashchange", showPage);
+
+// テーマの初期化
+const savedTheme = localStorage.getItem("theme");
+if (savedTheme === "light") {
+  document.body.classList.add("light");
+  document.getElementById("btn-theme-toggle").textContent = "🌙 ダーク";
+}
+
+document.getElementById("btn-theme-toggle").addEventListener("click", () => {
+  const isLight = document.body.classList.toggle("light");
+  document.getElementById("btn-theme-toggle").textContent = isLight
+    ? "🌙 ダーク"
+    : "☀️ ライト";
+  localStorage.setItem("theme", isLight ? "light" : "dark");
+});

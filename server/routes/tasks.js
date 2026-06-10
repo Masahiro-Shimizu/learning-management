@@ -44,9 +44,12 @@ router.post("/", async (req, res, next) => {
       granularity = null,
       book_id = null,
       status = "未着手",
-      planned_date = null,
-      completed_date = null,
+      start_planned_date = null,
+      end_planned_date = null,
+      start_date = null,
+      end_date = null,
       study_time = null,
+      planned_study_time = null,
       memo = null,
     } = req.body;
 
@@ -54,8 +57,8 @@ router.post("/", async (req, res, next) => {
       return res.status(400).json({ error: "title と type は必須です" });
 
     const [result] = await db.query(
-      `INSERT INTO tasks (group_id, title, type, granularity, book_id, status, planned_date, completed_date, study_time, memo)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO tasks (group_id, title, type, granularity, book_id, status, start_planned_date, end_planned_date, start_date, end_date, study_time, planned_study_time, memo)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         group_id,
         title,
@@ -63,9 +66,12 @@ router.post("/", async (req, res, next) => {
         granularity,
         book_id,
         status,
-        planned_date,
-        completed_date,
+        start_planned_date,
+        end_planned_date,
+        start_date,
+        end_date,
         study_time,
+        planned_study_time,
         memo,
       ],
     );
@@ -87,9 +93,12 @@ router.put("/:id", async (req, res, next) => {
       "granularity",
       "book_id",
       "status",
-      "planned_date",
-      "completed_date",
+      "start_planned_date",
+      "end_planned_date",
+      "start_date",
+      "end_date",
       "study_time",
+      "planned_study_time",
       "memo",
     ];
     const fields = [];

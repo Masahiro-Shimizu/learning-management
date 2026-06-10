@@ -41,3 +41,8 @@
   font-size: 1rem;
   width: 100%;
 }
+
+.modal-content {
+  overflow-y: auto;
+  max-height: 90vh;
+}

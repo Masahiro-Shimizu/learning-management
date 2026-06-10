@@ -26,41 +26,119 @@
   <body>
     <header class="page-header wrapper">
       <h1><a href="index.html">学習管理記録</a></h1>
+      <button id="btn-theme-toggle" class="btn btn-secondary">☀️ ライト</button>
     </header>
 
     <div class="container">
       <nav>
-        <!-- divやasideよりnavが適切 -->
+        <div class="nav-logo">
+          <div class="nav-logo-box">L</div>
+          <div>
+            <div class="nav-logo-title">学習記録簿</div>
+            <div class="nav-logo-sub">LEARNING LOG</div>
+          </div>
+        </div>
         <ul>
-          <li><a href="#page-dashboard">ダッシュボード</a></li>
-          <li><a href="#page-tasks">タスク一覧</a></li>
-          <li><a href="#page-books">書籍マスタ</a></li>
+          <li>
+            <a href="#page-dashboard">
+              <span class="nav-icon">📊</span>
+              <span>ダッシュボード</span>
+            </a>
+          </li>
+          <li>
+            <a href="#page-tasks">
+              <span class="nav-icon">✅</span>
+              <span>タスク一覧</span>
+            </a>
+          </li>
+          <li>
+            <a href="#page-books">
+              <span class="nav-icon">📖</span>
+              <span>書籍マスタ</span>
+            </a>
+          </li>
         </ul>
       </nav>
 
       <main>
-        <!-- divやasideよりmainが適切 -->
         <section id="page-dashboard">
-          ダッシュボード
-          <h2>ダッシュボード</h2>
+          <div class="dashboard-header">
+            <div>
+              <h2>ダッシュボード</h2>
+              <p class="dashboard-sub">今週もコツコツ積み上げています。</p>
+            </div>
+            <div class="period-toggle">
+              <button class="btn btn-period active" data-period="week">
+                週
+              </button>
+              <button class="btn btn-period" data-period="month">月</button>
+              <button class="btn btn-period" data-period="year">年</button>
+            </div>
+          </div>
           <div class="dashboard-summary">
             <div class="summary-card">
-              <p>今週の学習時間</p>
-              <p id="weekly-study-time">-- 分</p>
+              <div class="summary-card-header">
+                <p class="summary-card-label">今週の学習時間</p>
+                <span class="summary-card-icon">⏱️</span>
+              </div>
+              <p class="summary-card-value" id="weekly-study-time">-- 分</p>
+              <p class="summary-card-sub" id="weekly-study-sub">集計中...</p>
+            </div>
+            <div class="summary-card">
+              <div class="summary-card-header">
+                <p class="summary-card-label">今月の学習時間</p>
+                <span class="summary-card-icon">📅</span>
+              </div>
+              <p class="summary-card-value" id="monthly-study-time">-- 分</p>
+              <p class="summary-card-sub" id="monthly-study-sub">今月の合計</p>
+            </div>
+            <div class="summary-card">
+              <div class="summary-card-header">
+                <p class="summary-card-label">進行中タスク</p>
+                <span class="summary-card-icon">🔄</span>
+              </div>
+              <p class="summary-card-value" id="inprogress-count">-- 件</p>
+              <p class="summary-card-sub" id="inprogress-sub">集計中...</p>
+            </div>
+            <div class="summary-card">
+              <div class="summary-card-header">
+                <p class="summary-card-label">登録書籍数</p>
+                <span class="summary-card-icon">📚</span>
+              </div>
+              <p class="summary-card-value" id="books-count">-- 冊</p>
+              <p class="summary-card-sub" id="books-sub">集計中...</p>
             </div>
           </div>
           <div class="dashboard-charts">
             <div class="charts-row">
-              <canvas id="chart-daily"></canvas>
-              <canvas id="chart-status"></canvas>
+              <div class="chart-card">
+                <p class="chart-card-title">日別学習時間</p>
+                <canvas id="chart-daily"></canvas>
+              </div>
+              <div class="chart-card">
+                <p class="chart-card-title">ステータス別件数</p>
+                <canvas id="chart-status"></canvas>
+              </div>
             </div>
             <div class="charts-row">
-              <div class="chart-books-wrapper">
-                <canvas id="chart-books"></canvas>
+              <div class="chart-card" style="width: 100%">
+                <p class="chart-card-title">書籍別進捗率</p>
+                <div class="chart-books-wrapper">
+                  <canvas id="chart-books"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="charts-row">
+              <div class="chart-card" style="width: 100%">
+                <p class="chart-card-title">進捗率推移</p>
+                <div class="chart-progress-wrapper">
+                  <canvas id="chart-progress"></canvas>
+                </div>
               </div>
             </div>
           </div>
         </section>
+
         <section id="page-tasks">
           タスク一覧
           <button id="btn-add-group" class="btn btn-primary">
@@ -68,25 +146,20 @@
           </button>
           <div class="kanban">
             <div class="kanban-column">
-              <div class="kanban-header">
-                <span>未着手</span>
-              </div>
+              <div class="kanban-header"><span>未着手</span></div>
               <div class="kanban-cards" data-status="未着手"></div>
             </div>
             <div class="kanban-column">
-              <div class="kanban-header">
-                <span>進行中</span>
-              </div>
+              <div class="kanban-header"><span>進行中</span></div>
               <div class="kanban-cards" data-status="進行中"></div>
             </div>
             <div class="kanban-column">
-              <div class="kanban-header">
-                <span>完了</span>
-              </div>
+              <div class="kanban-header"><span>完了</span></div>
               <div class="kanban-cards" data-status="完了"></div>
             </div>
           </div>
         </section>
+
         <section id="page-books">
           <h2>書籍マスタ</h2>
           <div class="book-search">
@@ -124,6 +197,7 @@
         </div>
       </div>
     </div>
+
     <div id="task-modal" class="modal hidden">
       <div class="modal-content">
         <label for="task-title">タイトル</label>
@@ -135,19 +209,35 @@
           <option value="記事">記事</option>
           <option value="手を動かす練習">手を動かす練習</option>
         </select>
+        <label for="task-granularity">粒度</label>
+        <select id="task-granularity">
+          <option value="">未設定</option>
+          <option value="章単位">章単位</option>
+          <option value="トピック単位">トピック単位</option>
+        </select>
+
+        <label for="task-book-id">紐づく書籍</label>
+        <select id="task-book-id">
+          <option value="">（なし）</option>
+        </select>
         <label for="task-status">ステータス</label>
         <select id="task-status">
           <option value="未着手">未着手</option>
           <option value="進行中">進行中</option>
           <option value="完了">完了</option>
         </select>
-
-        <label for="task-planned-date">予定日</label>
-        <input type="date" id="task-planned-date" />
-
-        <label for="task-study-time">学習時間</label>
+        <label for="task-start-planned-date">開始予定日</label>
+        <input type="date" id="task-start-planned-date" />
+        <label for="task-end-planned-date">終了予定日</label>
+        <input type="date" id="task-end-planned-date" />
+        <label for="task-start-date">開始日（実績）</label>
+        <input type="date" id="task-start-date" />
+        <label for="task-end-date">終了日（実績）</label>
+        <input type="date" id="task-end-date" />
+        <label for="task-planned-study-time">予定学習時間（分）</label>
+        <input type="number" id="task-planned-study-time" />
+        <label for="task-study-time">学習時間（分）</label>
         <input type="number" id="task-study-time" />
-
         <label for="task-memo">メモ</label>
         <textarea id="task-memo"></textarea>
         <div class="task-actions">
