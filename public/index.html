@@ -24,17 +24,12 @@
     <script src="js/app.js" defer></script>
   </head>
   <body>
-    <header class="page-header wrapper">
-      <h1><a href="index.html">学習管理記録</a></h1>
-      <button id="btn-theme-toggle" class="btn btn-secondary">☀️ ライト</button>
-    </header>
-
     <div class="container">
       <nav>
         <div class="nav-logo">
           <div class="nav-logo-box">L</div>
           <div>
-            <div class="nav-logo-title">学習記録簿</div>
+            <div class="nav-logo-title">学習管理</div>
             <div class="nav-logo-sub">LEARNING LOG</div>
           </div>
         </div>
@@ -58,6 +53,11 @@
             </a>
           </li>
         </ul>
+        <div class="nav-footer">
+          <button id="btn-theme-toggle" class="btn btn-secondary">
+            ☀️ ライト
+          </button>
+        </div>
       </nav>
 
       <main>
@@ -117,7 +117,9 @@
               </div>
               <div class="chart-card">
                 <p class="chart-card-title">ステータス別件数</p>
-                <canvas id="chart-status"></canvas>
+                <div class="chart-status-wrapper">
+                  <canvas id="chart-status"></canvas>
+                </div>
               </div>
             </div>
             <div class="charts-row">

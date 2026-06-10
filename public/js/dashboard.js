@@ -282,6 +282,10 @@ function renderCharts(period, tasks, books) {
         },
       ],
     },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+    },
   });
 
   const bookProgress = books.map((book) => {

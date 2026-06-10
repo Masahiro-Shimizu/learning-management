@@ -10,7 +10,7 @@
   /* モーダル */
   --color-bg-modal: hsl(225 11% 25%);
   /* オーバーレイ */
-  --color-bg-overlay: rgb(0 0 0 / 0.6); /* 透明度のために / を入れている */
+  --color-bg-overlay: rgb(0 0 0 / 0.6);
   /* テキスト 見出し */
   --color-text-primary: hsl(220 20% 92%);
   /* テキスト 本文 */
@@ -22,7 +22,7 @@
   /* アクセントカラー アンバー */
   --color-accent-secondary: hsl(38 90% 55%);
   /* アクセントカラー 赤 */
-  --color-accent-danger: hsl(0 65% 55%); /* 赤は危険アクション用なのでdanger */
+  --color-accent-danger: hsl(0 65% 55%);
   /* ステータス 未着手 */
   --color-status-todo: hsl(0 0% 50%);
   /* ステータス 進行中 */
@@ -43,17 +43,6 @@
   --space-48: 48px;
   /* スペーシング 64 */
   --space-64: 64px;
-}
-
-/* ライトモード */
-body.light {
-  --color-bg-base: hsl(220 20% 97%);
-  --color-bg-sidebar: hsl(220 20% 92%);
-  --color-bg-card: hsl(220 20% 87%);
-  --color-bg-modal: hsl(220 20% 82%);
-  --color-text-primary: hsl(220 20% 10%);
-  --color-text-secondary: hsl(220 20% 25%);
-  --color-text-tertiary: hsl(220 20% 45%);
 }
 
 /* 全要素リセット */
@@ -82,6 +71,72 @@ body {
   font-size: 16px;
 }
 
+/* ライトモード */
+body.light {
+  --color-bg-base: hsl(220 20% 97%);
+  --color-bg-sidebar: hsl(220 20% 92%);
+  --color-bg-card: hsl(220 20% 87%);
+  --color-bg-modal: hsl(220 20% 82%);
+  --color-text-primary: hsl(220 20% 10%);
+  --color-text-secondary: hsl(220 20% 25%);
+  --color-text-tertiary: hsl(220 20% 45%);
+}
+
+/* syneフォント */
+h1,
+nav a {
+  font-family: "Syne", sans-serif;
+}
+
+/* ヘッダーを非表示 */
+header {
+  display: none;
+}
+
+/* Flexbox サイドバーとメイン */
+.container {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* サイドバー */
+nav {
+  width: 240px;
+  padding: var(--space-24);
+  background-color: var(--color-bg-sidebar);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+nav ul {
+  list-style: none;
+}
+
+nav a {
+  text-decoration: none;
+  color: var(--color-text-secondary);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-8);
+  border-radius: 6px; /* 角丸にする　これは変数作ってない */
+}
+
+nav a:hover {
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-card);
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-8);
+  margin-bottom: var(--space-24);
+}
+
 .nav-logo-box {
   width: 38px;
   height: 38px;
@@ -101,56 +156,6 @@ body {
   flex-shrink: 0;
 }
 
-/* syneフォント */
-h1,
-nav a {
-  font-family: "Syne", sans-serif;
-}
-
-/* Flexbox サイドバーとメイン */
-.container {
-  display: flex;
-  min-height: 100vh;
-}
-
-nav {
-  width: 240px;
-  padding: var(--space-24);
-  background-color: var(--color-bg-sidebar);
-}
-
-nav ul {
-  list-style: none;
-}
-
-main {
-  flex: 1;
-}
-
-nav a {
-  text-decoration: none;
-  color: var(--color-text-secondary);
-  transition: all 0.2s;
-  display: block;
-  padding: var(--space-8);
-  border-radius: 6px; /* 角丸にする　これは変数作ってない */
-}
-nav a:hover {
-  color: var(--color-text-primary);
-  background-color: var(--color-bg-card);
-}
-.nav-logo {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-  padding: var(--space-8);
-  margin-bottom: var(--space-24);
-}
-
-.nav-logo-icon {
-  font-size: 2rem;
-}
-
 .nav-logo-title {
   font-family: "Syne", sans-serif;
   font-size: 1rem;
@@ -164,26 +169,21 @@ nav a:hover {
   letter-spacing: 0.1em;
 }
 
-nav a {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-}
-
 .nav-icon {
   font-size: 1.1rem;
 }
 
-/* タイトル */
-header a {
-  text-decoration: none;
-  color: var(--color-text-primary);
+.nav-footer {
+  margin-top: auto;
+  padding-top: var(--space-16);
 }
-header {
-  padding: var(--space-24);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+
+#btn-theme-toggle {
+  width: 100%;
+}
+
+main {
+  flex: 1;
 }
 
 /* ボタン */
@@ -195,18 +195,22 @@ header {
   font-family: "DM Sans", sans-serif;
   transition: all 0.2s;
 }
+
 .btn-primary {
   background-color: var(--color-accent-primary);
   color: var(--color-text-primary);
 }
+
 .btn-secondary {
   background-color: var(--color-bg-card);
   color: var(--color-text-secondary);
 }
+
 .btn-danger {
   background-color: var(--color-accent-danger);
   color: var(--color-text-primary);
 }
+
 .btn:hover {
   filter: brightness(1.1);
 }
@@ -225,6 +229,7 @@ header {
   display: flex;
   gap: var(--space-16);
 }
+
 .kanban-column {
   display: flex;
   flex-direction: column;
@@ -234,11 +239,13 @@ header {
   padding: var(--space-8);
   border-radius: 6px;
 }
+
 .kanban-header {
-  display: flex; /* display: flexを当てると、中のspanとbuttonが横並びになる */
-  justify-content: space-between; /* 「タイトルを左端、ボタンを右端」に離して配置 */
-  align-items: center; /* 縦方向の位置を揃える。タイトルとボタンの高さが違っても中央で揃う */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
+
 .kanban-header button {
   background: none;
   border: none;
@@ -246,24 +253,29 @@ header {
   color: var(--color-text-tertiary);
   font-size: var(--space-16);
 }
+
 .kanban-header button:hover {
   color: var(--color-text-primary);
 }
+
 .kanban-card-header {
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
+
 .kanban-card-header:hover p {
   color: var(--color-text-primary);
   opacity: 0.7;
 }
+
 .kanban-card p {
   color: var(--color-text-primary);
   font-weight: 600;
   margin-bottom: var(--space-8);
 }
+
 .task-type {
   background-color: var(--color-bg-modal);
   color: var(--color-text-primary);
@@ -271,13 +283,16 @@ header {
   border-radius: 8px;
   font-size: 14px;
 }
+
 .task-time {
   color: var(--color-text-tertiary);
   font-size: 14px;
 }
+
 .hidden {
   display: none;
 }
+
 .child-task {
   display: flex;
   justify-content: space-between;
@@ -285,12 +300,15 @@ header {
   padding: var(--space-8) 0;
   border-top: 1px solid rgb(255 255 255 / 0.1);
 }
+
 .status-未着手 {
   color: var(--color-status-todo);
 }
+
 .status-進行中 {
-  color: var(--color-status-improgress);
+  color: var(--color-status-inprogress);
 }
+
 .status-完了 {
   color: var(--color-status-done);
 }
@@ -303,11 +321,7 @@ header {
   nav {
     width: 100%;
     padding: var(--space-8) var(--space-16);
-  }
-
-  nav ul {
-    display: flex;
-    gap: var(--space-8);
+    min-height: unset;
   }
 
   nav ul {

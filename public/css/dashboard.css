@@ -1,8 +1,7 @@
 .dashboard-summary {
   display: flex;
-  gap: var(--space-24);
+  gap: var(--space-16);
   margin-bottom: var(--space-24);
-  width: fit-content;
 }
 
 .dashboard-header {
@@ -13,15 +12,21 @@
   padding: var(--space-24) var(--space-24) 0;
 }
 
+.dashboard-sub {
+  font-size: 0.85rem;
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-4);
+}
+
 #page-dashboard {
   padding: var(--space-24);
 }
 
 .summary-card {
   background-color: var(--color-bg-card);
-  border-radius: 8px;
-  padding: var(--space-16) var(--space-24);
-  min-width: 200px;
+  border-radius: 12px;
+  padding: var(--space-24);
+  min-width: 220px;
   border: 1px solid rgb(255 255 255 / 0.1);
   box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
 }
@@ -43,7 +48,7 @@
 }
 
 .summary-card-value {
-  font-size: 1.75rem;
+  font-size: 2.5rem;
   font-weight: 700;
   color: var(--color-text-primary);
   margin-bottom: var(--space-4);
@@ -66,14 +71,14 @@
   flex-wrap: wrap;
 }
 
-#chart-status {
-  max-width: 300px;
-  max-height: 300px;
+#chart-daily {
+  max-width: 100%;
+  height: 240px;
 }
 
-#chart-daily {
-  max-width: 500px;
-  max-height: 300px;
+#chart-status {
+  max-width: 100%;
+  height: 240px;
 }
 
 .chart-books-wrapper {
@@ -89,9 +94,17 @@
 
 .chart-card {
   background-color: var(--color-bg-card);
-  border-radius: 8px;
-  padding: var(--space-16) var(--space-24);
+  border-radius: 12px;
+  padding: var(--space-24);
   border: 1px solid rgb(255 255 255 / 0.1);
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
+  flex: 1;
+  max-height: 360px;
+}
+
+.chart-status-wrapper {
+  height: 260px;
+  position: relative;
 }
 
 .chart-card-title {
