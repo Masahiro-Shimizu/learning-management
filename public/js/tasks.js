@@ -27,8 +27,8 @@ async function renderKanban() {
       <div class="child-task" data-task-id="${t.id}">
         <span>${t.title}</span>
         <span class="status-${t.status}">${t.status}</span>
-        </div>
-        `,
+      </div>
+      `,
       )
       .join("");
 
@@ -62,6 +62,10 @@ async function renderKanban() {
       document.getElementById("group-title").value = group.title;
       document.getElementById("group-memo").value = group.memo || "";
       document.getElementById("group-modal").dataset.groupId = groupId;
+      // 編集時は「子タスクを追加する」ボタンを非表示
+      document
+        .getElementById("btn-group-add-task-wrapper")
+        .classList.add("hidden");
       document.getElementById("group-modal").classList.remove("hidden");
     });
   });
@@ -69,22 +73,7 @@ async function renderKanban() {
   document.querySelectorAll(".btn-add-task").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
-      const groupId = btn.dataset.groupId;
-      document.getElementById("task-modal").dataset.groupId = groupId;
-      document.getElementById("task-modal").dataset.taskId = "";
-      document.getElementById("task-title").value = "";
-      document.getElementById("task-type").value = "本";
-      document.getElementById("task-granularity").value = "";
-      document.getElementById("task-book-id").value = "";
-      document.getElementById("task-status").value = "未着手";
-      document.getElementById("task-start-planned-date").value = "";
-      document.getElementById("task-end-planned-date").value = "";
-      document.getElementById("task-start-date").value = "";
-      document.getElementById("task-end-date").value = "";
-      document.getElementById("task-study-time").value = "";
-      document.getElementById("task-planned-study-time").value = "";
-      document.getElementById("task-memo").value = "";
-      document.getElementById("task-modal").classList.remove("hidden");
+      openTaskModal(btn.dataset.groupId);
     });
   });
 
@@ -120,6 +109,25 @@ async function renderKanban() {
   });
 }
 
+// 子タスクモーダルを開く共通関数
+function openTaskModal(groupId) {
+  document.getElementById("task-modal").dataset.groupId = groupId;
+  document.getElementById("task-modal").dataset.taskId = "";
+  document.getElementById("task-title").value = "";
+  document.getElementById("task-type").value = "本";
+  document.getElementById("task-granularity").value = "";
+  document.getElementById("task-book-id").value = "";
+  document.getElementById("task-status").value = "未着手";
+  document.getElementById("task-start-planned-date").value = "";
+  document.getElementById("task-end-planned-date").value = "";
+  document.getElementById("task-start-date").value = "";
+  document.getElementById("task-end-date").value = "";
+  document.getElementById("task-study-time").value = "";
+  document.getElementById("task-planned-study-time").value = "";
+  document.getElementById("task-memo").value = "";
+  document.getElementById("task-modal").classList.remove("hidden");
+}
+
 function calcStatus(groupId, tasks) {
   const children = tasks.filter((t) => t.group_id === groupId);
   if (children.length === 0) return "未着手";
@@ -134,6 +142,8 @@ document.getElementById("btn-add-group").addEventListener("click", () => {
   document.getElementById("group-title").value = "";
   document.getElementById("group-memo").value = "";
   document.getElementById("group-modal").dataset.groupId = "";
+  // 新規追加時は「子タスクを追加する」ボタンを非表示（保存後に表示）
+  document.getElementById("btn-group-add-task-wrapper").classList.add("hidden");
   document.getElementById("group-modal").classList.remove("hidden");
 });
 
@@ -143,6 +153,13 @@ document.getElementById("btn-group-close").addEventListener("click", () => {
 
 document.getElementById("btn-task-close").addEventListener("click", () => {
   document.getElementById("task-modal").classList.add("hidden");
+});
+
+// 「子タスクを追加する」ボタン
+document.getElementById("btn-group-add-task").addEventListener("click", () => {
+  const groupId = document.getElementById("group-modal").dataset.groupId;
+  document.getElementById("group-modal").classList.add("hidden");
+  openTaskModal(groupId);
 });
 
 document.getElementById("btn-task-save").addEventListener("click", async () => {
@@ -232,12 +249,17 @@ document
     const groupId = document.getElementById("group-modal").dataset.groupId;
 
     if (groupId) {
+      // 編集保存
       await api(`/api/groups/${groupId}`, "PUT", { title, memo });
+      document.getElementById("group-modal").classList.add("hidden");
     } else {
-      await api("/api/groups", "POST", { title, memo });
+      // 新規保存 → 「子タスクを追加する」ボタンを表示
+      const newGroup = await api("/api/groups", "POST", { title, memo });
+      document.getElementById("group-modal").dataset.groupId = newGroup.id;
+      document
+        .getElementById("btn-group-add-task-wrapper")
+        .classList.remove("hidden");
     }
 
-    document.getElementById("group-modal").dataset.groupId = "";
-    document.getElementById("group-modal").classList.add("hidden");
     renderKanban();
   });

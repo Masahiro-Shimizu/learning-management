@@ -9,19 +9,19 @@ function isSameDay(date1, date2) {
 let chartDaily = null;
 let chartStatus = null;
 let chartBooks = null;
-let chartProgress = null; // ← 追加
+let chartProgress = null;
 
 async function initDashboard() {
   const tasks = await api("/api/tasks");
   const books = await api("/api/books");
 
-  // 今週の学習時間（サマリーは常に今週固定）
   const today = new Date();
   const dayOfWeek = today.getDay();
   const monday = new Date(today);
   monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
   monday.setHours(0, 0, 0, 0);
 
+  // 今週の学習時間
   const weeklyTime = tasks
     .filter((t) => {
       if (!t.end_date) return false;
@@ -29,9 +29,9 @@ async function initDashboard() {
       return endDate >= monday && endDate <= today;
     })
     .reduce((sum, t) => sum + (t.study_time || 0), 0);
-  document.getElementById("weekly-study-time").textContent = `${weeklyTime} 分`;
+  document.getElementById("weekly-study-time").textContent = weeklyTime;
 
-  // 先週の学習時間
+  // 先週比
   const lastMonday = new Date(monday);
   lastMonday.setDate(monday.getDate() - 7);
   const lastSunday = new Date(monday);
@@ -61,23 +61,21 @@ async function initDashboard() {
       return d.getFullYear() === year && d.getMonth() === month;
     })
     .reduce((sum, t) => sum + (t.study_time || 0), 0);
-  document.getElementById("monthly-study-time").textContent =
-    `${monthlyTime} 分`;
+  document.getElementById("monthly-study-time").textContent = monthlyTime;
   document.getElementById("monthly-study-sub").textContent =
     `${year}年${month + 1}月の合計`;
 
   // 進行中タスク数
   const inprogressCount = tasks.filter((t) => t.status === "進行中").length;
   const totalCount = tasks.length;
-  document.getElementById("inprogress-count").textContent =
-    `${inprogressCount} 件`;
+  document.getElementById("inprogress-count").textContent = inprogressCount;
   document.getElementById("inprogress-sub").textContent =
     `全 ${totalCount} 件中`;
 
   // 登録書籍数
   const booksCount = books.length;
-  document.getElementById("books-count").textContent = `${booksCount} 冊`;
-  document.getElementById("books-sub").textContent = `登録済み`;
+  document.getElementById("books-count").textContent = booksCount;
+  document.getElementById("books-sub").textContent = "登録済み";
 
   // 期間切り替えボタン
   document.querySelectorAll(".btn-period").forEach((btn) => {
@@ -183,12 +181,13 @@ function renderCharts(period, tasks, books) {
   const inprogress = filteredTasks.filter((t) => t.status === "進行中").length;
   const done = filteredTasks.filter((t) => t.status === "完了").length;
 
-  // グラフを破棄して再描画
+  // グラフ破棄
   if (chartDaily) chartDaily.destroy();
   if (chartStatus) chartStatus.destroy();
   if (chartBooks) chartBooks.destroy();
   if (chartProgress) chartProgress.destroy();
 
+  // 棒グラフ（日別学習時間）
   const dailyCanvas = document.getElementById("chart-daily");
   const ctx = dailyCanvas.getContext("2d");
   const gradient = ctx.createLinearGradient(0, 0, 0, 300);
@@ -224,6 +223,81 @@ function renderCharts(period, tasks, books) {
     },
   });
 
+  // 円グラフ（ステータス別）
+  chartStatus = new Chart(document.getElementById("chart-status"), {
+    type: "doughnut",
+    data: {
+      labels: [`未着手 ${todo}`, `進行中 ${inprogress}`, `完了 ${done}`],
+      datasets: [
+        {
+          data: [todo, inprogress, done],
+          backgroundColor: ["#808080", "#4d7fd4", "#3a9d6e"],
+          borderWidth: 0,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: "65%",
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: {
+            padding: 20,
+            color: "#aaa",
+            font: { size: 13 },
+            usePointStyle: true,
+            pointStyleWidth: 10,
+          },
+        },
+      },
+    },
+  });
+
+  // 書籍別進捗（横棒グラフ）
+  const bookProgress = books.map((book) => {
+    const total = book.task_count || 0;
+    const done = Number(book.completed_count) || 0;
+    const rate = total > 0 ? Math.round((done / total) * 100) : 0;
+    return { title: book.title, rate };
+  });
+
+  const bookColors = [
+    "#4d7fd4",
+    "#e6a817",
+    "#3a9d6e",
+    "#e05c5c",
+    "#9b6fd4",
+    "#4dc4d4",
+    "#d46f9b",
+    "#7fd46f",
+  ];
+
+  chartBooks = new Chart(document.getElementById("chart-books"), {
+    type: "bar",
+    data: {
+      labels: bookProgress.map((b) => b.title),
+      datasets: [
+        {
+          label: "進捗率(%)",
+          data: bookProgress.map((b) => b.rate),
+          backgroundColor: bookProgress.map(
+            (_, i) => bookColors[i % bookColors.length],
+          ),
+        },
+      ],
+    },
+    options: {
+      indexAxis: "y",
+      maintainAspectRatio: false,
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { x: { min: 0, max: 100 } },
+    },
+  });
+
+  // 進捗率推移（折れ線グラフ）
   const totalTasks = filteredTasks.length;
   const doneTasks = filteredTasks.filter((t) => t.status === "完了").length;
   const actualRate =
@@ -268,64 +342,6 @@ function renderCharts(period, tasks, books) {
           ticks: { callback: (v) => v + "%" },
         },
       },
-    },
-  });
-
-  chartStatus = new Chart(document.getElementById("chart-status"), {
-    type: "doughnut",
-    data: {
-      labels: ["未着手", "進行中", "完了"],
-      datasets: [
-        {
-          data: [todo, inprogress, done],
-          backgroundColor: ["#808080", "#4d7fd4", "#3a9d6e"],
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-    },
-  });
-
-  const bookProgress = books.map((book) => {
-    const bookTasks = tasks.filter((t) => t.book_id === book.id);
-    const total = bookTasks.length;
-    const doneTasks = bookTasks.filter((t) => t.status === "完了").length;
-    const rate = total > 0 ? Math.round((doneTasks / total) * 100) : 0;
-    return { title: book.title, rate };
-  });
-
-  const bookColors = [
-    "#4d7fd4",
-    "#e6a817",
-    "#3a9d6e",
-    "#e05c5c",
-    "#9b6fd4",
-    "#4dc4d4",
-    "#d46f9b",
-    "#7fd46f",
-  ];
-
-  chartBooks = new Chart(document.getElementById("chart-books"), {
-    type: "bar",
-    data: {
-      labels: bookProgress.map((b) => b.title),
-      datasets: [
-        {
-          label: "進捗率(%)",
-          data: bookProgress.map((b) => b.rate),
-          backgroundColor: bookProgress.map(
-            (_, i) => bookColors[i % bookColors.length],
-          ),
-        },
-      ],
-    },
-    options: {
-      indexAxis: "y",
-      maintainAspectRatio: false,
-      responsive: true,
-      scales: { x: { min: 0, max: 100 } },
     },
   });
 }

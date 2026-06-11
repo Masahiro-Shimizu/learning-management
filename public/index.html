@@ -75,13 +75,17 @@
               <button class="btn btn-period" data-period="year">年</button>
             </div>
           </div>
+
           <div class="dashboard-summary">
             <div class="summary-card">
               <div class="summary-card-header">
                 <p class="summary-card-label">今週の学習時間</p>
                 <span class="summary-card-icon">⏱️</span>
               </div>
-              <p class="summary-card-value" id="weekly-study-time">-- 分</p>
+              <p class="summary-card-value">
+                <span id="weekly-study-time">--</span
+                ><span class="value-unit">分</span>
+              </p>
               <p class="summary-card-sub" id="weekly-study-sub">集計中...</p>
             </div>
             <div class="summary-card">
@@ -89,7 +93,10 @@
                 <p class="summary-card-label">今月の学習時間</p>
                 <span class="summary-card-icon">📅</span>
               </div>
-              <p class="summary-card-value" id="monthly-study-time">-- 分</p>
+              <p class="summary-card-value">
+                <span id="monthly-study-time">--</span
+                ><span class="value-unit">分</span>
+              </p>
               <p class="summary-card-sub" id="monthly-study-sub">今月の合計</p>
             </div>
             <div class="summary-card">
@@ -97,7 +104,10 @@
                 <p class="summary-card-label">進行中タスク</p>
                 <span class="summary-card-icon">🔄</span>
               </div>
-              <p class="summary-card-value" id="inprogress-count">-- 件</p>
+              <p class="summary-card-value">
+                <span id="inprogress-count">--</span
+                ><span class="value-unit">件</span>
+              </p>
               <p class="summary-card-sub" id="inprogress-sub">集計中...</p>
             </div>
             <div class="summary-card">
@@ -105,18 +115,29 @@
                 <p class="summary-card-label">登録書籍数</p>
                 <span class="summary-card-icon">📚</span>
               </div>
-              <p class="summary-card-value" id="books-count">-- 冊</p>
+              <p class="summary-card-value">
+                <span id="books-count">--</span
+                ><span class="value-unit">冊</span>
+              </p>
               <p class="summary-card-sub" id="books-sub">集計中...</p>
             </div>
           </div>
+
           <div class="dashboard-charts">
             <div class="charts-row">
               <div class="chart-card">
-                <p class="chart-card-title">日別学習時間</p>
-                <canvas id="chart-daily"></canvas>
+                <div class="chart-card-header">
+                  <p class="chart-card-title">日別学習時間</p>
+                  <span class="chart-card-unit">単位：分</span>
+                </div>
+                <div class="chart-daily-wrapper">
+                  <canvas id="chart-daily"></canvas>
+                </div>
               </div>
               <div class="chart-card">
-                <p class="chart-card-title">ステータス別件数</p>
+                <div class="chart-card-header">
+                  <p class="chart-card-title">ステータス別件数</p>
+                </div>
                 <div class="chart-status-wrapper">
                   <canvas id="chart-status"></canvas>
                 </div>
@@ -124,7 +145,10 @@
             </div>
             <div class="charts-row">
               <div class="chart-card" style="width: 100%">
-                <p class="chart-card-title">書籍別進捗率</p>
+                <div class="chart-card-header">
+                  <p class="chart-card-title">書籍別進捗率</p>
+                  <span class="chart-card-unit">%</span>
+                </div>
                 <div class="chart-books-wrapper">
                   <canvas id="chart-books"></canvas>
                 </div>
@@ -132,7 +156,9 @@
             </div>
             <div class="charts-row">
               <div class="chart-card" style="width: 100%">
-                <p class="chart-card-title">進捗率推移</p>
+                <div class="chart-card-header">
+                  <p class="chart-card-title">進捗率推移</p>
+                </div>
                 <div class="chart-progress-wrapper">
                   <canvas id="chart-progress"></canvas>
                 </div>
@@ -195,6 +221,20 @@
           </button>
           <button type="button" id="btn-group-close" class="btn btn-secondary">
             閉じる
+          </button>
+        </div>
+        <div
+          id="btn-group-add-task-wrapper"
+          class="hidden"
+          style="margin-top: 12px"
+        >
+          <button
+            type="button"
+            id="btn-group-add-task"
+            class="btn btn-primary"
+            style="width: 100%"
+          >
+            ＋ 子タスクを追加する
           </button>
         </div>
       </div>

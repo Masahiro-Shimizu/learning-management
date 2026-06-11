@@ -1,15 +1,8 @@
-.dashboard-summary {
-  display: flex;
-  gap: var(--space-16);
-  margin-bottom: var(--space-24);
-}
-
 .dashboard-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: var(--space-24);
-  padding: var(--space-24) var(--space-24) 0;
 }
 
 .dashboard-sub {
@@ -22,11 +15,19 @@
   padding: var(--space-24);
 }
 
+/* サマリーカード */
+.dashboard-summary {
+  display: flex;
+  gap: var(--space-16);
+  margin-bottom: var(--space-24);
+}
+
 .summary-card {
   background-color: var(--color-bg-card);
   border-radius: 12px;
   padding: var(--space-24);
-  min-width: 220px;
+  flex: 1;
+  min-height: 140px;
   border: 1px solid rgb(255 255 255 / 0.1);
   box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
 }
@@ -35,7 +36,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-12);
 }
 
 .summary-card-label {
@@ -44,14 +45,22 @@
 }
 
 .summary-card-icon {
-  font-size: 1.25rem;
+  font-size: 1.4rem;
 }
 
 .summary-card-value {
-  font-size: 2.5rem;
+  font-size: 2.8rem;
   font-weight: 700;
+  line-height: 1;
   color: var(--color-text-primary);
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+
+.summary-card-value .value-unit {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-left: 2px;
 }
 
 .summary-card-sub {
@@ -59,6 +68,7 @@
   color: var(--color-text-tertiary);
 }
 
+/* グラフエリア */
 .dashboard-charts {
   display: flex;
   flex-direction: column;
@@ -68,28 +78,6 @@
 .charts-row {
   display: flex;
   gap: var(--space-24);
-  flex-wrap: wrap;
-}
-
-#chart-daily {
-  max-width: 100%;
-  height: 240px;
-}
-
-#chart-status {
-  max-width: 100%;
-  height: 240px;
-}
-
-.chart-books-wrapper {
-  width: 100%;
-  height: 200px;
-  position: relative;
-}
-
-#chart-books {
-  max-width: 80%;
-  height: 100px;
 }
 
 .chart-card {
@@ -99,45 +87,54 @@
   border: 1px solid rgb(255 255 255 / 0.1);
   box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
   flex: 1;
-  max-height: 360px;
 }
 
-.chart-status-wrapper {
+.chart-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-16);
+}
+
+.chart-card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.chart-card-unit {
+  font-size: 0.8rem;
+  color: var(--color-text-tertiary);
+}
+
+/* 棒グラフ */
+.chart-daily-wrapper {
   height: 260px;
   position: relative;
 }
 
-.chart-card-title {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin-bottom: var(--space-16);
+/* 円グラフ */
+.chart-status-wrapper {
+  height: 320px;
+  position: relative;
 }
 
-@media (max-width: 768px) {
-  .charts-row {
-    flex-direction: column;
-  }
-
-  #chart-daily,
-  #chart-status {
-    max-width: 100%;
-  }
-
-  .dashboard-summary {
-    flex-direction: column;
-  }
+/* 書籍別進捗 */
+.chart-books-wrapper {
+  height: 200px;
+  position: relative;
 }
 
+/* 期間切り替え */
 .period-toggle {
   display: flex;
   gap: var(--space-8);
-  margin-bottom: var(--space-16);
 }
 
 .btn-period {
   background-color: var(--color-bg-card);
   color: var(--color-text-secondary);
+  border: 1px solid rgb(255 255 255 / 0.1);
 }
 
 .btn-period.active {
@@ -145,8 +142,13 @@
   color: var(--color-text-primary);
 }
 
-.chart-progress-wrapper {
-  width: 100%;
-  height: 200px;
-  position: relative;
+/* レスポンシブ */
+@media (max-width: 768px) {
+  .charts-row {
+    flex-direction: column;
+  }
+
+  .dashboard-summary {
+    flex-direction: column;
+  }
 }
