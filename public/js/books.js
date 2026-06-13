@@ -40,6 +40,7 @@ function renderBookList(books) {
     bookList.insertAdjacentHTML("beforeend", bookHtml);
   });
 
+  // カードクリックでモーダルを開く
   document.querySelectorAll(".book-card").forEach((card) => {
     card.addEventListener("click", async () => {
       const bookId = card.dataset.bookId;
@@ -55,14 +56,30 @@ function renderBookList(books) {
   });
 }
 
+function closeBookModal() {
+  document.getElementById("book-modal").classList.add("hidden");
+}
+
 async function renderBooks() {
   allBooksList = await api("/api/books");
   renderBookList(allBooksList);
+}
 
-  document.getElementById("btn-book-close").addEventListener("click", () => {
-    document.getElementById("book-modal").classList.add("hidden");
+function initBooks() {
+  renderBooks();
+
+  // モーダルを閉じる（✕・キャンセル・オーバーレイクリック）
+  document
+    .getElementById("btn-book-close-x")
+    .addEventListener("click", closeBookModal);
+  document
+    .getElementById("btn-book-close")
+    .addEventListener("click", closeBookModal);
+  document.getElementById("book-modal").addEventListener("click", (e) => {
+    if (e.target.id === "book-modal") closeBookModal();
   });
 
+  // 保存
   document
     .getElementById("btn-book-save")
     .addEventListener("click", async () => {
@@ -74,23 +91,22 @@ async function renderBooks() {
       const total_chapters =
         totalChaptersValue === "" ? null : Number(totalChaptersValue);
       await api(`/api/books/${bookId}`, "PUT", { memo, total_chapters });
-      document.getElementById("book-modal").classList.add("hidden");
+      closeBookModal();
       renderBooks();
     });
+
+  // 削除
   document
     .getElementById("btn-book-delete")
     .addEventListener("click", async () => {
       const bookId = document.getElementById("book-modal").dataset.bookId;
       if (!confirm("削除しますか？")) return;
       await api(`/api/books/${bookId}`, "DELETE");
-      document.getElementById("book-modal").classList.add("hidden");
+      closeBookModal();
       renderBooks();
     });
-}
 
-function initBooks() {
-  renderBooks();
-
+  // 絞り込み検索
   document
     .getElementById("book-filter-input")
     .addEventListener("input", (e) => {
@@ -103,6 +119,7 @@ function initBooks() {
       renderBookList(filtered);
     });
 
+  // Google Books 検索
   document
     .getElementById("btn-book-search")
     .addEventListener("click", async () => {
@@ -116,7 +133,7 @@ function initBooks() {
       const resultsEl = document.getElementById("book-search-results");
       resultsEl.innerHTML = "";
 
-      //data.itemが存在しない場合の処理
+      // data.items が存在しない場合の処理
       if (!data.items) {
         resultsEl.innerHTML = "<p>検索結果がありません</p>";
         return;
@@ -128,19 +145,20 @@ function initBooks() {
         const coverUrl = info.imageLinks ? info.imageLinks.thumbnail : "";
 
         const resultHtml = `
-          <div class="card book-search-result">
+        <div class="card book-search-result">
           <p>${title}</p>
           <p>${author}</p>
           <button class="btn btn-primary btn-register-book"
-          data-title="${title}"
-          data-author="${author}"
-          data-cover="${coverUrl}">登録</button>
-          </div>
-          `;
+            data-title="${title}"
+            data-author="${author}"
+            data-cover="${coverUrl}">登録</button>
+        </div>
+      `;
         resultsEl.insertAdjacentHTML("beforeend", resultHtml);
       });
     });
 
+  // 検索結果から登録
   document
     .getElementById("book-search-results")
     .addEventListener("click", async (e) => {

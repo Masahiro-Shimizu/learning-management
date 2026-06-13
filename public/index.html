@@ -575,20 +575,33 @@
     </div>
     <div id="book-modal" class="modal hidden">
       <div class="modal-content">
-        <p id="book-modal-title"></p>
+        <div class="modal-header">
+          <h3 id="book-modal-title"></h3>
+          <button
+            type="button"
+            id="btn-book-close-x"
+            class="btn-modal-close"
+            aria-label="閉じる"
+          >
+            ✕
+          </button>
+        </div>
         <p id="book-modal-author"></p>
+
+        <label for="book-total-chapters">全章数</label>
+        <input type="number" id="book-total-chapters" placeholder="例：14" />
+
         <label for="book-memo">メモ</label>
         <textarea id="book-memo"></textarea>
-        <div class="book-actions">
-          <button type="button" id="btn-book-save" class="btn btn-primary">
-            保存
-          </button>
-          <button type="button" id="btn-book-delete" class="btn btn-danger">
-            削除
-          </button>
-          <button type="button" id="btn-book-close" class="btn btn-secondary">
-            閉じる
-          </button>
+
+        
+        <div class="modal-actions">
+          <button type="button" id="btn-book-delete" class="btn btn-danger">削除</button>
+          <div style="display:flex; gap: 8px;">
+            <button type="button" id="btn-book-close" class="btn btn-secondary">キャンセル</button>
+            <button type="button" id="btn-book-save" class="btn btn-primary">保存</button>
+          </div>
+        </div>
         </div>
       </div>
     </div>
