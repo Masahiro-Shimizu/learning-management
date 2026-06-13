@@ -10,6 +10,8 @@ let chartDaily = null;
 let chartStatus = null;
 let chartBooks = null;
 let chartProgress = null;
+let chartCategoryTime = null;
+let chartCategoryProgress = null;
 
 // 現在表示中の期間モードと基準日
 let currentPeriod = "week";
@@ -17,6 +19,18 @@ let viewDate = new Date();
 
 let allTasks = [];
 let allBooks = [];
+
+// 書籍別・カテゴリ別グラフで共通利用する配色
+const CHART_COLORS = [
+  "#4d7fd4",
+  "#e6a817",
+  "#3a9d6e",
+  "#e05c5c",
+  "#9b6fd4",
+  "#4dc4d4",
+  "#d46f9b",
+  "#7fd46f",
+];
 
 async function initDashboard() {
   const tasks = await api("/api/tasks");
@@ -269,6 +283,8 @@ function renderCharts() {
   if (chartStatus) chartStatus.destroy();
   if (chartBooks) chartBooks.destroy();
   if (chartProgress) chartProgress.destroy();
+  if (chartCategoryTime) chartCategoryTime.destroy();
+  if (chartCategoryProgress) chartCategoryProgress.destroy();
 
   // 棒グラフ（日別学習時間）
   const dailyCanvas = document.getElementById("chart-daily");
@@ -346,17 +362,6 @@ function renderCharts() {
     return { title: book.title, rate };
   });
 
-  const bookColors = [
-    "#4d7fd4",
-    "#e6a817",
-    "#3a9d6e",
-    "#e05c5c",
-    "#9b6fd4",
-    "#4dc4d4",
-    "#d46f9b",
-    "#7fd46f",
-  ];
-
   chartBooks = new Chart(document.getElementById("chart-books"), {
     type: "bar",
     data: {
@@ -366,7 +371,7 @@ function renderCharts() {
           label: "進捗率(%)",
           data: bookProgress.map((b) => b.rate),
           backgroundColor: bookProgress.map(
-            (_, i) => bookColors[i % bookColors.length],
+            (_, i) => CHART_COLORS[i % CHART_COLORS.length],
           ),
         },
       ],
@@ -379,6 +384,81 @@ function renderCharts() {
       scales: { x: { min: 0, max: 100 } },
     },
   });
+
+  // カテゴリ別集計（学習時間・進捗率）
+  // filteredTasks（現在の期間内のタスク）を category_name でグループ化する
+  const categoryMap = new Map();
+  filteredTasks.forEach((t) => {
+    const name = t.category_name || "(言語不問)";
+    if (!categoryMap.has(name)) {
+      categoryMap.set(name, { time: 0, total: 0, done: 0 });
+    }
+    const entry = categoryMap.get(name);
+    entry.time += t.study_time || 0;
+    entry.total += 1;
+    if (t.status === "完了") entry.done += 1;
+  });
+
+  const categoryNames = Array.from(categoryMap.keys());
+  const categoryTimeData = categoryNames.map(
+    (name) => categoryMap.get(name).time,
+  );
+  const categoryProgressData = categoryNames.map((name) => {
+    const entry = categoryMap.get(name);
+    return entry.total > 0 ? Math.round((entry.done / entry.total) * 100) : 0;
+  });
+  const categoryColors = categoryNames.map(
+    (_, i) => CHART_COLORS[i % CHART_COLORS.length],
+  );
+
+  // カテゴリ別学習時間（縦棒グラフ・全幅）
+  chartCategoryTime = new Chart(
+    document.getElementById("chart-category-time"),
+    {
+      type: "bar",
+      data: {
+        labels: categoryNames,
+        datasets: [
+          {
+            label: "学習時間（分）",
+            data: categoryTimeData,
+            backgroundColor: categoryColors,
+          },
+        ],
+      },
+      options: {
+        maintainAspectRatio: false,
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } },
+      },
+    },
+  );
+
+  // カテゴリ別進捗率（横棒グラフ）
+  chartCategoryProgress = new Chart(
+    document.getElementById("chart-category-progress"),
+    {
+      type: "bar",
+      data: {
+        labels: categoryNames,
+        datasets: [
+          {
+            label: "進捗率(%)",
+            data: categoryProgressData,
+            backgroundColor: categoryColors,
+          },
+        ],
+      },
+      options: {
+        indexAxis: "y",
+        maintainAspectRatio: false,
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { x: { min: 0, max: 100 } },
+      },
+    },
+  );
 
   // 進捗率推移（折れ線グラフ）
   const totalTasks = filteredTasks.length;
