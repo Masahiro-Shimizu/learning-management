@@ -81,10 +81,6 @@ router.delete("/:id", async (req, res, next) => {
     if (req.params.id === "1") {
       return res.status(403).json({ error: "「未分類」は削除できません" });
     }
-
-    // 親タスク（groups）に紐づく子タスク（tasks）を先に削除
-    await db.query("DELETE FROM tasks WHERE group_id = ?", [req.params.id]);
-
     const [result] = await db.query("DELETE FROM `groups` WHERE id = ?", [
       req.params.id,
     ]);

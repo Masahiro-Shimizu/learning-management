@@ -125,18 +125,6 @@
   position: relative;
 }
 
-/* カテゴリ別学習時間 */
-.chart-category-time-wrapper {
-  height: 240px;
-  position: relative;
-}
-
-/* カテゴリ別進捗 */
-.chart-category-progress-wrapper {
-  height: 200px;
-  position: relative;
-}
-
 /* 期間切り替え */
 .period-controls {
   display: flex;
