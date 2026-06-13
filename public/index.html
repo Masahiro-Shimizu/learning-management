@@ -106,8 +106,10 @@
           <div class="dashboard-summary">
             <div class="summary-card">
               <div class="summary-card-header">
-                <p class="summary-card-label">今週の学習時間</p>
-                <span class="summary-card-icon">⏱️</span>
+                <p class="summary-card-label" id="weekly-study-label">
+                  今週の学習時間
+                </p>
+                <span class="summary-card-icon" id="weekly-study-icon">⏱️</span>
               </div>
               <p class="summary-card-value">
                 <span id="weekly-study-time">--</span
@@ -117,14 +119,18 @@
             </div>
             <div class="summary-card">
               <div class="summary-card-header">
-                <p class="summary-card-label">今月の学習時間</p>
-                <span class="summary-card-icon">📅</span>
+                <p class="summary-card-label" id="monthly-study-label">
+                  1日あたり平均
+                </p>
+                <span class="summary-card-icon" id="monthly-study-icon"
+                  >📊</span
+                >
               </div>
               <p class="summary-card-value">
                 <span id="monthly-study-time">--</span
                 ><span class="value-unit">分</span>
               </p>
-              <p class="summary-card-sub" id="monthly-study-sub">今月の合計</p>
+              <p class="summary-card-sub" id="monthly-study-sub">集計中...</p>
             </div>
             <div class="summary-card">
               <div class="summary-card-header">
@@ -173,11 +179,31 @@
             <div class="charts-row">
               <div class="chart-card" style="width: 100%">
                 <div class="chart-card-header">
+                  <p class="chart-card-title">カテゴリ別学習時間</p>
+                  <span class="chart-card-unit">単位：分</span>
+                </div>
+                <div class="chart-category-time-wrapper">
+                  <canvas id="chart-category-time"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="charts-row">
+              <div class="chart-card">
+                <div class="chart-card-header">
                   <p class="chart-card-title">書籍別進捗率</p>
                   <span class="chart-card-unit">%</span>
                 </div>
                 <div class="chart-books-wrapper">
                   <canvas id="chart-books"></canvas>
+                </div>
+              </div>
+              <div class="chart-card">
+                <div class="chart-card-header">
+                  <p class="chart-card-title">カテゴリ別進捗率</p>
+                  <span class="chart-card-unit">%</span>
+                </div>
+                <div class="chart-category-progress-wrapper">
+                  <canvas id="chart-category-progress"></canvas>
                 </div>
               </div>
             </div>
