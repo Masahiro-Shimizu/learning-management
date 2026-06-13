@@ -151,6 +151,7 @@
           </div>
 
           <div class="dashboard-charts">
+            <h3 class="dashboard-section-title">学習時間</h3>
             <div class="charts-row">
               <div class="chart-card">
                 <div class="chart-card-header">
@@ -163,21 +164,41 @@
               </div>
               <div class="chart-card">
                 <div class="chart-card-header">
+                  <p class="chart-card-title">カテゴリ別学習時間</p>
+                  <span class="chart-card-unit">単位：分</span>
+                </div>
+                <div class="chart-category-time-wrapper">
+                  <canvas id="chart-category-time"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <h3 class="dashboard-section-title">進捗</h3>
+            <div class="charts-row charts-row--triple">
+              <div class="chart-card">
+                <div class="chart-card-header">
                   <p class="chart-card-title">ステータス別件数</p>
                 </div>
                 <div class="chart-status-wrapper">
                   <canvas id="chart-status"></canvas>
                 </div>
               </div>
-            </div>
-            <div class="charts-row">
-              <div class="chart-card" style="width: 100%">
+              <div class="chart-card">
                 <div class="chart-card-header">
                   <p class="chart-card-title">書籍別進捗率</p>
                   <span class="chart-card-unit">%</span>
                 </div>
                 <div class="chart-books-wrapper">
                   <canvas id="chart-books"></canvas>
+                </div>
+              </div>
+              <div class="chart-card">
+                <div class="chart-card-header">
+                  <p class="chart-card-title">カテゴリ別進捗率</p>
+                  <span class="chart-card-unit">%</span>
+                </div>
+                <div class="chart-category-progress-wrapper">
+                  <canvas id="chart-category-progress"></canvas>
                 </div>
               </div>
             </div>
