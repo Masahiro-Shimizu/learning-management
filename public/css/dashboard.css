@@ -125,6 +125,37 @@
   position: relative;
 }
 
+/* セクション見出し（学習時間／進捗） */
+.dashboard-section-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* 3カラムの進捗セクション用 */
+.charts-row--triple {
+  display: flex;
+  gap: var(--space-24);
+}
+
+.charts-row--triple .chart-card {
+  flex: 1;
+  min-width: 0;
+}
+
+/* カテゴリ別学習時間 */
+.chart-category-time-wrapper {
+  height: 240px;
+  position: relative;
+}
+
+/* カテゴリ別進捗 */
+.chart-category-progress-wrapper {
+  height: 200px;
+  position: relative;
+}
+
 /* 期間切り替え */
 .period-controls {
   display: flex;
