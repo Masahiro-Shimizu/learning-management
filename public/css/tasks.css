@@ -948,6 +948,7 @@
   border: 1px solid rgb(255 255 255 / 0.06);
   border-radius: 10px;
   overflow-x: auto;
+  margin-top: var(--space-16);
 }
 
 .timeline-grid {
@@ -976,6 +977,56 @@
 
 .timeline-row-header--axis {
   background-color: #27272a;
+  padding: 4px 4px;
+  min-height: 28px;
+  overflow: hidden;
+}
+
+.timeline-month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+  width: 100%;
+  position: relative;
+}
+
+.timeline-month-nav .btn {
+  padding: 1px 5px;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.timeline-month-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 2px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex: 1;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.timeline-month-label:hover,
+.timeline-month-label:focus-visible {
+  background-color: rgb(255 255 255 / 0.08);
+  outline: none;
+}
+
+.timeline-month-picker {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  border: 0;
 }
 
 .timeline-track {
@@ -994,6 +1045,10 @@
   color: var(--color-text-tertiary);
   padding: 4px 2px;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
 }
 
 .timeline-today-line {

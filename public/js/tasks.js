@@ -193,7 +193,6 @@ function openGroupModal(groupId = "") {
   document.getElementById("group-modal").dataset.groupId = groupId;
   document.getElementById("btn-group-add-task-wrapper").classList.add("hidden");
   document.getElementById("group-modal").classList.remove("hidden");
-  markGroupModalClean();
 }
 
 async function openGroupEditModal(groupId) {
@@ -203,7 +202,6 @@ async function openGroupEditModal(groupId) {
   document.getElementById("group-modal").dataset.groupId = groupId;
   document.getElementById("btn-group-add-task-wrapper").classList.add("hidden");
   document.getElementById("group-modal").classList.remove("hidden");
-  markGroupModalClean();
 }
 
 // ===== ステップ（孫タスク）関連 =====
@@ -731,6 +729,46 @@ function bindTimelineEvents() {
       }
     });
   });
+
+  const prevBtn = document.getElementById("btn-timeline-prev");
+  const nextBtn = document.getElementById("btn-timeline-next");
+  const monthLabel = document.getElementById("timeline-month-label");
+  const monthPicker = document.getElementById("timeline-month-picker");
+
+  prevBtn.addEventListener("click", () => {
+    timelineDate.setMonth(timelineDate.getMonth() - 1);
+    renderTimeline(lastTaskViewData);
+  });
+
+  nextBtn.addEventListener("click", () => {
+    timelineDate.setMonth(timelineDate.getMonth() + 1);
+    renderTimeline(lastTaskViewData);
+  });
+
+  const openMonthPicker = () => {
+    if (typeof monthPicker.showPicker === "function") {
+      monthPicker.showPicker();
+    } else {
+      monthPicker.focus();
+      monthPicker.click();
+    }
+  };
+
+  monthLabel.addEventListener("click", openMonthPicker);
+  monthLabel.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      openMonthPicker();
+    }
+  });
+
+  monthPicker.addEventListener("change", (e) => {
+    const value = e.target.value; // "YYYY-MM"
+    if (!value) return;
+    const [year, month] = value.split("-").map(Number);
+    timelineDate = new Date(year, month - 1, 1);
+    renderTimeline(lastTaskViewData);
+  });
 }
 
 function renderTimeline(data) {
@@ -738,9 +776,6 @@ function renderTimeline(data) {
 
   const year = timelineDate.getFullYear();
   const month = timelineDate.getMonth();
-
-  document.getElementById("timeline-month-label").textContent =
-    `${year}年${month + 1}月`;
 
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const monthStart = new Date(year, month, 1);
@@ -758,7 +793,14 @@ function renderTimeline(data) {
     "beforeend",
     `
       <div class="timeline-row">
-        <div class="timeline-row-header timeline-row-header--axis"></div>
+        <div class="timeline-row-header timeline-row-header--axis">
+          <div class="timeline-month-nav">
+            <button type="button" id="btn-timeline-prev" class="btn btn-secondary" aria-label="前の月">＜</button>
+            <span id="timeline-month-label" class="timeline-month-label" role="button" tabindex="0"></span>
+            <button type="button" id="btn-timeline-next" class="btn btn-secondary" aria-label="次の月">＞</button>
+            <input type="month" id="timeline-month-picker" class="timeline-month-picker" aria-label="年月を選択" />
+          </div>
+        </div>
         <div class="timeline-track">
           <div class="timeline-axis" style="grid-template-columns: repeat(${daysInMonth}, 1fr);">
             ${axisCellsHtml}
@@ -823,17 +865,13 @@ function renderTimeline(data) {
   });
 
   bindTimelineEvents();
+
+  document.getElementById("timeline-month-label").textContent =
+    `${year}年${month + 1}月`;
+
+  const monthPicker = document.getElementById("timeline-month-picker");
+  monthPicker.value = `${year}-${String(month + 1).padStart(2, "0")}`;
 }
-
-document.getElementById("btn-timeline-prev").addEventListener("click", () => {
-  timelineDate.setMonth(timelineDate.getMonth() - 1);
-  renderTimeline(lastTaskViewData);
-});
-
-document.getElementById("btn-timeline-next").addEventListener("click", () => {
-  timelineDate.setMonth(timelineDate.getMonth() + 1);
-  renderTimeline(lastTaskViewData);
-});
 
 // ===== ビュー全体の描画・切り替え =====
 
@@ -905,9 +943,9 @@ document.querySelectorAll(".kanban-add-btn").forEach((btn) => {
   });
 });
 
-document
-  .getElementById("btn-group-close")
-  .addEventListener("click", closeGroupModalWithConfirm);
+document.getElementById("btn-group-close").addEventListener("click", () => {
+  document.getElementById("group-modal").classList.add("hidden");
+});
 
 document
   .getElementById("btn-task-close")
@@ -993,7 +1031,6 @@ document
     if (!confirm("削除しますか？")) return;
     await api(`/api/groups/${groupId}`, "DELETE");
     document.getElementById("group-modal").dataset.groupId = "";
-    markGroupModalClean();
     document.getElementById("group-modal").classList.add("hidden");
     renderTaskViews();
   });
@@ -1019,7 +1056,6 @@ document
       document
         .getElementById("btn-group-add-task-wrapper")
         .classList.remove("hidden");
-      markGroupModalClean();
     }
 
     renderTaskViews();
@@ -1088,49 +1124,5 @@ document
 document.getElementById("task-modal").addEventListener("click", (e) => {
   if (e.target.id === "task-modal") {
     closeTaskModalWithConfirm();
-  }
-});
-
-// ===== 親タスクモーダル：未保存確認つき開閉処理 =====
-
-function getGroupModalSnapshot() {
-  const ids = ["group-title", "group-memo"];
-  const snapshot = {};
-  ids.forEach((id) => {
-    const el = document.getElementById(id);
-    snapshot[id] = el ? el.value : "";
-  });
-  return JSON.stringify(snapshot);
-}
-
-function markGroupModalClean() {
-  document.getElementById("group-modal").dataset.initialSnapshot =
-    getGroupModalSnapshot();
-}
-
-function isGroupModalDirty() {
-  const modal = document.getElementById("group-modal");
-  const initial = modal.dataset.initialSnapshot;
-  if (initial === undefined) return false;
-  return initial !== getGroupModalSnapshot();
-}
-
-function closeGroupModalWithConfirm() {
-  if (isGroupModalDirty()) {
-    const ok = confirm(
-      "編集の内容は保存されていません。閉じてもよろしいですか？",
-    );
-    if (!ok) return;
-  }
-  document.getElementById("group-modal").classList.add("hidden");
-}
-
-document
-  .getElementById("btn-group-close-x")
-  .addEventListener("click", closeGroupModalWithConfirm);
-
-document.getElementById("group-modal").addEventListener("click", (e) => {
-  if (e.target.id === "group-modal") {
-    closeGroupModalWithConfirm();
   }
 });

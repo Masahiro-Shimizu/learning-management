@@ -26,7 +26,7 @@ function showPage() {
 
   if (pageId === "page-dashboard" && !dashboardInitialized) {
     initDashboard();
-    initDashboardIntialized = true;
+    dashboardInitialized = true;
   }
 
   if (pageId === "page-settings" && !settingsInitialized) {

@@ -10,25 +10,13 @@ let chartDaily = null;
 let chartStatus = null;
 let chartBooks = null;
 let chartProgress = null;
-let chartCategoryTime = null;
-let chartCategoryProgress = null;
 
+// 現在表示中の期間モードと基準日
 let currentPeriod = "week";
 let viewDate = new Date();
 
 let allTasks = [];
 let allBooks = [];
-
-const CHART_COLORS = [
-  "#4d7fd4",
-  "#e6a817",
-  "#3a9d6e",
-  "#e05c5c",
-  "#9b6fd4",
-  "#4dc4d4",
-  "#d46f9b",
-  "#7fd46f",
-];
 
 async function initDashboard() {
   const tasks = await api("/api/tasks");
@@ -43,6 +31,7 @@ async function initDashboard() {
   monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
   monday.setHours(0, 0, 0, 0);
 
+  // 今週の学習時間
   const weeklyTime = tasks
     .filter((t) => {
       if (!t.end_date) return false;
@@ -52,6 +41,7 @@ async function initDashboard() {
     .reduce((sum, t) => sum + (t.study_time || 0), 0);
   document.getElementById("weekly-study-time").textContent = weeklyTime;
 
+  // 先週比
   const lastMonday = new Date(monday);
   lastMonday.setDate(monday.getDate() - 7);
   const lastSunday = new Date(monday);
@@ -71,6 +61,7 @@ async function initDashboard() {
   document.getElementById("weekly-study-sub").textContent =
     `先週比 ${diffText}`;
 
+  // 今月の学習時間
   const year = today.getFullYear();
   const month = today.getMonth();
   const monthlyTime = tasks
@@ -84,16 +75,19 @@ async function initDashboard() {
   document.getElementById("monthly-study-sub").textContent =
     `${year}年${month + 1}月の合計`;
 
+  // 進行中タスク数
   const inprogressCount = tasks.filter((t) => t.status === "進行中").length;
   const totalCount = tasks.length;
   document.getElementById("inprogress-count").textContent = inprogressCount;
   document.getElementById("inprogress-sub").textContent =
     `全 ${totalCount} 件中`;
 
+  // 登録書籍数
   const booksCount = books.length;
   document.getElementById("books-count").textContent = booksCount;
   document.getElementById("books-sub").textContent = "登録済み";
 
+  // 期間切り替えボタン（週／月／年）
   document.querySelectorAll(".btn-period").forEach((btn) => {
     btn.addEventListener("click", () => {
       document
@@ -101,11 +95,12 @@ async function initDashboard() {
         .forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       currentPeriod = btn.dataset.period;
-      viewDate = new Date();
+      viewDate = new Date(); // 期間種別を切り替えたら現在を基準にリセット
       renderCharts();
     });
   });
 
+  // 前へ／次へボタン
   document
     .getElementById("period-prev-btn")
     .addEventListener("click", () => shiftPeriod(-1));
@@ -113,9 +108,11 @@ async function initDashboard() {
     .getElementById("period-next-btn")
     .addEventListener("click", () => shiftPeriod(1));
 
+  // 初期描画（週）
   renderCharts();
 }
 
+// 期間を前後に移動する
 function shiftPeriod(direction) {
   if (currentPeriod === "week") {
     viewDate.setDate(viewDate.getDate() + 7 * direction);
@@ -127,6 +124,7 @@ function shiftPeriod(direction) {
   renderCharts();
 }
 
+// 表示中の期間が「現在」を含むかどうか（次へボタンの無効化判定に使用）
 function isCurrentPeriod() {
   const today = new Date();
 
@@ -143,6 +141,7 @@ function isCurrentPeriod() {
   return true;
 }
 
+// 週の月曜日（00:00:00）を返す
 function getWeekStart(date) {
   const dayOfWeek = date.getDay();
   const monday = new Date(date);
@@ -151,6 +150,7 @@ function getWeekStart(date) {
   return monday;
 }
 
+// 期間ラベルを更新する（例: "5/26 〜 6/1" / "2026年5月" / "2026年"）
 function updatePeriodLabel() {
   const label = document.getElementById("period-label");
   let text = "";
@@ -168,6 +168,7 @@ function updatePeriodLabel() {
 
   label.textContent = text;
 
+  // 未来方向への移動を制限する
   const nextBtn = document.getElementById("period-next-btn");
   nextBtn.disabled = isCurrentPeriod();
 }
@@ -258,17 +259,18 @@ function renderCharts() {
     });
   }
 
+  // ステータス別件数
   const todo = filteredTasks.filter((t) => t.status === "未着手").length;
   const inprogress = filteredTasks.filter((t) => t.status === "進行中").length;
   const done = filteredTasks.filter((t) => t.status === "完了").length;
 
+  // グラフ破棄
   if (chartDaily) chartDaily.destroy();
   if (chartStatus) chartStatus.destroy();
   if (chartBooks) chartBooks.destroy();
   if (chartProgress) chartProgress.destroy();
-  if (chartCategoryTime) chartCategoryTime.destroy();
-  if (chartCategoryProgress) chartCategoryProgress.destroy();
 
+  // 棒グラフ（日別学習時間）
   const dailyCanvas = document.getElementById("chart-daily");
   const ctx = dailyCanvas.getContext("2d");
   const gradient = ctx.createLinearGradient(0, 0, 0, 300);
@@ -304,6 +306,7 @@ function renderCharts() {
     },
   });
 
+  // 円グラフ（ステータス別）
   chartStatus = new Chart(document.getElementById("chart-status"), {
     type: "doughnut",
     data: {
@@ -335,12 +338,24 @@ function renderCharts() {
     },
   });
 
+  // 書籍別進捗（横棒グラフ）
   const bookProgress = books.map((book) => {
     const total = book.task_count || 0;
     const done = Number(book.completed_count) || 0;
     const rate = total > 0 ? Math.round((done / total) * 100) : 0;
     return { title: book.title, rate };
   });
+
+  const bookColors = [
+    "#4d7fd4",
+    "#e6a817",
+    "#3a9d6e",
+    "#e05c5c",
+    "#9b6fd4",
+    "#4dc4d4",
+    "#d46f9b",
+    "#7fd46f",
+  ];
 
   chartBooks = new Chart(document.getElementById("chart-books"), {
     type: "bar",
@@ -351,7 +366,7 @@ function renderCharts() {
           label: "進捗率(%)",
           data: bookProgress.map((b) => b.rate),
           backgroundColor: bookProgress.map(
-            (_, i) => CHART_COLORS[i % CHART_COLORS.length],
+            (_, i) => bookColors[i % bookColors.length],
           ),
         },
       ],
@@ -365,78 +380,7 @@ function renderCharts() {
     },
   });
 
-  // カテゴリ別集計（学習時間・進捗率）
-  const categoryMap = new Map();
-  filteredTasks.forEach((t) => {
-    const name = t.category_name || "(言語不問)";
-    if (!categoryMap.has(name)) {
-      categoryMap.set(name, { time: 0, total: 0, done: 0 });
-    }
-    const entry = categoryMap.get(name);
-    entry.time += t.study_time || 0;
-    entry.total += 1;
-    if (t.status === "完了") entry.done += 1;
-  });
-
-  const categoryNames = Array.from(categoryMap.keys());
-  const categoryTimeData = categoryNames.map(
-    (name) => categoryMap.get(name).time,
-  );
-  const categoryProgressData = categoryNames.map((name) => {
-    const entry = categoryMap.get(name);
-    return entry.total > 0 ? Math.round((entry.done / entry.total) * 100) : 0;
-  });
-  const categoryColors = categoryNames.map(
-    (_, i) => CHART_COLORS[i % CHART_COLORS.length],
-  );
-
-  chartCategoryTime = new Chart(
-    document.getElementById("chart-category-time"),
-    {
-      type: "bar",
-      data: {
-        labels: categoryNames,
-        datasets: [
-          {
-            label: "学習時間（分）",
-            data: categoryTimeData,
-            backgroundColor: categoryColors,
-          },
-        ],
-      },
-      options: {
-        maintainAspectRatio: false,
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true } },
-      },
-    },
-  );
-
-  chartCategoryProgress = new Chart(
-    document.getElementById("chart-category-progress"),
-    {
-      type: "bar",
-      data: {
-        labels: categoryNames,
-        datasets: [
-          {
-            label: "進捗率(%)",
-            data: categoryProgressData,
-            backgroundColor: categoryColors,
-          },
-        ],
-      },
-      options: {
-        indexAxis: "y",
-        maintainAspectRatio: false,
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: { x: { min: 0, max: 100 } },
-      },
-    },
-  );
-
+  // 進捗率推移（折れ線グラフ）
   const totalTasks = filteredTasks.length;
   const doneTasks = filteredTasks.filter((t) => t.status === "完了").length;
   const actualRate =

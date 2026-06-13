@@ -151,7 +151,6 @@
           </div>
 
           <div class="dashboard-charts">
-            <h3 class="dashboard-section-title">学習時間</h3>
             <div class="charts-row">
               <div class="chart-card">
                 <div class="chart-card-header">
@@ -164,41 +163,21 @@
               </div>
               <div class="chart-card">
                 <div class="chart-card-header">
-                  <p class="chart-card-title">カテゴリ別学習時間</p>
-                  <span class="chart-card-unit">単位：分</span>
-                </div>
-                <div class="chart-category-time-wrapper">
-                  <canvas id="chart-category-time"></canvas>
-                </div>
-              </div>
-            </div>
-
-            <h3 class="dashboard-section-title">進捗</h3>
-            <div class="charts-row charts-row--triple">
-              <div class="chart-card">
-                <div class="chart-card-header">
                   <p class="chart-card-title">ステータス別件数</p>
                 </div>
                 <div class="chart-status-wrapper">
                   <canvas id="chart-status"></canvas>
                 </div>
               </div>
-              <div class="chart-card">
+            </div>
+            <div class="charts-row">
+              <div class="chart-card" style="width: 100%">
                 <div class="chart-card-header">
                   <p class="chart-card-title">書籍別進捗率</p>
                   <span class="chart-card-unit">%</span>
                 </div>
                 <div class="chart-books-wrapper">
                   <canvas id="chart-books"></canvas>
-                </div>
-              </div>
-              <div class="chart-card">
-                <div class="chart-card-header">
-                  <p class="chart-card-title">カテゴリ別進捗率</p>
-                  <span class="chart-card-unit">%</span>
-                </div>
-                <div class="chart-category-progress-wrapper">
-                  <canvas id="chart-category-progress"></canvas>
                 </div>
               </div>
             </div>
@@ -357,28 +336,6 @@
           </div>
 
           <div class="view-panel hidden" data-view-panel="timeline">
-            <div class="calendar-header">
-              <button
-                type="button"
-                id="btn-timeline-prev"
-                class="btn btn-secondary"
-                aria-label="前の月"
-              >
-                ＜
-              </button>
-              <span
-                id="timeline-month-label"
-                class="calendar-month-label"
-              ></span>
-              <button
-                type="button"
-                id="btn-timeline-next"
-                class="btn btn-secondary"
-                aria-label="次の月"
-              >
-                ＞
-              </button>
-            </div>
             <div class="timeline-wrapper">
               <div class="timeline-grid" id="timeline-grid"></div>
             </div>
@@ -398,6 +355,24 @@
             </button>
           </div>
           <div id="book-search-results"></div>
+          <div class="book-toolbar">
+            <div class="search">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="11" cy="11" r="7" />
+                <path d="m21 21-4-4" />
+              </svg>
+              <input
+                type="text"
+                id="book-filter-input"
+                placeholder="登録済みの書籍を絞り込む…"
+              />
+            </div>
+          </div>
           <div id="book-list"></div>
         </section>
 
