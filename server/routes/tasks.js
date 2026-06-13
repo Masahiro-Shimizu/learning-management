@@ -7,9 +7,11 @@ const db = require("../db");
 router.get("/", async (req, res, next) => {
   try {
     const [rows] = await db.query(`
-      SELECT t.*, b.title AS book_title
+      SELECT t.*, b.title AS book_title, tt.name AS type_name, tc.name AS category_name
       FROM tasks t
       LEFT JOIN books b ON t.book_id = b.id
+      LEFT JOIN task_types tt ON t.type_id = tt.id
+      LEFT JOIN task_categories tc ON t.category_id = tc.id
       ORDER BY t.created_at DESC
     `);
     res.json(rows);
@@ -21,9 +23,11 @@ router.get("/", async (req, res, next) => {
 router.get("/:id", async (req, res, next) => {
   try {
     const [rows] = await db.query(
-      `SELECT t.*, b.title AS book_title
+      `SELECT t.*, b.title AS book_title, tt.name AS type_name, tc.name AS category_name
        FROM tasks t
        LEFT JOIN books b ON t.book_id = b.id
+       LEFT JOIN task_types tt ON t.type_id = tt.id
+       LEFT JOIN task_categories tc ON t.category_id = tc.id
        WHERE t.id = ?`,
       [req.params.id],
     );
@@ -40,7 +44,8 @@ router.post("/", async (req, res, next) => {
     const {
       group_id = 1,
       title,
-      type,
+      type_id,
+      category_id = 1,
       granularity = null,
       book_id = null,
       status = "未着手",
@@ -53,16 +58,17 @@ router.post("/", async (req, res, next) => {
       memo = null,
     } = req.body;
 
-    if (!title || !type)
-      return res.status(400).json({ error: "title と type は必須です" });
+    if (!title || !type_id)
+      return res.status(400).json({ error: "title と type_id は必須です" });
 
     const [result] = await db.query(
-      `INSERT INTO tasks (group_id, title, type, granularity, book_id, status, start_planned_date, end_planned_date, start_date, end_date, study_time, planned_study_time, memo)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO tasks (group_id, title, type_id, category_id, granularity, book_id, status, start_planned_date, end_planned_date, start_date, end_date, study_time, planned_study_time, memo)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         group_id,
         title,
-        type,
+        type_id,
+        category_id,
         granularity,
         book_id,
         status,
@@ -89,7 +95,8 @@ router.put("/:id", async (req, res, next) => {
     const allowedFields = [
       "group_id",
       "title",
-      "type",
+      "type_id",
+      "category_id",
       "granularity",
       "book_id",
       "status",

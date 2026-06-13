@@ -8,6 +8,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 100;
 }
 
 .modal-content {
@@ -45,4 +46,345 @@
 .modal-content {
   overflow-y: auto;
   max-height: 90vh;
+}
+
+/* ステップ（孫タスク）セクション */
+
+.step-section {
+  margin-top: var(--space-16);
+  padding-top: var(--space-16);
+  border-top: 1px solid rgb(255 255 255 / 0.06);
+}
+
+.step-section.hidden {
+  display: none;
+}
+
+#step-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: var(--space-8) 0;
+  padding: 0;
+  list-style: none;
+}
+
+#step-list:empty::after {
+  content: "ステップはまだありません";
+  display: block;
+  padding: var(--space-8) 0;
+  font-size: 0.8rem;
+  color: var(--color-text-tertiary);
+  opacity: 0.6;
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: 6px 10px;
+  border-radius: 6px;
+  background-color: #27272a;
+  border: 1px solid rgb(255 255 255 / 0.06);
+}
+
+.step-item input[type="checkbox"] {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.step-item-title {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--color-text-primary);
+}
+
+.step-item.completed .step-item-title {
+  color: var(--color-text-tertiary);
+  text-decoration: line-through;
+}
+
+.btn-step-delete {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    background-color 0.2s;
+}
+
+.btn-step-delete:hover {
+  color: #f87171;
+  background-color: rgb(255 255 255 / 0.06);
+}
+
+.step-add-row {
+  display: flex;
+  gap: var(--space-8);
+}
+
+.step-add-row input[type="text"] {
+  flex: 1;
+}
+
+/* ステップ（孫タスク）セクション */
+
+.step-section {
+  margin-top: var(--space-16);
+  padding-top: var(--space-16);
+  border-top: 1px solid rgb(255 255 255 / 0.06);
+}
+
+.step-section.hidden {
+  display: none;
+}
+
+#step-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: var(--space-8) 0;
+  padding: 0;
+  list-style: none;
+}
+
+#step-list:empty::after {
+  content: "ステップはまだありません";
+  display: block;
+  padding: var(--space-8) 0;
+  font-size: 0.8rem;
+  color: var(--color-text-tertiary);
+  opacity: 0.6;
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: 6px 10px;
+  border-radius: 6px;
+  background-color: #27272a;
+  border: 1px solid rgb(255 255 255 / 0.06);
+}
+
+.step-item input[type="checkbox"] {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.step-item-title {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--color-text-primary);
+}
+
+.step-item.completed .step-item-title {
+  color: var(--color-text-tertiary);
+  text-decoration: line-through;
+}
+
+.btn-step-delete {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    background-color 0.2s;
+}
+
+.btn-step-delete:hover {
+  color: #f87171;
+  background-color: rgb(255 255 255 / 0.06);
+}
+
+.step-add-row {
+  display: flex;
+  gap: var(--space-8);
+}
+
+.step-add-row input[type="text"] {
+  flex: 1;
+}
+
+/* カンバンカードのステップ進捗バッジ */
+.task-step-badge {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background-color: rgb(255 255 255 / 0.08);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+/* ===== 親タスクモーダル：ヘッダー・ボタン配置 ===== */
+
+#group-modal .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-8);
+}
+
+#group-modal .modal-header h3 {
+  margin: 0;
+  font-family: "Syne", sans-serif;
+}
+
+#group-modal .btn-modal-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    background-color 0.2s;
+}
+
+#group-modal .btn-modal-close:hover {
+  color: var(--color-text-primary);
+  background-color: rgb(255 255 255 / 0.08);
+}
+
+/* 削除は左、キャンセル・保存は右 */
+#group-modal .modal-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#group-modal .modal-actions .task-actions-right {
+  display: flex;
+  gap: var(--space-8);
+}
+
+/* ===== タスクモーダル：2カラムレイアウト & ヘッダー ===== */
+
+#task-modal .modal-content {
+  width: 640px;
+  max-height: 95vh;
+  position: relative;
+}
+
+#task-modal .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-8);
+}
+
+#task-modal .modal-header h3 {
+  margin: 0;
+  font-family: "Syne", sans-serif;
+}
+
+#task-modal .btn-modal-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    background-color 0.2s;
+}
+
+#task-modal .btn-modal-close:hover {
+  color: var(--color-text-primary);
+  background-color: rgb(255 255 255 / 0.08);
+}
+
+#task-modal .form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px var(--space-16);
+}
+
+#task-modal .form-grid .field-full {
+  grid-column: 1 / -1;
+}
+
+#task-modal .form-grid label {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 0.85rem;
+}
+
+#task-modal .form-grid .field {
+  display: flex;
+  flex-direction: column;
+}
+
+/* タイトル・メモは常にフル幅 */
+#task-title,
+#task-memo {
+  width: 100%;
+}
+
+/* メモを小さくしてスクロールを減らす */
+#task-memo {
+  min-height: 48px;
+  resize: vertical;
+}
+
+/* input/select/textareaの上下パディングを詰めて高さを抑える */
+#task-modal .form-grid input,
+#task-modal .form-grid select,
+#task-modal #task-memo {
+  padding: 6px var(--space-16);
+}
+
+/* ステップセクションの上マージンを詰める */
+#task-modal .step-section {
+  margin-top: var(--space-8);
+  padding-top: var(--space-8);
+}
+
+/* タスクアクション：削除は左、キャンセル・保存は右 */
+#task-modal .task-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-8);
+  margin-top: var(--space-16);
+}
+
+#task-modal .task-actions .task-actions-right {
+  display: flex;
+  gap: var(--space-8);
 }

@@ -1,36 +1,1116 @@
 #page-tasks {
-  padding: var(--space-24);
+  padding: var(--space-32) var(--space-32) var(--space-48);
 }
 
-#btn-add-group {
-  margin-bottom: var(--space-16);
+.tasks-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-16);
+  margin-bottom: var(--space-32);
 }
 
-.kanban {
-  min-height: 400px;
+#page-tasks h2 {
+  font-family: "Syne", sans-serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.2;
 }
 
-.kanban-card {
-  background-color: var(--color-bg-card);
-  border-radius: 6px;
-  padding: var(--space-16);
-  border: 1px solid rgb(255, 255, 255 / 0.1);
-  margin-bottom: var(--space-8);
-}
-
-.btn-add-child {
+.tasks-sub {
   font-size: 0.85rem;
-  padding: var(--space-4) var(--space-8);
+  color: var(--color-text-tertiary);
   margin-top: var(--space-8);
 }
 
+.kanban {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-16);
+  align-items: start;
+}
+
+.kanban-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.kanban-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 var(--space-4);
+}
+
+.kanban-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.kanban-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.kanban-status-dot--todo {
+  background-color: var(--color-status-todo);
+}
+
+.kanban-status-dot--inprogress {
+  background-color: var(--color-status-inprogress);
+}
+
+.kanban-status-dot--done {
+  background-color: var(--color-status-done);
+}
+
+.kanban-header-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.kanban-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background-color: rgb(255 255 255 / 0.08);
+  color: var(--color-text-tertiary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.kanban-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    background-color 0.2s;
+}
+
+.kanban-add-btn:hover {
+  color: var(--color-text-primary);
+  background-color: rgb(255 255 255 / 0.06);
+}
+
+.kanban-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-height: 120px;
+}
+
+.task-card {
+  background-color: #27272a;
+  border-radius: 10px;
+  padding: 12px var(--space-16);
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-left-width: 3px;
+  cursor: pointer;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s,
+    background-color 0.15s;
+}
+
+.task-card:hover {
+  background-color: #2f2f33;
+  box-shadow: 0 8px 24px -8px rgb(0 0 0 / 0.5);
+  transform: translateY(-1px);
+}
+
+.task-card--book {
+  border-left-color: #8b5cf6;
+}
+
+.task-card--article {
+  border-left-color: #10b981;
+}
+
+.task-card--video {
+  border-left-color: #f59e0b;
+}
+
+.task-card--practice {
+  border-left-color: #71717a;
+}
+
+.task-card--default {
+  border-left-color: var(--color-text-tertiary);
+}
+
+.task-type-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: var(--space-8);
+}
+
+.task-type-badge--book {
+  background-color: rgb(139 92 246 / 0.2);
+  color: #c4b5fd;
+}
+
+.task-type-badge--article {
+  background-color: rgb(16 185 129 / 0.2);
+  color: #6ee7b7;
+}
+
+.task-type-badge--video {
+  background-color: rgb(245 158 11 / 0.2);
+  color: #fcd34d;
+}
+
+.task-type-badge--practice {
+  background-color: rgb(113 113 122 / 0.25);
+  color: #d4d4d8;
+}
+
+.task-card--teal {
+  border-left-color: #14b8a6;
+}
+
+.task-card--rose {
+  border-left-color: #f43f5e;
+}
+
+.task-card--lime {
+  border-left-color: #84cc16;
+}
+
+.task-type-badge--teal {
+  background-color: rgb(20 184 166 / 0.2);
+  color: #5eead4;
+}
+
+.task-type-badge--rose {
+  background-color: rgb(244 63 94 / 0.2);
+  color: #fda4af;
+}
+
+.task-type-badge--lime {
+  background-color: rgb(132 204 22 / 0.2);
+  color: #d9f99d;
+}
+
+.task-type-badge--default {
+  background-color: rgb(255 255 255 / 0.08);
+  color: var(--color-text-secondary);
+}
+
+.task-card-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+
+.task-card-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+}
+
+.task-card-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  color: var(--color-text-tertiary);
+}
+
+.task-card-meta-item svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.group-card {
+  background-color: #27272a;
+  border-radius: 10px;
+  border: 1px solid rgb(255 255 255 / 0.06);
+  overflow: hidden;
+}
+
+.group-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-8);
+  padding: 12px var(--space-16);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.group-card-header:hover {
+  background-color: #2f2f33;
+}
+
+.group-card-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.4;
+}
+
+.btn-edit-group {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    border-color 0.2s,
+    background-color 0.2s;
+}
+
+.btn-edit-group:hover {
+  color: var(--color-text-primary);
+  border-color: rgb(255 255 255 / 0.2);
+  background-color: rgb(255 255 255 / 0.04);
+}
+
+.group-card-children {
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: 0 var(--space-8) var(--space-8);
+  border-top: 1px solid rgb(255 255 255 / 0.06);
+}
+
+.group-card-children:not(.hidden) {
+  display: flex;
+}
+
+.group-card-children.hidden {
+  display: none;
+}
+
+.group-card-children .task-card:hover {
+  transform: none;
+}
+
 .btn-add-task {
+  align-self: flex-start;
+  margin: var(--space-8) 0 0;
+  padding: 4px 10px;
+  border: 1px dashed rgb(255 255 255 / 0.15);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    border-color 0.2s,
+    background-color 0.2s;
+}
+
+.btn-add-task:hover {
+  color: var(--color-text-primary);
+  border-color: rgb(255 255 255 / 0.25);
+  background-color: rgb(255 255 255 / 0.04);
+}
+
+.kanban-cards:empty::after {
+  content: "タスクなし";
+  display: block;
+  padding: var(--space-24) var(--space-8);
+  text-align: center;
   font-size: 0.8rem;
-  padding: var(--space-4) var(--space-8);
+  color: var(--color-text-tertiary);
+  opacity: 0.6;
+}
+
+/* ビュー切り替えタブ */
+
+.view-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid rgb(255 255 255 / 0.08);
+  margin-bottom: var(--space-16);
+}
+
+.view-tab {
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.view-tab:hover {
+  color: var(--color-text-secondary);
+}
+
+.view-tab.active {
+  color: var(--color-text-primary);
+  border-bottom-color: #8b5cf6;
+}
+
+.view-panel.hidden {
+  display: none;
+}
+
+.view-placeholder {
+  padding: var(--space-32);
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: 0.9rem;
+}
+
+/* テーブルビュー */
+
+.task-table-wrapper {
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.task-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  table-layout: fixed;
+}
+
+.task-table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-weight: 600;
+  background-color: #27272a;
+  color: var(--color-text-secondary);
+}
+
+.task-table td {
+  padding: 10px 12px;
+  border-top: 1px solid rgb(255 255 255 / 0.06);
+}
+
+.task-table tr.group-row {
+  background-color: #27272a;
+  cursor: pointer;
+}
+
+.task-table tr.group-row td {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.task-table tr.group-row.collapsed + .task-row {
+  display: none;
+}
+
+.task-table tr.task-row {
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.task-table tr.task-row:hover {
+  background-color: #2f2f33;
+}
+
+.task-table tr.task-row td:first-child {
+  padding-left: 28px;
+}
+
+.task-table-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.task-table-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.task-table-status-dot--todo {
+  background-color: var(--color-status-todo);
+}
+
+.task-table-status-dot--inprogress {
+  background-color: var(--color-status-inprogress);
+}
+
+.task-table-status-dot--done {
+  background-color: var(--color-status-done);
+}
+
+.task-table .btn-edit-group {
+  float: right;
+}
+
+.task-table-dim {
+  color: var(--color-text-tertiary);
+}
+
+.group-row-toggle {
+  display: inline-block;
+  width: 16px;
+  color: var(--color-text-tertiary);
+  font-size: 0.7rem;
+}
+
+/* ビュー切り替えタブ */
+
+.view-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid rgb(255 255 255 / 0.08);
+  margin-bottom: var(--space-16);
+}
+
+.view-tab {
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.view-tab:hover {
+  color: var(--color-text-secondary);
+}
+
+.view-tab.active {
+  color: var(--color-text-primary);
+  border-bottom-color: #8b5cf6;
+}
+
+.view-panel.hidden {
+  display: none;
+}
+
+.view-placeholder {
+  padding: var(--space-32);
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: 0.9rem;
+}
+
+/* テーブルビュー */
+
+.task-table-wrapper {
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.task-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  table-layout: fixed;
+}
+
+.task-table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-weight: 600;
+  background-color: #27272a;
+  color: var(--color-text-secondary);
+}
+
+.task-table td {
+  padding: 10px 12px;
+  border-top: 1px solid rgb(255 255 255 / 0.06);
+}
+
+.task-table tr.group-row {
+  background-color: #27272a;
+  cursor: pointer;
+}
+
+.task-table tr.group-row td {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.task-table tr.group-row.collapsed + .task-row {
+  display: none;
+}
+
+.task-table tr.task-row {
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.task-table tr.task-row:hover {
+  background-color: #2f2f33;
+}
+
+.task-table tr.task-row td:first-child {
+  padding-left: 28px;
+}
+
+.task-table-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.task-table-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.task-table-status-dot--todo {
+  background-color: var(--color-status-todo);
+}
+
+.task-table-status-dot--inprogress {
+  background-color: var(--color-status-inprogress);
+}
+
+.task-table-status-dot--done {
+  background-color: var(--color-status-done);
+}
+
+.task-table .btn-edit-group {
+  float: right;
+}
+
+.task-table-dim {
+  color: var(--color-text-tertiary);
+}
+
+.group-row-toggle {
+  display: inline-block;
+  width: 16px;
+  color: var(--color-text-tertiary);
+  font-size: 0.7rem;
+}
+
+/* カレンダービュー */
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-16);
+  margin-bottom: var(--space-16);
+}
+
+.calendar-month-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  min-width: 110px;
+  text-align: center;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.calendar-weekday {
+  padding: 8px 4px;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  background-color: #27272a;
+  border-bottom: 1px solid rgb(255 255 255 / 0.06);
+}
+
+.calendar-cell {
+  min-height: 96px;
+  padding: 4px;
+  border-top: 1px solid rgb(255 255 255 / 0.06);
+  border-left: 1px solid rgb(255 255 255 / 0.06);
+}
+
+.calendar-cell:nth-child(7n + 1) {
+  border-left: none;
+}
+
+.calendar-cell.calendar-cell--empty {
+  background-color: rgb(0 0 0 / 0.1);
+}
+
+.calendar-cell-date {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  margin-bottom: 4px;
+}
+
+.calendar-chip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  margin-bottom: 2px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+  background-color: rgb(139 92 246 / 0.18);
+  color: #c4b5fd;
+}
+
+.calendar-chip-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-chip-badge {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.calendar-chip-more {
+  font-size: 0.7rem;
+  color: var(--color-text-tertiary);
+  padding: 2px 6px;
+  cursor: default;
+}
+
+/* ビュー切り替えタブ */
+
+.view-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid rgb(255 255 255 / 0.08);
+  margin-bottom: var(--space-16);
+}
+
+.view-tab {
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.view-tab:hover {
+  color: var(--color-text-secondary);
+}
+
+.view-tab.active {
+  color: var(--color-text-primary);
+  border-bottom-color: #8b5cf6;
+}
+
+.view-panel.hidden {
+  display: none;
+}
+
+.view-placeholder {
+  padding: var(--space-32);
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: 0.9rem;
+}
+
+/* テーブルビュー */
+
+.task-table-wrapper {
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.task-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  table-layout: fixed;
+}
+
+.task-table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-weight: 600;
+  background-color: #27272a;
+  color: var(--color-text-secondary);
+}
+
+.task-table td {
+  padding: 10px 12px;
+  border-top: 1px solid rgb(255 255 255 / 0.06);
+}
+
+.task-table tr.group-row {
+  background-color: #27272a;
+  cursor: pointer;
+}
+
+.task-table tr.group-row td {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.task-table tr.group-row.collapsed + .task-row {
+  display: none;
+}
+
+.task-table tr.task-row {
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.task-table tr.task-row:hover {
+  background-color: #2f2f33;
+}
+
+.task-table tr.task-row td:first-child {
+  padding-left: 28px;
+}
+
+.task-table-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.task-table-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.task-table-status-dot--todo {
+  background-color: var(--color-status-todo);
+}
+
+.task-table-status-dot--inprogress {
+  background-color: var(--color-status-inprogress);
+}
+
+.task-table-status-dot--done {
+  background-color: var(--color-status-done);
+}
+
+.task-table .btn-edit-group {
+  float: right;
+}
+
+.task-table-dim {
+  color: var(--color-text-tertiary);
+}
+
+.group-row-toggle {
+  display: inline-block;
+  width: 16px;
+  color: var(--color-text-tertiary);
+  font-size: 0.7rem;
+}
+
+/* カレンダービュー */
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-16);
+  margin-bottom: var(--space-16);
+}
+
+.calendar-month-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  min-width: 110px;
+  text-align: center;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.calendar-weekday {
+  padding: 8px 4px;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  background-color: #27272a;
+  border-bottom: 1px solid rgb(255 255 255 / 0.06);
+}
+
+.calendar-cell {
+  min-height: 96px;
+  padding: 4px;
+  border-top: 1px solid rgb(255 255 255 / 0.06);
+  border-left: 1px solid rgb(255 255 255 / 0.06);
+}
+
+.calendar-cell:nth-child(7n + 1) {
+  border-left: none;
+}
+
+.calendar-cell.calendar-cell--empty {
+  background-color: rgb(0 0 0 / 0.1);
+}
+
+.calendar-cell-date {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  margin-bottom: 4px;
+}
+
+.calendar-chip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  margin-bottom: 2px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+  background-color: rgb(139 92 246 / 0.18);
+  color: #c4b5fd;
+}
+
+.calendar-chip-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-chip-badge {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.calendar-chip-more {
+  font-size: 0.7rem;
+  color: var(--color-text-tertiary);
+  padding: 2px 6px;
+  cursor: default;
+}
+
+/* タイムラインビュー */
+
+.timeline-wrapper {
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-radius: 10px;
+  overflow-x: auto;
+}
+
+.timeline-grid {
+  min-width: 900px;
+}
+
+.timeline-row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  border-bottom: 1px solid rgb(255 255 255 / 0.06);
+}
+
+.timeline-row:last-child {
+  border-bottom: none;
+}
+
+.timeline-row-header {
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  border-right: 1px solid rgb(255 255 255 / 0.06);
+  background-color: #27272a;
+}
+
+.timeline-row-header--axis {
+  background-color: #27272a;
+}
+
+.timeline-track {
+  position: relative;
+  min-height: 40px;
+}
+
+.timeline-axis {
+  display: grid;
+  height: 100%;
+}
+
+.timeline-axis-cell {
+  border-left: 1px solid rgb(255 255 255 / 0.04);
+  font-size: 0.65rem;
+  color: var(--color-text-tertiary);
+  padding: 4px 2px;
+  text-align: center;
+}
+
+.timeline-today-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1px solid #f59e0b;
+  z-index: 2;
+}
+
+.timeline-bar {
+  position: absolute;
+  height: 20px;
+  border-radius: 6px;
+  background-color: rgb(139 92 246 / 0.25);
+  color: #c4b5fd;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  overflow: hidden;
+  white-space: nowrap;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.timeline-bar-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ===== カテゴリバッジ（言語/技術カテゴリ） ===== */
+
+.task-card-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: var(--space-8);
+}
+
+.task-card-badges .task-type-badge {
+  margin-bottom: 0;
+}
+
+.task-table-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.task-category-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.task-category-badge--indigo {
+  background-color: rgb(99 102 241 / 0.2);
+  color: #a5b4fc;
+}
+
+.task-category-badge--amber {
+  background-color: rgb(245 158 11 / 0.2);
+  color: #fcd34d;
+}
+
+.task-category-badge--teal {
+  background-color: rgb(20 184 166 / 0.2);
+  color: #5eead4;
+}
+
+.task-category-badge--rose {
+  background-color: rgb(244 63 94 / 0.2);
+  color: #fda4af;
+}
+
+.task-category-badge--lime {
+  background-color: rgb(132 204 22 / 0.2);
+  color: #d9f99d;
+}
+
+.task-category-badge--sky {
+  background-color: rgb(14 165 233 / 0.2);
+  color: #7dd3fc;
+}
+
+.task-category-badge--violet {
+  background-color: rgb(139 92 246 / 0.2);
+  color: #c4b5fd;
+}
+
+.task-category-badge--default {
+  background-color: rgb(255 255 255 / 0.08);
+  color: var(--color-text-secondary);
+}
+
+/* カレンダーチップ内のカテゴリバッジ */
+.calendar-chip .task-category-badge {
+  flex-shrink: 0;
+  padding: 1px 5px;
+  font-size: 0.65rem;
+}
+
+@media (max-width: 1024px) {
+  .kanban {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 768px) {
-  .kanban {
-    flex-direction: column;
+  #page-tasks {
+    padding: var(--space-16);
   }
 }

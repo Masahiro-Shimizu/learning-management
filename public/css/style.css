@@ -101,12 +101,17 @@ header {
 
 /* サイドバー */
 nav {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 240px;
+  height: 100vh;
   padding: var(--space-24);
   background-color: var(--color-bg-sidebar);
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  z-index: 100;
 }
 
 nav ul {
@@ -120,13 +125,30 @@ nav a {
   display: flex;
   align-items: center;
   gap: var(--space-8);
-  padding: var(--space-8);
+  padding: var(--space-8) var(--space-8) var(--space-8) 12px;
   border-radius: 6px; /* 角丸にする　これは変数作ってない */
+  position: relative;
 }
 
 nav a:hover {
   color: var(--color-text-primary);
   background-color: var(--color-bg-card);
+}
+
+nav a.active {
+  color: var(--color-text-primary);
+  background-color: rgb(255 255 255 / 0.06);
+}
+
+nav a.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background-color: var(--color-accent-primary);
 }
 
 .nav-logo {
@@ -184,6 +206,8 @@ nav a:hover {
 
 main {
   flex: 1;
+  margin-left: 240px;
+  min-height: 100vh;
 }
 
 /* ボタン */
@@ -224,93 +248,8 @@ main {
   box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
 }
 
-/* カンバン */
-.kanban {
-  display: flex;
-  gap: var(--space-16);
-}
-
-.kanban-column {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-8);
-  flex: 1;
-  background-color: var(--color-bg-sidebar);
-  padding: var(--space-8);
-  border-radius: 6px;
-}
-
-.kanban-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.kanban-header button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--color-text-tertiary);
-  font-size: var(--space-16);
-}
-
-.kanban-header button:hover {
-  color: var(--color-text-primary);
-}
-
-.kanban-card-header {
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.kanban-card-header:hover p {
-  color: var(--color-text-primary);
-  opacity: 0.7;
-}
-
-.kanban-card p {
-  color: var(--color-text-primary);
-  font-weight: 600;
-  margin-bottom: var(--space-8);
-}
-
-.task-type {
-  background-color: var(--color-bg-modal);
-  color: var(--color-text-primary);
-  padding: 2px var(--space-8);
-  border-radius: 8px;
-  font-size: 14px;
-}
-
-.task-time {
-  color: var(--color-text-tertiary);
-  font-size: 14px;
-}
-
 .hidden {
   display: none;
-}
-
-.child-task {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--space-8) 0;
-  border-top: 1px solid rgb(255 255 255 / 0.1);
-}
-
-.status-未着手 {
-  color: var(--color-status-todo);
-}
-
-.status-進行中 {
-  color: var(--color-status-inprogress);
-}
-
-.status-完了 {
-  color: var(--color-status-done);
 }
 
 @media (max-width: 768px) {
@@ -319,9 +258,10 @@ main {
   }
 
   nav {
+    position: static;
     width: 100%;
+    height: auto;
     padding: var(--space-8) var(--space-16);
-    min-height: unset;
   }
 
   nav ul {
@@ -335,6 +275,7 @@ main {
   }
 
   main {
+    margin-left: 0;
     padding: var(--space-16);
   }
 }
