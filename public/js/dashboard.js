@@ -11,9 +11,19 @@ let chartStatus = null;
 let chartBooks = null;
 let chartProgress = null;
 
+// 現在表示中の期間モードと基準日
+let currentPeriod = "week";
+let viewDate = new Date();
+
+let allTasks = [];
+let allBooks = [];
+
 async function initDashboard() {
   const tasks = await api("/api/tasks");
   const books = await api("/api/books");
+
+  allTasks = tasks;
+  allBooks = books;
 
   const today = new Date();
   const dayOfWeek = today.getDay();
@@ -77,38 +87,111 @@ async function initDashboard() {
   document.getElementById("books-count").textContent = booksCount;
   document.getElementById("books-sub").textContent = "登録済み";
 
-  // 期間切り替えボタン
+  // 期間切り替えボタン（週／月／年）
   document.querySelectorAll(".btn-period").forEach((btn) => {
     btn.addEventListener("click", () => {
       document
         .querySelectorAll(".btn-period")
         .forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
-      renderCharts(btn.dataset.period, tasks, books);
+      currentPeriod = btn.dataset.period;
+      viewDate = new Date(); // 期間種別を切り替えたら現在を基準にリセット
+      renderCharts();
     });
   });
 
+  // 前へ／次へボタン
+  document
+    .getElementById("period-prev-btn")
+    .addEventListener("click", () => shiftPeriod(-1));
+  document
+    .getElementById("period-next-btn")
+    .addEventListener("click", () => shiftPeriod(1));
+
   // 初期描画（週）
-  renderCharts("week", tasks, books);
+  renderCharts();
 }
 
-function renderCharts(period, tasks, books) {
+// 期間を前後に移動する
+function shiftPeriod(direction) {
+  if (currentPeriod === "week") {
+    viewDate.setDate(viewDate.getDate() + 7 * direction);
+  } else if (currentPeriod === "month") {
+    viewDate.setMonth(viewDate.getMonth() + direction);
+  } else if (currentPeriod === "year") {
+    viewDate.setFullYear(viewDate.getFullYear() + direction);
+  }
+  renderCharts();
+}
+
+// 表示中の期間が「現在」を含むかどうか（次へボタンの無効化判定に使用）
+function isCurrentPeriod() {
   const today = new Date();
+
+  if (currentPeriod === "week") {
+    return getWeekStart(viewDate).getTime() === getWeekStart(today).getTime();
+  } else if (currentPeriod === "month") {
+    return (
+      viewDate.getFullYear() === today.getFullYear() &&
+      viewDate.getMonth() === today.getMonth()
+    );
+  } else if (currentPeriod === "year") {
+    return viewDate.getFullYear() === today.getFullYear();
+  }
+  return true;
+}
+
+// 週の月曜日（00:00:00）を返す
+function getWeekStart(date) {
+  const dayOfWeek = date.getDay();
+  const monday = new Date(date);
+  monday.setDate(date.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+  monday.setHours(0, 0, 0, 0);
+  return monday;
+}
+
+// 期間ラベルを更新する（例: "5/26 〜 6/1" / "2026年5月" / "2026年"）
+function updatePeriodLabel() {
+  const label = document.getElementById("period-label");
+  let text = "";
+
+  if (currentPeriod === "week") {
+    const monday = getWeekStart(viewDate);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    text = `${monday.getMonth() + 1}/${monday.getDate()} 〜 ${sunday.getMonth() + 1}/${sunday.getDate()}`;
+  } else if (currentPeriod === "month") {
+    text = `${viewDate.getFullYear()}年${viewDate.getMonth() + 1}月`;
+  } else if (currentPeriod === "year") {
+    text = `${viewDate.getFullYear()}年`;
+  }
+
+  label.textContent = text;
+
+  // 未来方向への移動を制限する
+  const nextBtn = document.getElementById("period-next-btn");
+  nextBtn.disabled = isCurrentPeriod();
+}
+
+function renderCharts() {
+  const tasks = allTasks;
+  const books = allBooks;
+
+  updatePeriodLabel();
+
   let filteredTasks = [];
   let labels = [];
   let dailyData = [];
 
-  if (period === "week") {
-    const dayOfWeek = today.getDay();
-    const monday = new Date(today);
-    monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
-    monday.setHours(0, 0, 0, 0);
+  if (currentPeriod === "week") {
+    const monday = getWeekStart(viewDate);
 
     const weekDates = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(monday);
       d.setDate(monday.getDate() + i);
       return d;
     });
+    const sunday = weekDates[6];
 
     labels = ["月", "火", "水", "木", "金", "土", "日"];
     dailyData = weekDates.map((weekDate) =>
@@ -122,11 +205,11 @@ function renderCharts(period, tasks, books) {
     filteredTasks = tasks.filter((t) => {
       if (!t.end_date) return true;
       const d = new Date(t.end_date);
-      return d >= monday && d <= today;
+      return d >= monday && d <= sunday;
     });
-  } else if (period === "month") {
-    const year = today.getFullYear();
-    const month = today.getMonth();
+  } else if (currentPeriod === "month") {
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
     labels = Array.from({ length: daysInMonth }, (_, i) => `${i + 1}`);
@@ -144,8 +227,8 @@ function renderCharts(period, tasks, books) {
       const d = new Date(t.end_date);
       return d.getFullYear() === year && d.getMonth() === month;
     });
-  } else if (period === "year") {
-    const year = today.getFullYear();
+  } else if (currentPeriod === "year") {
+    const year = viewDate.getFullYear();
     labels = [
       "1月",
       "2月",

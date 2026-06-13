@@ -126,6 +126,12 @@
 }
 
 /* 期間切り替え */
+.period-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+}
+
 .period-toggle {
   display: flex;
   gap: var(--space-8);
@@ -142,6 +148,57 @@
   color: var(--color-text-primary);
 }
 
+/* 期間ナビゲーション（前後移動） */
+.period-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-8);
+}
+
+.period-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+}
+
+.btn-period-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background-color: var(--color-bg-card);
+  color: var(--color-text-secondary);
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: var(--radius-md, 6px);
+  cursor: pointer;
+  font-size: 14px;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.btn-period-nav:hover:not(:disabled) {
+  background-color: var(--color-accent-primary);
+  color: var(--color-text-primary);
+}
+
+.btn-period-nav:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.period-label {
+  min-width: 110px;
+  text-align: center;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm, 14px);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 /* レスポンシブ */
 @media (max-width: 768px) {
   .charts-row {
@@ -150,5 +207,10 @@
 
   .dashboard-summary {
     flex-direction: column;
+  }
+
+  .period-controls {
+    width: 100%;
+    align-items: center;
   }
 }
