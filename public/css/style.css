@@ -106,7 +106,7 @@ nav {
   left: 0;
   width: 240px;
   height: 100vh;
-  padding: var(--space-24);
+  padding: var(--space-32) var(--space-24); /* var(--space-48) → var(--space-32) */
   background-color: var(--color-bg-sidebar);
   display: flex;
   flex-direction: column;
@@ -114,8 +114,12 @@ nav {
   z-index: 100;
 }
 
+/* ナビアイテム間にgapを追加 */
 nav ul {
   list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4); /* 追加 */
 }
 
 nav a {
@@ -125,8 +129,8 @@ nav a {
   display: flex;
   align-items: center;
   gap: var(--space-8);
-  padding: var(--space-8) var(--space-8) var(--space-8) 12px;
-  border-radius: 6px; /* 角丸にする　これは変数作ってない */
+  padding: 10px var(--space-8) 10px 12px; /* var(--space-8) → 10px に増やす */
+  border-radius: 6px;
   position: relative;
 }
 
@@ -155,14 +159,14 @@ nav a.active::before {
   display: flex;
   align-items: center;
   gap: var(--space-8);
-  padding: var(--space-8);
-  margin-bottom: var(--space-24);
+  padding: var(--space-16) var(--space-8); /* var(--space-8) → 上下var(--space-16) */
+  margin-bottom: var(--space-16);
 }
 
 .nav-logo-box {
-  width: 38px;
-  height: 38px;
-  border-radius: 11px;
+  width: 44px; /* 38px → 44px */
+  height: 44px; /* 38px → 44px */
+  border-radius: 13px; /* 11px → 13px */
   background: linear-gradient(
     135deg,
     hsl(234 70% 58%) 0%,
@@ -173,7 +177,7 @@ nav a.active::before {
   font-family: "Syne", sans-serif;
   font-weight: 800;
   color: #0c0d12;
-  font-size: 19px;
+  font-size: 22px; /* 19px → 22px */
   box-shadow: 0 6px 18px -6px rgba(108, 108, 245, 0.7);
   flex-shrink: 0;
 }
@@ -192,21 +196,24 @@ nav a.active::before {
 }
 
 .nav-icon {
-  font-size: 1.1rem;
+  width: 18px; /* font-size: 1.1rem → width/heightに変更 */
+  height: 18px;
+  flex-shrink: 0;
 }
 
+/* フッター上部の余白も少し増やす */
 .nav-footer {
   margin-top: auto;
-  padding-top: var(--space-16);
+  padding-top: var(--space-16); /* var(--space-8) → var(--space-16) */
 }
 
 #btn-theme-toggle {
-  width: 100%;
+  width: auto; /* 100% → auto */
 }
 
 main {
   flex: 1;
-  margin-left: 240px;
+  margin-left: 240px; /* 200px → 240px に戻す */
   min-height: 100vh;
 }
 

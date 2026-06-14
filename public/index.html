@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="css/modal.css" />
     <link rel="stylesheet" href="css/settings.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="js/api.js" defer></script>
     <script src="js/tasks.js" defer></script>
     <script src="js/config.js" defer></script>
@@ -38,19 +39,19 @@
         <ul>
           <li>
             <a href="#page-dashboard">
-              <span class="nav-icon">📊</span>
+              <i data-lucide="layout-dashboard" class="nav-icon"></i>
               <span>ダッシュボード</span>
             </a>
           </li>
           <li>
             <a href="#page-tasks">
-              <span class="nav-icon">✅</span>
+              <i data-lucide="check-square" class="nav-icon"></i>
               <span>タスク一覧</span>
             </a>
           </li>
           <li>
             <a href="#page-books">
-              <span class="nav-icon">📖</span>
+              <i data-lucide="book-open" class="nav-icon"></i>
               <span>書籍マスタ</span>
             </a>
           </li>
@@ -59,13 +60,11 @@
           <button id="btn-theme-toggle" class="btn btn-secondary">
             ☀️ ライト
           </button>
-        </div>
-        <li>
-          <a href="#page-settings">
-            <span class="nav-icon">⚙️</span>
+          <a href="#page-settings" class="nav-settings-link">
+            <i data-lucide="settings" class="nav-icon"></i>
             <span>設定</span>
           </a>
-        </li>
+        </div>
       </nav>
 
       <main>
@@ -627,8 +626,6 @@
       </div>
     </div>
 
-    <footer>
-      <p>ここはフッターです</p>
-    </footer>
+    <script>lucide.createIcons();</script>
   </body>
 </html>
