@@ -505,7 +505,7 @@ function createTaskRowHtml(task, steps) {
       : `<span class="task-table-dim">－</span>`;
 
   return `
-    <tr class="task-row" data-task-id="${task.id}" tabindex="0">
+  <tr class="task-row" data-task-id="${task.id}" data-group-id="${task.group_id}" tabindex="0">
       <td>${task.title}</td>
       <td>
         <div class="task-table-badges">
@@ -532,8 +532,19 @@ function bindTableEvents() {
     row.addEventListener("click", (e) => {
       if (e.target.closest(".btn-edit-group")) return;
       row.classList.toggle("collapsed");
-      const toggle = row.querySelector(".group-row-toggle");
-      toggle.textContent = row.classList.contains("collapsed") ? "▸" : "▾";
+
+const isCollapsed = row.classList.contains("collapsed");
+
+document
+  .querySelectorAll(
+    `.task-row[data-group-id="${row.dataset.groupId}"]`
+  )
+  .forEach((taskRow) => {
+    taskRow.style.display = isCollapsed ? "none" : "";
+  });
+
+  const toggle = row.querySelector(".group-row-toggle");
+    toggle.textContent = isCollapsed ? "▸" : "▾";
     });
   });
 

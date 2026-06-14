@@ -463,9 +463,9 @@
   color: var(--color-text-primary);
 }
 
-.task-table tr.group-row.collapsed + .task-row {
+/* .task-table tr.group-row.collapsed + .task-row {
   display: none;
-}
+} */
 
 .task-table tr.task-row {
   cursor: pointer;
