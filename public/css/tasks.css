@@ -254,7 +254,39 @@
   background-color: var(--color-bg-sidebar);
   border-radius: 10px;
   border: 1px solid rgb(255 255 255 / 0.06);
-  overflow: hidden;
+}
+
+.group-card--indigo {
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-left: 3px solid #818cf8;
+}
+.group-card--amber {
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-left: 3px solid #fbbf24;
+}
+.group-card--teal {
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-left: 3px solid #2dd4bf;
+}
+.group-card--rose {
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-left: 3px solid #fb7185;
+}
+.group-card--lime {
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-left: 3px solid #a3e635;
+}
+.group-card--sky {
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-left: 3px solid #38bdf8;
+}
+.group-card--violet {
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-left: 3px solid #a78bfa;
+}
+.group-card--default {
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-left: 3px solid rgb(255 255 255 / 0.06);
 }
 
 .group-card-header {

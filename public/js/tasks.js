@@ -150,6 +150,17 @@ function calcStatus(groupId, tasks) {
   return "進行中";
 }
 
+function getMajorityCategory(groupId, tasks) {
+  const children = tasks.filter((t) => t.group_id === groupId);
+  if (children.length === 0) return null;
+  const counts = {};
+  children.forEach((t) => {
+    const name = t.category_name || "(言語不問)";
+    counts[name] = (counts[name] || 0) + 1;
+  });
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+}
+
 function groupStepsByTaskId(allSteps) {
   const map = {};
   allSteps.forEach((step) => {
@@ -159,13 +170,17 @@ function groupStepsByTaskId(allSteps) {
   return map;
 }
 
-function createGroupCardHtml(group, childTasks, stepsByTaskId) {
+function createGroupCardHtml(group, childTasks, stepsByTaskId, tasks) {
+  const majorityCategory = getMajorityCategory(group.id, tasks);
+  const categoryInfo = majorityCategory
+    ? getCategoryInfo(majorityCategory)
+    : { class: "default" };
   const childrenHTML = childTasks
     .map((t) => createTaskCardHtml(t, stepsByTaskId[t.id] || []))
     .join("");
 
   return `
-    <div class="group-card" data-group-id="${group.id}">
+    <div class="group-card group-card--${categoryInfo.class}" data-group-id="${group.id}">
       <div class="group-card-header">
         <p class="group-card-title">${group.title}</p>
         <button
@@ -430,7 +445,7 @@ function renderKanban(data) {
     );
     container.insertAdjacentHTML(
       "beforeend",
-      createGroupCardHtml(group, childTasks, stepsByTaskId),
+      createGroupCardHtml(group, childTasks, stepsByTaskId, tasks),
     );
   });
 
