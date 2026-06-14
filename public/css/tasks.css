@@ -121,7 +121,7 @@
 }
 
 .task-card {
-  background-color: #27272a;
+  background-color: var(--color-bg-sidebar);
   border-radius: 10px;
   padding: 12px var(--space-16);
   border: 1px solid rgb(255 255 255 / 0.06);
@@ -251,7 +251,7 @@
 }
 
 .group-card {
-  background-color: #27272a;
+  background-color: var(--color-bg-sidebar);
   border-radius: 10px;
   border: 1px solid rgb(255 255 255 / 0.06);
   overflow: hidden;
@@ -268,7 +268,7 @@
 }
 
 .group-card-header:hover {
-  background-color: #2f2f33;
+  background-color: var(--color-bg-sidebar);
 }
 
 .group-card-title {
@@ -412,7 +412,7 @@
   text-align: left;
   padding: 10px 12px;
   font-weight: 600;
-  background-color: #27272a;
+  background-color: var(--color-bg-sidebar);
   color: var(--color-text-secondary);
 }
 
@@ -422,7 +422,7 @@
 }
 
 .task-table tr.group-row {
-  background-color: #27272a;
+  background-color: var(--color-bg-sidebar);
   cursor: pointer;
 }
 
@@ -550,7 +550,7 @@
   text-align: left;
   padding: 10px 12px;
   font-weight: 600;
-  background-color: #27272a;
+  background-color: var(--color-bg-sidebar);
   color: var(--color-text-secondary);
 }
 
@@ -560,7 +560,7 @@
 }
 
 .task-table tr.group-row {
-  background-color: #27272a;
+  background-color: var(--color-bg-sidebar);
   cursor: pointer;
 }
 
@@ -656,7 +656,7 @@
   text-align: center;
   font-size: 0.75rem;
   color: var(--color-text-tertiary);
-  background-color: #27272a;
+  background-color: var(--color-bg-sidebar);
   border-bottom: 1px solid rgb(255 255 255 / 0.06);
 }
 
@@ -671,8 +671,9 @@
   border-left: none;
 }
 
+/* 修正後 */
 .calendar-cell.calendar-cell--empty {
-  background-color: rgb(0 0 0 / 0.1);
+  background-color: var(--color-bg-card);
 }
 
 .calendar-cell-date {
@@ -777,7 +778,7 @@
   text-align: left;
   padding: 10px 12px;
   font-weight: 600;
-  background-color: #27272a;
+  background-color: var(--color-bg-sidebar);
   color: var(--color-text-secondary);
 }
 
@@ -787,7 +788,7 @@
 }
 
 .task-table tr.group-row {
-  background-color: #27272a;
+  background-color: var(--color-bg-sidebar);
   cursor: pointer;
 }
 
@@ -883,7 +884,7 @@
   text-align: center;
   font-size: 0.75rem;
   color: var(--color-text-tertiary);
-  background-color: #27272a;
+  background-color: var(--color-bg-sidebar);
   border-bottom: 1px solid rgb(255 255 255 / 0.06);
 }
 
@@ -972,11 +973,11 @@
   display: flex;
   align-items: center;
   border-right: 1px solid rgb(255 255 255 / 0.06);
-  background-color: #27272a;
+  background-color: var(--color-bg-sidebar);
 }
 
 .timeline-row-header--axis {
-  background-color: #27272a;
+  background-color: var(--color-bg-sidebar);
   padding: 4px 4px;
   min-height: 28px;
   overflow: hidden;
@@ -1080,6 +1081,20 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* タイムラインツールバー */
+.timeline-toolbar {
+  margin-bottom: var(--space-8);
+}
+
+.timeline-filter-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
 }
 
 /* ===== カテゴリバッジ（言語/技術カテゴリ） ===== */

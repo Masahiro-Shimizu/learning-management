@@ -352,6 +352,10 @@ function renderCharts() {
     return { title: book.title, rate };
   });
 
+  // 書籍数に応じてラッパーの高さを動的に設定
+  const booksWrapperEl = document.querySelector(".chart-books-wrapper");
+  booksWrapperEl.style.height = Math.max(120, bookProgress.length * 60) + "px";
+
   chartBooks = new Chart(document.getElementById("chart-books"), {
     type: "bar",
     data: {
@@ -423,6 +427,13 @@ function renderCharts() {
       },
     },
   );
+
+  // カテゴリ数に応じてラッパーの高さを動的に設定
+  const catProgressWrapperEl = document.querySelector(
+    ".chart-category-progress-wrapper",
+  );
+  catProgressWrapperEl.style.height =
+    Math.max(120, categoryNames.length * 60) + "px";
 
   // カテゴリ別進捗率（横棒グラフ）
   chartCategoryProgress = new Chart(

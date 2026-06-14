@@ -242,7 +242,7 @@
             </button>
           </div>
 
-          <div class="view-panel" data-view-panel="kanban">
+          <div class="view-panel hidden" data-view-panel="kanban">
             <div class="kanban">
               <div class="kanban-column">
                 <div class="kanban-header">
@@ -357,6 +357,12 @@
 
           <div class="view-panel hidden" data-view-panel="timeline">
             <div class="timeline-wrapper">
+              <div class="timeline-toolbar">
+                <label class="timeline-filter-label">
+                  <input type="checkbox" id="timeline-hide-completed" />
+                  完了タスクを非表示
+                </label>
+              </div>
               <div class="timeline-grid" id="timeline-grid"></div>
             </div>
           </div>

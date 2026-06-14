@@ -424,6 +424,7 @@ function renderKanban(data) {
     const status = calcStatus(group.id, tasks);
     statusCounts[status]++;
     const childTasks = tasks.filter((t) => t.group_id === group.id);
+
     const container = document.querySelector(
       `.kanban-cards[data-status="${status}"]`,
     );
@@ -769,11 +770,26 @@ function bindTimelineEvents() {
     timelineDate = new Date(year, month - 1, 1);
     renderTimeline(lastTaskViewData);
   });
+
+  const hideCompletedCheckbox = document.getElementById(
+    "timeline-hide-completed",
+  );
+  if (hideCompletedCheckbox) {
+    hideCompletedCheckbox.addEventListener("change", () => {
+      renderTimeline(lastTaskViewData);
+    });
+  }
 }
 
 function renderTimeline(data) {
   const { groups, tasks } = data;
 
+  // 完了タスク非表示フィルタ
+  const hideCompleted =
+    document.getElementById("timeline-hide-completed")?.checked ?? false;
+  const filteredTasks = hideCompleted
+    ? tasks.filter((t) => t.status !== "完了")
+    : tasks;
   const year = timelineDate.getFullYear();
   const month = timelineDate.getMonth();
 
@@ -818,7 +834,10 @@ function renderTimeline(data) {
     : null;
 
   groups.forEach((group) => {
-    const childTasks = tasks.filter((t) => t.group_id === group.id);
+    const childTasks = filteredTasks.filter((t) => t.group_id === group.id);
+
+    // 追加：子タスクが1件もなければ行を描画しない
+    if (childTasks.length === 0) return;
 
     const barsHtml = childTasks
       .map((task) => {
@@ -875,10 +894,13 @@ function renderTimeline(data) {
 
 // ===== ビュー全体の描画・切り替え =====
 
-let currentView = "kanban";
+let currentView = localStorage.getItem("taskView") ?? "kanban";
 let lastTaskViewData = null;
 
 async function renderTaskViews() {
+  // データ取得前に先にビューを切り替えておく（ちらつき防止）
+  switchView(currentView);
+
   const data = await fetchTaskViewData();
   lastTaskViewData = data;
   renderKanban(data);
@@ -889,6 +911,7 @@ async function renderTaskViews() {
 
 function switchView(view) {
   currentView = view;
+  localStorage.setItem("taskView", view); // 追加
 
   document.querySelectorAll(".view-tab").forEach((tab) => {
     tab.classList.toggle("active", tab.dataset.view === view);
@@ -930,7 +953,9 @@ function openTaskModal(groupId, status = "未着手") {
   markTaskModalClean();
 }
 
-renderTaskViews();
+renderTaskViews().then(() => {
+  switchView(currentView);
+});
 
 document.getElementById("btn-add-group").addEventListener("click", () => {
   openGroupModal();

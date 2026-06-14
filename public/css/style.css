@@ -72,7 +72,7 @@ body {
 }
 
 /* ライトモード */
-body.light {
+html.light {
   --color-bg-base: hsl(220 20% 97%);
   --color-bg-sidebar: hsl(220 20% 92%);
   --color-bg-card: hsl(220 20% 87%);

@@ -121,7 +121,12 @@
 
 /* 書籍別進捗 */
 .chart-books-wrapper {
-  height: 200px;
+  min-height: 80px;
+  position: relative;
+}
+
+.chart-category-progress-wrapper {
+  min-height: 80px;
   position: relative;
 }
 
@@ -131,6 +136,12 @@
   font-weight: 600;
   color: var(--color-text-secondary);
   margin: 0;
+  padding-top: var(--space-8); /* セクション見出しの上に少し余白を追加 */
+}
+
+/* さらに、最初の見出し（「学習時間」）には上余白不要なので除去 */
+.dashboard-section-title:first-child {
+  padding-top: 0;
 }
 
 /* 3カラムの進捗セクション用 */
