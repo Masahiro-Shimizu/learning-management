@@ -538,27 +538,37 @@
 }
 
 .calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
   border: 1px solid rgb(255 255 255 / 0.06);
   border-radius: 10px;
   overflow: hidden;
 }
 
 .calendar-weekday {
+  display: inline-block;
+  width: 14.285%;
   padding: 8px 4px;
   text-align: center;
   font-size: 0.75rem;
   color: var(--color-text-tertiary);
   background-color: var(--color-bg-sidebar);
   border-bottom: 1px solid rgb(255 255 255 / 0.06);
+  border-left: 1px solid rgb(255 255 255 / 0.06);
+  box-sizing: border-box;
+}
+
+.calendar-weekday:nth-child(7n + 1) {
+  border-left: none;
 }
 
 .calendar-cell {
+  display: inline-block;
+  width: 14.285%;
   min-height: 96px;
   padding: 4px;
   border-top: 1px solid rgb(255 255 255 / 0.06);
   border-left: 1px solid rgb(255 255 255 / 0.06);
+  box-sizing: border-box;
+  vertical-align: top;
 }
 
 .calendar-cell:nth-child(7n + 1) {
