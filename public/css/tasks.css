@@ -2,13 +2,47 @@
   padding: var(--space-32) var(--space-32) var(--space-48);
 }
 
-.tasks-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--space-16);
-  margin-bottom: var(--space-32);
+#page-tasks {
+  padding: var(--space-32) var(--space-32) var(--space-48);
 }
+
+/* 💡 タスクヘッダー全体のレイアウト調整（要素が潰れるのを防ぎます） */
+.tasks-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important; 
+  gap: var(--space-24);
+  margin-bottom: var(--space-32);
+  width: 100% !important;
+}
+
+/* 💡 「タスク一覧」のタイトルエリアが潰れないように固定値を与えます */
+.tasks-header > div:first-child {
+  flex: 1 !important;
+  min-width: 300px !important; /* タイトルが改行されるのを絶対に防ぐ */
+}
+
+/* 💡 ボタンの箱を右端に配置し、中身のボタンが綺麗に横並びになる指示 */
+.header-actions {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: var(--space-12) !important;
+  flex-shrink: 0 !important; /* 💡 ボタンの箱自体が潰れるのを防ぐ */
+  margin-left: auto !important; /* 💡 確実に右端へ寄せます */
+}
+
+/* 💡 ボタン自体の余計な干渉をリセット */
+.header-actions button,
+.header-actions .btn {
+  position: static !important;
+  transform: none !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
 
 #page-tasks h2 {
   font-family: "Syne", sans-serif;
@@ -514,10 +548,9 @@
 .calendar-header {
   display: flex;
   align-items: center;
-  justify-content: center; /* 💡 年月を確実に中央に寄せます */
-  position: relative;     /* 💡 右端のボタンの基準点を作ります */
+  justify-content: center; /* 年月を確実に中央に寄せます */
   margin-bottom: var(--space-16);
-  min-height: 38px;        /* 💡 ボタンと高さを揃えてガタつきを防ぎます */
+  min-height: 38px;
 }
 
 .calendar-month-label {
@@ -527,20 +560,31 @@
   text-align: center;
 }
 
-/* 💡 「+ 子タスク追加」ボタンを確実に右端へ絶対配置します */
-.calendar-header .btn-add-task-view,
-.calendar-header .btn-add-task-table {
-  position: absolute !important;
-  right: 0 !important;
-  top: 50%;
-  transform: translateY(-50%);
+/* 💡 右上のヘッダー全体を上下中央（center）で美しく揃えます */
+.tasks-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center !important; 
+  gap: var(--space-16);
+  margin-bottom: var(--space-32);
+}
+
+/* 💡 過去の absolute（絶対配置）の干渉を確実に消して横並びを綺麗にします */
+.tasks-header button,
+.tasks-header .btn {
+  position: static !important;
+  transform: none !important;
   margin: 0 !important;
 }
 
-/* 「+ 子タスク追加」ボタンを右端に寄せる */
-.calendar-header .btn-add-task-view {
-  margin-left: auto;
+/* ボタン同士の間に綺麗な隙間を空けます */
+.tasks-header button + button,
+.tasks-header .btn + .btn {
+  margin-left: var(--space-12) !important; 
 }
+
+/* 💡 ここから下に .calendar-grid { ... が続くようにしてください */
+
 
 .calendar-grid {
   border: 1px solid rgb(255 255 255 / 0.06);
