@@ -134,7 +134,7 @@
 }
 
 .task-card:hover {
-  background-color: #2f2f33;
+  background-color: var(--color-bg-card);
   box-shadow: 0 8px 24px -8px rgb(0 0 0 / 0.5);
   transform: translateY(-1px);
 }
@@ -254,39 +254,7 @@
   background-color: var(--color-bg-sidebar);
   border-radius: 10px;
   border: 1px solid rgb(255 255 255 / 0.06);
-}
-
-.group-card--indigo {
-  border: 1px solid rgb(255 255 255 / 0.06);
-  border-left: 3px solid #818cf8;
-}
-.group-card--amber {
-  border: 1px solid rgb(255 255 255 / 0.06);
-  border-left: 3px solid #fbbf24;
-}
-.group-card--teal {
-  border: 1px solid rgb(255 255 255 / 0.06);
-  border-left: 3px solid #2dd4bf;
-}
-.group-card--rose {
-  border: 1px solid rgb(255 255 255 / 0.06);
-  border-left: 3px solid #fb7185;
-}
-.group-card--lime {
-  border: 1px solid rgb(255 255 255 / 0.06);
-  border-left: 3px solid #a3e635;
-}
-.group-card--sky {
-  border: 1px solid rgb(255 255 255 / 0.06);
-  border-left: 3px solid #38bdf8;
-}
-.group-card--violet {
-  border: 1px solid rgb(255 255 255 / 0.06);
-  border-left: 3px solid #a78bfa;
-}
-.group-card--default {
-  border: 1px solid rgb(255 255 255 / 0.06);
-  border-left: 3px solid rgb(255 255 255 / 0.06);
+  overflow: hidden;
 }
 
 .group-card-header {
@@ -300,7 +268,7 @@
 }
 
 .group-card-header:hover {
-  background-color: var(--color-bg-sidebar);
+  background-color: var(--color-bg-card);
 }
 
 .group-card-title {
@@ -372,6 +340,27 @@
   background-color: rgb(255 255 255 / 0.04);
 }
 
+/* テーブルビューの「+」ボタン */
+.btn-add-task-table {
+  padding: 2px 8px;
+  border: 1px dashed rgb(255 255 255 / 0.15);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    border-color 0.2s,
+    background-color 0.2s;
+}
+
+.btn-add-task-table:hover {
+  color: var(--color-text-primary);
+  border-color: rgb(255 255 255 / 0.25);
+  background-color: rgb(255 255 255 / 0.04);
+}
+
 .kanban-cards:empty::after {
   content: "タスクなし";
   display: block;
@@ -382,7 +371,7 @@
   opacity: 0.6;
 }
 
-/* ビュー切り替えタブ */
+/* ===== ビュー切り替えタブ ===== */
 
 .view-tabs {
   display: flex;
@@ -425,145 +414,7 @@
   font-size: 0.9rem;
 }
 
-/* テーブルビュー */
-
-.task-table-wrapper {
-  border: 1px solid rgb(255 255 255 / 0.06);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.task-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.85rem;
-  table-layout: fixed;
-}
-
-.task-table th {
-  text-align: left;
-  padding: 10px 12px;
-  font-weight: 600;
-  background-color: var(--color-bg-sidebar);
-  color: var(--color-text-secondary);
-}
-
-.task-table td {
-  padding: 10px 12px;
-  border-top: 1px solid rgb(255 255 255 / 0.06);
-}
-
-.task-table tr.group-row {
-  background-color: var(--color-bg-sidebar);
-  cursor: pointer;
-}
-
-.task-table tr.group-row td {
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-/* .task-table tr.group-row.collapsed + .task-row {
-  display: none;
-} */
-
-.task-table tr.task-row {
-  cursor: pointer;
-  transition: background-color 0.15s;
-}
-
-.task-table tr.task-row:hover {
-  background-color: #2f2f33;
-}
-
-.task-table tr.task-row td:first-child {
-  padding-left: 28px;
-}
-
-.task-table-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.task-table-status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.task-table-status-dot--todo {
-  background-color: var(--color-status-todo);
-}
-
-.task-table-status-dot--inprogress {
-  background-color: var(--color-status-inprogress);
-}
-
-.task-table-status-dot--done {
-  background-color: var(--color-status-done);
-}
-
-.task-table .btn-edit-group {
-  float: right;
-}
-
-.task-table-dim {
-  color: var(--color-text-tertiary);
-}
-
-.group-row-toggle {
-  display: inline-block;
-  width: 16px;
-  color: var(--color-text-tertiary);
-  font-size: 0.7rem;
-}
-
-/* ビュー切り替えタブ */
-
-.view-tabs {
-  display: flex;
-  gap: 4px;
-  border-bottom: 1px solid rgb(255 255 255 / 0.08);
-  margin-bottom: var(--space-16);
-}
-
-.view-tab {
-  padding: 8px 16px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--color-text-tertiary);
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-  transition:
-    color 0.15s,
-    border-color 0.15s;
-}
-
-.view-tab:hover {
-  color: var(--color-text-secondary);
-}
-
-.view-tab.active {
-  color: var(--color-text-primary);
-  border-bottom-color: #8b5cf6;
-}
-
-.view-panel.hidden {
-  display: none;
-}
-
-.view-placeholder {
-  padding: var(--space-32);
-  text-align: center;
-  color: var(--color-text-tertiary);
-  font-size: 0.9rem;
-}
-
-/* テーブルビュー */
+/* ===== テーブルビュー ===== */
 
 .task-table-wrapper {
   border: 1px solid rgb(255 255 255 / 0.06);
@@ -611,237 +462,9 @@
 }
 
 .task-table tr.task-row:hover {
-  background-color: #2f2f33;
-}
-
-.task-table tr.task-row td:first-child {
-  padding-left: 28px;
-}
-
-.task-table-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.task-table-status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.task-table-status-dot--todo {
-  background-color: var(--color-status-todo);
-}
-
-.task-table-status-dot--inprogress {
-  background-color: var(--color-status-inprogress);
-}
-
-.task-table-status-dot--done {
-  background-color: var(--color-status-done);
-}
-
-.task-table .btn-edit-group {
-  float: right;
-}
-
-.task-table-dim {
-  color: var(--color-text-tertiary);
-}
-
-.group-row-toggle {
-  display: inline-block;
-  width: 16px;
-  color: var(--color-text-tertiary);
-  font-size: 0.7rem;
-}
-
-/* カレンダービュー */
-
-.calendar-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-16);
-  margin-bottom: var(--space-16);
-}
-
-.calendar-month-label {
-  font-size: 0.95rem;
-  font-weight: 600;
-  min-width: 110px;
-  text-align: center;
-}
-
-.calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  border: 1px solid rgb(255 255 255 / 0.06);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.calendar-weekday {
-  padding: 8px 4px;
-  text-align: center;
-  font-size: 0.75rem;
-  color: var(--color-text-tertiary);
-  background-color: var(--color-bg-sidebar);
-  border-bottom: 1px solid rgb(255 255 255 / 0.06);
-}
-
-.calendar-cell {
-  min-height: 96px;
-  padding: 4px;
-  border-top: 1px solid rgb(255 255 255 / 0.06);
-  border-left: 1px solid rgb(255 255 255 / 0.06);
-}
-
-.calendar-cell:nth-child(7n + 1) {
-  border-left: none;
-}
-
-/* 修正後 */
-.calendar-cell.calendar-cell--empty {
   background-color: var(--color-bg-card);
 }
 
-.calendar-cell-date {
-  font-size: 0.75rem;
-  color: var(--color-text-tertiary);
-  margin-bottom: 4px;
-}
-
-.calendar-chip {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 6px;
-  margin-bottom: 2px;
-  border-radius: 6px;
-  font-size: 0.7rem;
-  cursor: pointer;
-  overflow: hidden;
-  white-space: nowrap;
-  background-color: rgb(139 92 246 / 0.18);
-  color: #c4b5fd;
-}
-
-.calendar-chip-title {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.calendar-chip-badge {
-  flex-shrink: 0;
-  opacity: 0.85;
-}
-
-.calendar-chip-more {
-  font-size: 0.7rem;
-  color: var(--color-text-tertiary);
-  padding: 2px 6px;
-  cursor: default;
-}
-
-/* ビュー切り替えタブ */
-
-.view-tabs {
-  display: flex;
-  gap: 4px;
-  border-bottom: 1px solid rgb(255 255 255 / 0.08);
-  margin-bottom: var(--space-16);
-}
-
-.view-tab {
-  padding: 8px 16px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--color-text-tertiary);
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-  transition:
-    color 0.15s,
-    border-color 0.15s;
-}
-
-.view-tab:hover {
-  color: var(--color-text-secondary);
-}
-
-.view-tab.active {
-  color: var(--color-text-primary);
-  border-bottom-color: #8b5cf6;
-}
-
-.view-panel.hidden {
-  display: none;
-}
-
-.view-placeholder {
-  padding: var(--space-32);
-  text-align: center;
-  color: var(--color-text-tertiary);
-  font-size: 0.9rem;
-}
-
-/* テーブルビュー */
-
-.task-table-wrapper {
-  border: 1px solid rgb(255 255 255 / 0.06);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.task-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.85rem;
-  table-layout: fixed;
-}
-
-.task-table th {
-  text-align: left;
-  padding: 10px 12px;
-  font-weight: 600;
-  background-color: var(--color-bg-sidebar);
-  color: var(--color-text-secondary);
-}
-
-.task-table td {
-  padding: 10px 12px;
-  border-top: 1px solid rgb(255 255 255 / 0.06);
-}
-
-.task-table tr.group-row {
-  background-color: var(--color-bg-sidebar);
-  cursor: pointer;
-}
-
-.task-table tr.group-row td {
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.task-table tr.group-row.collapsed + .task-row {
-  display: none;
-}
-
-.task-table tr.task-row {
-  cursor: pointer;
-  transition: background-color 0.15s;
-}
-
-.task-table tr.task-row:hover {
-  background-color: #2f2f33;
-}
-
 .task-table tr.task-row td:first-child {
   padding-left: 28px;
 }
@@ -886,13 +509,12 @@
   font-size: 0.7rem;
 }
 
-/* カレンダービュー */
+/* ===== カレンダービュー ===== */
 
 .calendar-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: var(--space-16);
+  gap: var(--space-8);
   margin-bottom: var(--space-16);
 }
 
@@ -903,12 +525,18 @@
   text-align: center;
 }
 
+/* 「+ 子タスク追加」ボタンを右端に寄せる */
+.calendar-header .btn-add-task-view {
+  margin-left: auto;
+}
+
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   border: 1px solid rgb(255 255 255 / 0.06);
   border-radius: 10px;
   overflow: hidden;
+  width: 100%;
 }
 
 .calendar-weekday {
@@ -975,7 +603,15 @@
   cursor: default;
 }
 
-/* タイムラインビュー */
+/* ===== タイムラインビュー ===== */
+
+.timeline-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  margin-bottom: var(--space-8);
+}
 
 .timeline-wrapper {
   border: 1px solid rgb(255 255 255 / 0.06);
@@ -1113,20 +749,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-/* タイムラインツールバー */
-.timeline-toolbar {
-  margin-bottom: var(--space-8);
-}
-
-.timeline-filter-label {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-  font-size: 0.85rem;
-  color: var(--color-text-secondary);
-  cursor: pointer;
 }
 
 /* ===== カテゴリバッジ（言語/技術カテゴリ） ===== */

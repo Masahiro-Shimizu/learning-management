@@ -1,3 +1,5 @@
+"use strict";
+
 const CALENDAR_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
 const CLOCK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>`;
 
@@ -150,17 +152,6 @@ function calcStatus(groupId, tasks) {
   return "進行中";
 }
 
-function getMajorityCategory(groupId, tasks) {
-  const children = tasks.filter((t) => t.group_id === groupId);
-  if (children.length === 0) return null;
-  const counts = {};
-  children.forEach((t) => {
-    const name = t.category_name || "(言語不問)";
-    counts[name] = (counts[name] || 0) + 1;
-  });
-  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
-}
-
 function groupStepsByTaskId(allSteps) {
   const map = {};
   allSteps.forEach((step) => {
@@ -170,17 +161,13 @@ function groupStepsByTaskId(allSteps) {
   return map;
 }
 
-function createGroupCardHtml(group, childTasks, stepsByTaskId, tasks) {
-  const majorityCategory = getMajorityCategory(group.id, tasks);
-  const categoryInfo = majorityCategory
-    ? getCategoryInfo(majorityCategory)
-    : { class: "default" };
+function createGroupCardHtml(group, childTasks, stepsByTaskId) {
   const childrenHTML = childTasks
     .map((t) => createTaskCardHtml(t, stepsByTaskId[t.id] || []))
     .join("");
 
   return `
-    <div class="group-card group-card--${categoryInfo.class}" data-group-id="${group.id}">
+    <div class="group-card" data-group-id="${group.id}">
       <div class="group-card-header">
         <p class="group-card-title">${group.title}</p>
         <button
@@ -208,6 +195,7 @@ function openGroupModal(groupId = "") {
   document.getElementById("group-modal").dataset.groupId = groupId;
   document.getElementById("btn-group-add-task-wrapper").classList.add("hidden");
   document.getElementById("group-modal").classList.remove("hidden");
+  markGroupModalClean();
 }
 
 async function openGroupEditModal(groupId) {
@@ -217,6 +205,7 @@ async function openGroupEditModal(groupId) {
   document.getElementById("group-modal").dataset.groupId = groupId;
   document.getElementById("btn-group-add-task-wrapper").classList.add("hidden");
   document.getElementById("group-modal").classList.remove("hidden");
+  markGroupModalClean();
 }
 
 // ===== ステップ（孫タスク）関連 =====
@@ -439,13 +428,12 @@ function renderKanban(data) {
     const status = calcStatus(group.id, tasks);
     statusCounts[status]++;
     const childTasks = tasks.filter((t) => t.group_id === group.id);
-
     const container = document.querySelector(
       `.kanban-cards[data-status="${status}"]`,
     );
     container.insertAdjacentHTML(
       "beforeend",
-      createGroupCardHtml(group, childTasks, stepsByTaskId, tasks),
+      createGroupCardHtml(group, childTasks, stepsByTaskId),
     );
   });
 
@@ -481,12 +469,21 @@ function createGroupRowHtml(group, childCount) {
         ${group.title}（${childCount}件）
       </td>
       <td>
-        <button
-          type="button"
-          class="btn-edit-group"
-          data-group-id="${group.id}"
-          aria-label="親タスクを編集"
-        >編集</button>
+        <div style="display:flex;gap:4px;justify-content:flex-end;align-items:center;">
+          <button
+            type="button"
+            class="btn-add-task-table"
+            data-group-id="${group.id}"
+            aria-label="子タスクを追加"
+            title="子タスクを追加"
+          >+</button>
+          <button
+            type="button"
+            class="btn-edit-group"
+            data-group-id="${group.id}"
+            aria-label="親タスクを編集"
+          >編集</button>
+        </div>
       </td>
     </tr>
   `;
@@ -505,7 +502,7 @@ function createTaskRowHtml(task, steps) {
       : `<span class="task-table-dim">－</span>`;
 
   return `
-  <tr class="task-row" data-task-id="${task.id}" data-group-id="${task.group_id}" tabindex="0">
+    <tr class="task-row" data-task-id="${task.id}" tabindex="0">
       <td>${task.title}</td>
       <td>
         <div class="task-table-badges">
@@ -530,23 +527,27 @@ function createTaskRowHtml(task, steps) {
 function bindTableEvents() {
   document.querySelectorAll("#task-table-body .group-row").forEach((row) => {
     row.addEventListener("click", (e) => {
-      if (e.target.closest(".btn-edit-group")) return;
+      // + ボタンまたは編集ボタンのクリックは行の開閉をスキップ
+      if (
+        e.target.closest(".btn-edit-group") ||
+        e.target.closest(".btn-add-task-table")
+      )
+        return;
       row.classList.toggle("collapsed");
-
-const isCollapsed = row.classList.contains("collapsed");
-
-document
-  .querySelectorAll(
-    `.task-row[data-group-id="${row.dataset.groupId}"]`
-  )
-  .forEach((taskRow) => {
-    taskRow.style.display = isCollapsed ? "none" : "";
-  });
-
-  const toggle = row.querySelector(".group-row-toggle");
-    toggle.textContent = isCollapsed ? "▸" : "▾";
+      const toggle = row.querySelector(".group-row-toggle");
+      toggle.textContent = row.classList.contains("collapsed") ? "▸" : "▾";
     });
   });
+
+  // テーブルビューの「+ 子タスク追加」ボタン
+  document
+    .querySelectorAll("#task-table-body .btn-add-task-table")
+    .forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openTaskModal(btn.dataset.groupId);
+      });
+    });
 
   document
     .querySelectorAll("#task-table-body .btn-edit-group")
@@ -762,46 +763,43 @@ function bindTimelineEvents() {
   const monthLabel = document.getElementById("timeline-month-label");
   const monthPicker = document.getElementById("timeline-month-picker");
 
-  prevBtn.addEventListener("click", () => {
-    timelineDate.setMonth(timelineDate.getMonth() - 1);
-    renderTimeline(lastTaskViewData);
-  });
+  if (prevBtn) {
+    prevBtn.addEventListener("click", () => {
+      timelineDate.setMonth(timelineDate.getMonth() - 1);
+      renderTimeline(lastTaskViewData);
+    });
+  }
 
-  nextBtn.addEventListener("click", () => {
-    timelineDate.setMonth(timelineDate.getMonth() + 1);
-    renderTimeline(lastTaskViewData);
-  });
+  if (nextBtn) {
+    nextBtn.addEventListener("click", () => {
+      timelineDate.setMonth(timelineDate.getMonth() + 1);
+      renderTimeline(lastTaskViewData);
+    });
+  }
 
-  const openMonthPicker = () => {
-    if (typeof monthPicker.showPicker === "function") {
-      monthPicker.showPicker();
-    } else {
-      monthPicker.focus();
-      monthPicker.click();
-    }
-  };
+  if (monthLabel && monthPicker) {
+    const openMonthPicker = () => {
+      if (typeof monthPicker.showPicker === "function") {
+        monthPicker.showPicker();
+      } else {
+        monthPicker.focus();
+        monthPicker.click();
+      }
+    };
 
-  monthLabel.addEventListener("click", openMonthPicker);
-  monthLabel.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      openMonthPicker();
-    }
-  });
+    monthLabel.addEventListener("click", openMonthPicker);
+    monthLabel.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        openMonthPicker();
+      }
+    });
 
-  monthPicker.addEventListener("change", (e) => {
-    const value = e.target.value; // "YYYY-MM"
-    if (!value) return;
-    const [year, month] = value.split("-").map(Number);
-    timelineDate = new Date(year, month - 1, 1);
-    renderTimeline(lastTaskViewData);
-  });
-
-  const hideCompletedCheckbox = document.getElementById(
-    "timeline-hide-completed",
-  );
-  if (hideCompletedCheckbox) {
-    hideCompletedCheckbox.addEventListener("change", () => {
+    monthPicker.addEventListener("change", (e) => {
+      const value = e.target.value; // "YYYY-MM"
+      if (!value) return;
+      const [year, month] = value.split("-").map(Number);
+      timelineDate = new Date(year, month - 1, 1);
       renderTimeline(lastTaskViewData);
     });
   }
@@ -810,12 +808,6 @@ function bindTimelineEvents() {
 function renderTimeline(data) {
   const { groups, tasks } = data;
 
-  // 完了タスク非表示フィルタ
-  const hideCompleted =
-    document.getElementById("timeline-hide-completed")?.checked ?? false;
-  const filteredTasks = hideCompleted
-    ? tasks.filter((t) => t.status !== "完了")
-    : tasks;
   const year = timelineDate.getFullYear();
   const month = timelineDate.getMonth();
 
@@ -859,11 +851,16 @@ function renderTimeline(data) {
     ? ((today.getDate() - 1) / daysInMonth) * 100
     : null;
 
-  groups.forEach((group) => {
-    const childTasks = filteredTasks.filter((t) => t.group_id === group.id);
+  // 完了タスク非表示フィルタ
+  const hideCompleted = document.getElementById("timeline-hide-completed")?.checked ?? false;
 
-    // 追加：子タスクが1件もなければ行を描画しない
-    if (childTasks.length === 0) return;
+  groups.forEach((group) => {
+    let childTasks = tasks.filter((t) => t.group_id === group.id);
+    if (hideCompleted) {
+      childTasks = childTasks.filter((t) => t.status !== "完了");
+    }
+    // フィルタ後に子タスクが0件の親グループ行は描画しない
+    if (hideCompleted && childTasks.length === 0) return;
 
     const barsHtml = childTasks
       .map((task) => {
@@ -911,11 +908,13 @@ function renderTimeline(data) {
 
   bindTimelineEvents();
 
+  // DOM生成後にラベル・ピッカーの値をセット
   document.getElementById("timeline-month-label").textContent =
     `${year}年${month + 1}月`;
-
   const monthPicker = document.getElementById("timeline-month-picker");
-  monthPicker.value = `${year}-${String(month + 1).padStart(2, "0")}`;
+  if (monthPicker) {
+    monthPicker.value = `${year}-${String(month + 1).padStart(2, "0")}`;
+  }
 }
 
 // ===== ビュー全体の描画・切り替え =====
@@ -923,21 +922,55 @@ function renderTimeline(data) {
 let currentView = localStorage.getItem("taskView") ?? "kanban";
 let lastTaskViewData = null;
 
-async function renderTaskViews() {
-  // データ取得前に先にビューを切り替えておく（ちらつき防止）
-  switchView(currentView);
+// カレンダー/タイムライン用：グループ選択して子タスクモーダルを開く
+function openAddTaskGroupPicker(groups) {
+  if (groups.length === 0) return;
+  if (groups.length === 1) {
+    openTaskModal(groups[0].id);
+    return;
+  }
+  const names = groups.map((g, i) => `${i + 1}: ${g.title}`).join("\n");
+  const input = prompt(`追加先のグループ番号を入力してください:\n${names}`);
+  if (!input) return;
+  const idx = parseInt(input, 10) - 1;
+  if (idx >= 0 && idx < groups.length) {
+    openTaskModal(groups[idx].id);
+  }
+}
 
+// カレンダー/タイムラインの「+ 子タスク追加」ボタンにイベントをバインド
+function bindAddTaskButtons(groups) {
+  const calBtn = document.getElementById("btn-add-task-calendar");
+  if (calBtn) {
+    calBtn.onclick = () => openAddTaskGroupPicker(groups);
+  }
+
+  const tlBtn = document.getElementById("btn-add-task-timeline");
+  if (tlBtn) {
+    tlBtn.onclick = () => openAddTaskGroupPicker(groups);
+  }
+
+  // タイムライン「完了タスクを非表示」チェックボックス
+  const hideCheckbox = document.getElementById("timeline-hide-completed");
+  if (hideCheckbox) {
+    // 重複バインド防止のためonchangeで上書き
+    hideCheckbox.onchange = () => renderTimeline(lastTaskViewData);
+  }
+}
+
+async function renderTaskViews() {
   const data = await fetchTaskViewData();
   lastTaskViewData = data;
   renderKanban(data);
   renderTable(data);
   renderCalendar(data);
   renderTimeline(data);
+  bindAddTaskButtons(data.groups);
 }
 
 function switchView(view) {
   currentView = view;
-  localStorage.setItem("taskView", view); // 追加
+  localStorage.setItem("taskView", view);
 
   document.querySelectorAll(".view-tab").forEach((tab) => {
     tab.classList.toggle("active", tab.dataset.view === view);
@@ -947,6 +980,9 @@ function switchView(view) {
     panel.classList.toggle("hidden", panel.dataset.viewPanel !== view);
   });
 }
+
+// 初期ビューを復元
+switchView(currentView);
 
 document.querySelectorAll(".view-tab").forEach((tab) => {
   tab.addEventListener("click", () => {
@@ -979,9 +1015,7 @@ function openTaskModal(groupId, status = "未着手") {
   markTaskModalClean();
 }
 
-renderTaskViews().then(() => {
-  switchView(currentView);
-});
+renderTaskViews();
 
 document.getElementById("btn-add-group").addEventListener("click", () => {
   openGroupModal();
@@ -994,9 +1028,9 @@ document.querySelectorAll(".kanban-add-btn").forEach((btn) => {
   });
 });
 
-document.getElementById("btn-group-close").addEventListener("click", () => {
-  document.getElementById("group-modal").classList.add("hidden");
-});
+document
+  .getElementById("btn-group-close")
+  .addEventListener("click", closeGroupModalWithConfirm);
 
 document
   .getElementById("btn-task-close")
@@ -1082,6 +1116,7 @@ document
     if (!confirm("削除しますか？")) return;
     await api(`/api/groups/${groupId}`, "DELETE");
     document.getElementById("group-modal").dataset.groupId = "";
+    markGroupModalClean();
     document.getElementById("group-modal").classList.add("hidden");
     renderTaskViews();
   });
@@ -1100,6 +1135,7 @@ document
 
     if (groupId) {
       await api(`/api/groups/${groupId}`, "PUT", { title, memo });
+      markGroupModalClean();
       document.getElementById("group-modal").classList.add("hidden");
     } else {
       const newGroup = await api("/api/groups", "POST", { title, memo });
@@ -1107,6 +1143,7 @@ document
       document
         .getElementById("btn-group-add-task-wrapper")
         .classList.remove("hidden");
+      markGroupModalClean();
     }
 
     renderTaskViews();
@@ -1175,5 +1212,49 @@ document
 document.getElementById("task-modal").addEventListener("click", (e) => {
   if (e.target.id === "task-modal") {
     closeTaskModalWithConfirm();
+  }
+});
+
+// ===== 親タスクモーダル：未保存確認つき開閉処理 =====
+
+function getGroupModalSnapshot() {
+  const ids = ["group-title", "group-memo"];
+  const snapshot = {};
+  ids.forEach((id) => {
+    const el = document.getElementById(id);
+    snapshot[id] = el ? el.value : "";
+  });
+  return JSON.stringify(snapshot);
+}
+
+function markGroupModalClean() {
+  document.getElementById("group-modal").dataset.initialSnapshot =
+    getGroupModalSnapshot();
+}
+
+function isGroupModalDirty() {
+  const modal = document.getElementById("group-modal");
+  const initial = modal.dataset.initialSnapshot;
+  if (initial === undefined) return false;
+  return initial !== getGroupModalSnapshot();
+}
+
+function closeGroupModalWithConfirm() {
+  if (isGroupModalDirty()) {
+    const ok = confirm(
+      "編集の内容は保存されていません。閉じてもよろしいですか？",
+    );
+    if (!ok) return;
+  }
+  document.getElementById("group-modal").classList.add("hidden");
+}
+
+document
+  .getElementById("btn-group-close-x")
+  .addEventListener("click", closeGroupModalWithConfirm);
+
+document.getElementById("group-modal").addEventListener("click", (e) => {
+  if (e.target.id === "group-modal") {
+    closeGroupModalWithConfirm();
   }
 });

@@ -1,3 +1,5 @@
+"use strict";
+
 const pages = document.querySelectorAll("main section");
 
 let booksInitialized = false;
@@ -18,7 +20,7 @@ function showPage() {
     link.classList.toggle("active", link.getAttribute("href") === `#${pageId}`);
   });
 
-  //ページごと初期化
+  // ページごと初期化
   if (pageId === "page-books" && !booksInitialized) {
     initBooks();
     booksInitialized = true;
@@ -34,11 +36,13 @@ function showPage() {
     settingsInitialized = true;
   }
 }
-//function showPage()を実行
+
+// function showPage() を実行
 showPage();
 window.addEventListener("hashchange", showPage);
 
 // テーマの初期化
+// ライトモードは <html> 要素に "light" クラスを付与する（body ではなく html に付与することで CSS 変数が全子要素に正しく継承される）
 const savedTheme = localStorage.getItem("theme");
 if (savedTheme === "light") {
   document.documentElement.classList.add("light");

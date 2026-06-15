@@ -30,74 +30,17 @@ const CHART_COLORS = [
   "#7fd46f",
 ];
 
+// 分を「X時間Y分」または「X.X時間」に変換（グラフ表示用は小数）
+function minutesToHours(minutes) {
+  return Math.round((minutes / 60) * 10) / 10;
+}
+
 async function initDashboard() {
   const tasks = await api("/api/tasks");
   const books = await api("/api/books");
 
   allTasks = tasks;
   allBooks = books;
-
-  const today = new Date();
-  const dayOfWeek = today.getDay();
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
-  monday.setHours(0, 0, 0, 0);
-
-  // 今週の学習時間
-  const weeklyTime = tasks
-    .filter((t) => {
-      if (!t.end_date) return false;
-      const endDate = new Date(t.end_date);
-      return endDate >= monday && endDate <= today;
-    })
-    .reduce((sum, t) => sum + (t.study_time || 0), 0);
-  document.getElementById("weekly-study-time").textContent = weeklyTime;
-
-  // 先週比
-  const lastMonday = new Date(monday);
-  lastMonday.setDate(monday.getDate() - 7);
-  const lastSunday = new Date(monday);
-  lastSunday.setDate(monday.getDate() - 1);
-
-  const lastWeekTime = tasks
-    .filter((t) => {
-      if (!t.end_date) return false;
-      const endDate = new Date(t.end_date);
-      return endDate >= lastMonday && endDate <= lastSunday;
-    })
-    .reduce((sum, t) => sum + (t.study_time || 0), 0);
-
-  const diff = weeklyTime - lastWeekTime;
-  const diffText =
-    diff > 0 ? `+${diff}分` : diff < 0 ? `${diff}分` : "先週と同じ";
-  document.getElementById("weekly-study-sub").textContent =
-    `先週比 ${diffText}`;
-
-  // 今月の学習時間
-  const year = today.getFullYear();
-  const month = today.getMonth();
-  const monthlyTime = tasks
-    .filter((t) => {
-      if (!t.end_date) return false;
-      const d = new Date(t.end_date);
-      return d.getFullYear() === year && d.getMonth() === month;
-    })
-    .reduce((sum, t) => sum + (t.study_time || 0), 0);
-  document.getElementById("monthly-study-time").textContent = monthlyTime;
-  document.getElementById("monthly-study-sub").textContent =
-    `${year}年${month + 1}月の合計`;
-
-  // 進行中タスク数
-  const inprogressCount = tasks.filter((t) => t.status === "進行中").length;
-  const totalCount = tasks.length;
-  document.getElementById("inprogress-count").textContent = inprogressCount;
-  document.getElementById("inprogress-sub").textContent =
-    `全 ${totalCount} 件中`;
-
-  // 登録書籍数
-  const booksCount = books.length;
-  document.getElementById("books-count").textContent = booksCount;
-  document.getElementById("books-sub").textContent = "登録済み";
 
   // 期間切り替えボタン
   document.querySelectorAll(".btn-period").forEach((btn) => {
@@ -178,15 +121,25 @@ function updatePeriodLabel() {
   nextBtn.disabled = isCurrentPeriod();
 }
 
+// サマリーカードのラベルを期間に合わせて更新
+function updateSummaryCardLabel() {
+  const el = document.getElementById("period-study-label");
+  if (!el) return;
+  if (currentPeriod === "week") el.textContent = "今週の学習時間";
+  else if (currentPeriod === "month") el.textContent = "今月の学習時間";
+  else el.textContent = "今年の学習時間";
+}
+
 function renderCharts() {
   const tasks = allTasks;
   const books = allBooks;
 
   updatePeriodLabel();
+  updateSummaryCardLabel();
 
   let filteredTasks = [];
   let labels = [];
-  let dailyData = [];
+  let dailyData = []; // 分単位
 
   if (currentPeriod === "week") {
     const monday = getWeekStart(viewDate);
@@ -207,7 +160,7 @@ function renderCharts() {
         .reduce((sum, t) => sum + (t.study_time || 0), 0),
     );
     filteredTasks = tasks.filter((t) => {
-      if (!t.end_date) return true;
+      if (!t.end_date) return false;
       const d = new Date(t.end_date);
       return d >= monday && d <= sunday;
     });
@@ -227,25 +180,15 @@ function renderCharts() {
         .reduce((sum, t) => sum + (t.study_time || 0), 0);
     });
     filteredTasks = tasks.filter((t) => {
-      if (!t.end_date) return true;
+      if (!t.end_date) return false;
       const d = new Date(t.end_date);
       return d.getFullYear() === year && d.getMonth() === month;
     });
   } else if (currentPeriod === "year") {
     const year = viewDate.getFullYear();
     labels = [
-      "1月",
-      "2月",
-      "3月",
-      "4月",
-      "5月",
-      "6月",
-      "7月",
-      "8月",
-      "9月",
-      "10月",
-      "11月",
-      "12月",
+      "1月","2月","3月","4月","5月","6月",
+      "7月","8月","9月","10月","11月","12月",
     ];
     dailyData = Array.from({ length: 12 }, (_, i) =>
       tasks
@@ -257,11 +200,89 @@ function renderCharts() {
         .reduce((sum, t) => sum + (t.study_time || 0), 0),
     );
     filteredTasks = tasks.filter((t) => {
-      if (!t.end_date) return true;
+      if (!t.end_date) return false;
       const d = new Date(t.end_date);
       return d.getFullYear() === year;
     });
   }
+
+  // ===== サマリーカード更新 =====
+
+  // ① 期間の学習時間（時間単位）
+  const periodTotalMinutes = filteredTasks.reduce(
+    (sum, t) => sum + (t.study_time || 0),
+    0,
+  );
+  const periodHours = minutesToHours(periodTotalMinutes);
+  document.getElementById("period-study-time").textContent = periodHours;
+
+  // 先週・先月・前年との比較（サブテキスト）
+  let prevFilteredTasks = [];
+  if (currentPeriod === "week") {
+    const monday = getWeekStart(viewDate);
+    const prevMonday = new Date(monday);
+    prevMonday.setDate(monday.getDate() - 7);
+    const prevSunday = new Date(monday);
+    prevSunday.setDate(monday.getDate() - 1);
+    prevFilteredTasks = tasks.filter((t) => {
+      if (!t.end_date) return false;
+      const d = new Date(t.end_date);
+      return d >= prevMonday && d <= prevSunday;
+    });
+  } else if (currentPeriod === "month") {
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
+    const prevYear = month === 0 ? year - 1 : year;
+    const prevMonth = month === 0 ? 11 : month - 1;
+    prevFilteredTasks = tasks.filter((t) => {
+      if (!t.end_date) return false;
+      const d = new Date(t.end_date);
+      return d.getFullYear() === prevYear && d.getMonth() === prevMonth;
+    });
+  } else if (currentPeriod === "year") {
+    const prevYear = viewDate.getFullYear() - 1;
+    prevFilteredTasks = tasks.filter((t) => {
+      if (!t.end_date) return false;
+      const d = new Date(t.end_date);
+      return d.getFullYear() === prevYear;
+    });
+  }
+  const prevMinutes = prevFilteredTasks.reduce(
+    (sum, t) => sum + (t.study_time || 0),
+    0,
+  );
+  const diffHours = minutesToHours(periodTotalMinutes - prevMinutes);
+  const diffSign = diffHours > 0 ? "+" : "";
+  const periodLabel = currentPeriod === "week" ? "先週比" : currentPeriod === "month" ? "先月比" : "前年比";
+  document.getElementById("period-study-sub").textContent =
+    `${periodLabel} ${diffSign}${diffHours}時間`;
+
+  // ② 進捗率（全タスクベースの完了率%）
+  const totalAllTasks = tasks.length;
+  const completedAllTasks = tasks.filter((t) => t.status === "完了").length;
+  const progressRate =
+    totalAllTasks > 0
+      ? Math.round((completedAllTasks / totalAllTasks) * 100)
+      : 0;
+  document.getElementById("progress-rate").textContent = progressRate;
+  document.getElementById("progress-sub").textContent =
+    `完了 ${completedAllTasks} / 全 ${totalAllTasks} 件`;
+
+  // ③ 完了タスク数
+  const doneCount = filteredTasks.filter((t) => t.status === "完了").length;
+  const totalCount = filteredTasks.length;
+  document.getElementById("done-count").textContent = doneCount;
+  document.getElementById("done-sub").textContent = `全 ${totalCount} 件中`;
+
+  // ④ 読了書籍数（completed_count >= total_chapters かつ total_chapters > 0）
+  const readBooks = books.filter(
+    (b) => b.total_chapters && Number(b.completed_count) >= b.total_chapters,
+  ).length;
+  document.getElementById("books-read-count").textContent = readBooks;
+  document.getElementById("books-read-sub").textContent =
+    `読了 / 全 ${books.length} 冊`;
+
+  // ===== グラフ =====
 
   // ステータス別件数
   const todo = filteredTasks.filter((t) => t.status === "未着手").length;
@@ -276,12 +297,19 @@ function renderCharts() {
   if (chartCategoryTime) chartCategoryTime.destroy();
   if (chartCategoryProgress) chartCategoryProgress.destroy();
 
-  // 日別学習時間（棒グラフ）
+  // 日別学習時間（棒グラフ）— 時間単位
+  const dailyHours = dailyData.map(minutesToHours);
   const dailyCanvas = document.getElementById("chart-daily");
   const ctx = dailyCanvas.getContext("2d");
   const gradient = ctx.createLinearGradient(0, 0, 0, 300);
   gradient.addColorStop(0, "hsl(234 70% 58%)");
   gradient.addColorStop(1, "hsla(234, 70%, 58%, 0.25)");
+
+  // 予定時間の平均（時間単位）
+  const avgPlannedHours = minutesToHours(
+    tasks.reduce((sum, t) => sum + (t.planned_study_time || 0), 0) /
+      Math.max(labels.length, 1),
+  );
 
   chartDaily = new Chart(dailyCanvas, {
     type: "bar",
@@ -289,17 +317,13 @@ function renderCharts() {
       labels,
       datasets: [
         {
-          label: "予定時間（分）",
-          data: dailyData.map(
-            () =>
-              tasks.reduce((sum, t) => sum + (t.planned_study_time || 0), 0) /
-              labels.length,
-          ),
+          label: "予定時間（時間）",
+          data: dailyData.map(() => avgPlannedHours),
           backgroundColor: "#B5D4F4",
         },
         {
-          label: "実績時間（分）",
-          data: dailyData,
+          label: "実績時間（時間）",
+          data: dailyHours,
           backgroundColor: gradient,
         },
       ],
@@ -308,7 +332,12 @@ function renderCharts() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true } },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { callback: (v) => v + "h" },
+        },
+      },
     },
   });
 
@@ -352,10 +381,6 @@ function renderCharts() {
     return { title: book.title, rate };
   });
 
-  // 書籍数に応じてラッパーの高さを動的に設定
-  const booksWrapperEl = document.querySelector(".chart-books-wrapper");
-  booksWrapperEl.style.height = Math.max(120, bookProgress.length * 60) + "px";
-
   chartBooks = new Chart(document.getElementById("chart-books"), {
     type: "bar",
     data: {
@@ -394,7 +419,7 @@ function renderCharts() {
 
   const categoryNames = Array.from(categoryMap.keys());
   const categoryTimeData = categoryNames.map(
-    (name) => categoryMap.get(name).time,
+    (name) => minutesToHours(categoryMap.get(name).time),
   );
   const categoryProgressData = categoryNames.map((name) => {
     const entry = categoryMap.get(name);
@@ -404,7 +429,7 @@ function renderCharts() {
     (_, i) => CHART_COLORS[i % CHART_COLORS.length],
   );
 
-  // カテゴリ別学習時間（縦棒グラフ）
+  // カテゴリ別学習時間（縦棒グラフ）— 時間単位
   chartCategoryTime = new Chart(
     document.getElementById("chart-category-time"),
     {
@@ -413,7 +438,7 @@ function renderCharts() {
         labels: categoryNames,
         datasets: [
           {
-            label: "学習時間（分）",
+            label: "学習時間（時間）",
             data: categoryTimeData,
             backgroundColor: categoryColors,
           },
@@ -423,17 +448,15 @@ function renderCharts() {
         maintainAspectRatio: false,
         responsive: true,
         plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { callback: (v) => v + "h" },
+          },
+        },
       },
     },
   );
-
-  // カテゴリ数に応じてラッパーの高さを動的に設定
-  const catProgressWrapperEl = document.querySelector(
-    ".chart-category-progress-wrapper",
-  );
-  catProgressWrapperEl.style.height =
-    Math.max(120, categoryNames.length * 60) + "px";
 
   // カテゴリ別進捗率（横棒グラフ）
   chartCategoryProgress = new Chart(
@@ -461,8 +484,6 @@ function renderCharts() {
   );
 
   // 進捗率推移（累積カーブ・折れ線グラフ）
-  const totalAllTasks = allTasks.length;
-
   let progressLabelDates = [];
   if (currentPeriod === "week") {
     const monday = getWeekStart(viewDate);
