@@ -514,8 +514,10 @@
 .calendar-header {
   display: flex;
   align-items: center;
-  gap: var(--space-8);
+  justify-content: center; /* 💡 年月を確実に中央に寄せます */
+  position: relative;     /* 💡 右端のボタンの基準点を作ります */
   margin-bottom: var(--space-16);
+  min-height: 38px;        /* 💡 ボタンと高さを揃えてガタつきを防ぎます */
 }
 
 .calendar-month-label {
@@ -523,6 +525,16 @@
   font-weight: 600;
   min-width: 110px;
   text-align: center;
+}
+
+/* 💡 「+ 子タスク追加」ボタンを確実に右端へ絶対配置します */
+.calendar-header .btn-add-task-view,
+.calendar-header .btn-add-task-table {
+  position: absolute !important;
+  right: 0 !important;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0 !important;
 }
 
 /* 「+ 子タスク追加」ボタンを右端に寄せる */
@@ -535,12 +547,16 @@
   border-radius: 10px;
   overflow: hidden;
   width: 100%;
+  /* 💡 Gridによる自動高さをやめ、ブロック配置に戻します */
+  display: block !important; 
+  font-size: 0; /* 💡 子要素の隙間（改行）をなくす */
 }
 
+/* 曜日ヘッダーのスタイル */
 .calendar-weekday {
-  display: inline-block;
-  width: 14.285%;
-  padding: 8px 4px;
+  display: inline-block !important;
+  width: 14.285% !important; /* 💡 100% ÷ 7日 = 均等な7分割 */
+  padding: 8px 4px !important;
   text-align: center;
   font-size: 0.75rem;
   color: var(--color-text-tertiary);
@@ -548,29 +564,54 @@
   border-bottom: 1px solid rgb(255 255 255 / 0.06);
   border-left: 1px solid rgb(255 255 255 / 0.06);
   box-sizing: border-box;
+  vertical-align: top;
 }
 
-.calendar-weekday:nth-child(7n + 1) {
-  border-left: none;
+/* 日付マスのスタイル（タスクの数に関わらず高さを完全に統一） */
+.calendar-cell {
+  display: inline-flex !important;
+  flex-direction: column;
+  width: 14.285% !important; /* 💡 均等な7分割 */
+  height: 110px !important;    /* 💡 5月の理想的な高さに完全固定 */
+  min-height: 110px !important;
+  padding: var(--space-8) !important;
+  background-color: transparent;
+  border-left: 1px solid rgb(255 255 255 / 0.06);
+  border-bottom: 1px solid rgb(255 255 255 / 0.06);
+  box-sizing: border-box;
+  vertical-align: top;
+}
+
+/* 左端（日曜日）の列の左ボーダーを消して二重線を防ぐ */
+.calendar-weekday:nth-child(7n + 1),
+.calendar-cell:nth-child(7n + 1) {
+  border-left: none !important;
 }
 
 .calendar-cell.calendar-cell--empty {
-  background-color: rgb(0 0 0 / 0.1);
+  background-color: rgb(0 0 0 / 0.15);
 }
 
 .calendar-cell-date {
   font-size: 0.75rem;
   color: var(--color-text-tertiary);
-  margin-bottom: 4px;
+  margin-bottom: var(--space-8);
+  font-weight: 500;
 }
 
+/* カレンダーのチップ（タイムラインの絶対配置を完全にリセット） */
 .calendar-chip {
-  display: flex;
+  position: relative !important; 
+  left: auto !important;
+  top: auto !important;
+  width: 100% !important;
+  height: auto !important;
+  display: flex !important;
   justify-content: space-between;
   align-items: center;
   gap: 4px;
-  padding: 2px 6px;
-  margin-bottom: 2px;
+  padding: 4px 6px;
+  margin-bottom: 4px;
   border-radius: 6px;
   font-size: 0.7rem;
   cursor: pointer;
@@ -578,6 +619,8 @@
   white-space: nowrap;
   background-color: rgb(139 92 246 / 0.18);
   color: #c4b5fd;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .calendar-chip-title {
@@ -597,6 +640,7 @@
   padding: 2px 6px;
   cursor: default;
 }
+
 
 /* ===== タイムラインビュー ===== */
 
