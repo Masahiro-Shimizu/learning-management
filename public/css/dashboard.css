@@ -241,6 +241,17 @@
   white-space: nowrap;
 }
 
+/* ===== 書籍別進捗率のガタつき・縦ズレ修正 ===== */
+.chart-books-wrapper {
+  width: 100%;
+  /* 
+    💡 heightは固定せず、最低高さを確保。
+       JS側の「booksWrapper.style.height」から動的に伸ばせるようにします。
+  */
+  min-height: 250px; 
+  position: relative;
+}
+
 /* レスポンシブ */
 @media (max-width: 768px) {
   .charts-row {

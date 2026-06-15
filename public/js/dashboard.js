@@ -381,6 +381,12 @@ function renderCharts() {
     return { title: book.title, rate };
   });
 
+  const booksWrapper = document.querySelector(".chart-books-wrapper");
+  if (booksWrapper) {
+    booksWrapper.style.height = `${Math.max(bookProgress.length * 45, 250)}px`;
+  }
+
+
   chartBooks = new Chart(document.getElementById("chart-books"), {
     type: "bar",
     data: {
@@ -395,12 +401,35 @@ function renderCharts() {
         },
       ],
     },
-    options: {
+      options: {
       indexAxis: "y",
       maintainAspectRatio: false,
       responsive: true,
       plugins: { legend: { display: false } },
-      scales: { x: { min: 0, max: 100 } },
+      scales: { 
+        x: { 
+          min: 0, 
+          max: 100,
+          ticks: { color: "#aaa" }, // X軸の数字を明るく
+          grid: { color: "rgba(255, 255, 255, 0.1)" } // グリッド線を薄く
+        },
+        y: {
+          ticks: {
+            color: "#eee", // 書籍タイトルを白っぽくして見やすく
+            font: { size: 11 },
+            // 💡 タイトルが長すぎる場合に15文字で省略（...）する処理を追加
+            callback: function(value) {
+              const label = this.getLabelForValue(value);
+              return label.length > 15 ? label.substr(0, 15) + "..." : label;
+            }
+          },
+          grid: { display: false } // 横棒グラフの見栄えのためにY軸のグリッドを隠す
+        }
+      },
+      // 💡 左側の余白を広げて文字がはみ出さないようにする
+      layout: {
+        padding: { left: 20 }
+      }
     },
   });
 
