@@ -30,7 +30,7 @@ const CHART_COLORS = [
   "#7fd46f",
 ];
 
-// 分を「X時間Y分」または「X.X時間」に変換（グラフ表示用は小数）
+// 分を「X.X時間」に変換（グラフ表示用は小数）
 function minutesToHours(minutes) {
   return Math.round((minutes / 60) * 10) / 10;
 }
@@ -148,7 +148,11 @@ function renderCharts() {
       d.setDate(monday.getDate() + i);
       return d;
     });
-    const sunday = weekDates[6];
+    
+    // 🛠️ 【修正】配列ではなく、ちゃんと7番目の日付（日曜日）を生成して代入
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
 
     labels = ["月", "火", "水", "木", "金", "土", "日"];
     dailyData = weekDates.map((weekDate) =>
@@ -224,6 +228,7 @@ function renderCharts() {
     prevMonday.setDate(monday.getDate() - 7);
     const prevSunday = new Date(monday);
     prevSunday.setDate(monday.getDate() - 1);
+    prevSunday.setHours(23, 59, 59, 999);
     prevFilteredTasks = tasks.filter((t) => {
       if (!t.end_date) return false;
       const d = new Date(t.end_date);
@@ -307,10 +312,10 @@ function renderCharts() {
 
   // 予定時間の平均（時間単位）
   const avgPlannedHours = minutesToHours(
-    tasks.reduce((sum, t) => sum + (t.planned_study_time || 0), 0) /
-      Math.max(labels.length, 1),
+    filteredTasks.reduce((sum, t) => sum + (t.planned_time || 0), 0),
   );
-
+  
+  // 日別学習時間（棒グラフ）の初期化
   chartDaily = new Chart(dailyCanvas, {
     type: "bar",
     data: {
@@ -331,11 +336,20 @@ function renderCharts() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      aspectRatio: 2.5, // 💡【追加】横幅に対して適切な高さを強制確保させる（つぶれ防止）
       plugins: { legend: { display: false } },
       scales: {
+        x: {
+          ticks: { color: "#aaa" },
+          grid: { color: "rgba(255, 255, 255, 0.1)" },
+        },
         y: {
           beginAtZero: true,
-          ticks: { callback: (v) => v + "h" },
+          ticks: {
+            color: "#aaa",
+            callback: (v) => v + "h",
+          },
+          grid: { color: "rgba(255, 255, 255, 0.1)" },
         },
       },
     },
@@ -373,20 +387,23 @@ function renderCharts() {
     },
   });
 
-  // 書籍別進捗率（横棒グラフ）
-  const bookProgress = books.map((book) => {
-    const total = book.task_count || 0;
-    const completed = Number(book.completed_count) || 0;
-    const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
-    return { title: book.title, rate };
-  });
+    // ===== 書籍別進捗率（横棒グラフ）=====
+    const bookProgress = books
+    .map((book) => {
+      const total = book.task_count || 0;
+      const completed = Number(book.completed_count) || 0;
+      const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+      return { title: book.title, rate, total }; // 💡 total（タスク数）も一緒に返す
+    })
+    // 🛠️ 【機能追加】タスク数が1件以上ある（進捗が存在する）書籍だけを表示
+    .filter((b) => b.total > 0);
 
-  const booksWrapper = document.querySelector(".chart-books-wrapper");
+  // 書籍数に合わせて親要素の高さを動的に引き伸ばす
+  const booksWrapper = document.getElementById("books-wrapper-js");
   if (booksWrapper) {
-    booksWrapper.style.height = `${Math.max(bookProgress.length * 45, 250)}px`;
+     const barHeight = bookProgress.length > 6 ? 32 : 45;
+     booksWrapper.style.height = `${Math.max(bookProgress.length * barHeight, 250)}px`;
   }
-
-
   chartBooks = new Chart(document.getElementById("chart-books"), {
     type: "bar",
     data: {
@@ -398,42 +415,42 @@ function renderCharts() {
           backgroundColor: bookProgress.map(
             (_, i) => CHART_COLORS[i % CHART_COLORS.length],
           ),
+          // 💡 件数が多いときは棒自体の太さ（％）を自動で最適化する
+          barPercentage: bookProgress.length > 6 ? 0.6 : 0.8,
         },
       ],
     },
-      options: {
+    options: {
       indexAxis: "y",
       maintainAspectRatio: false,
       responsive: true,
       plugins: { legend: { display: false } },
-      scales: { 
-        x: { 
-          min: 0, 
+      scales: {
+        x: {
+          min: 0,
           max: 100,
-          ticks: { color: "#aaa" }, // X軸の数字を明るく
-          grid: { color: "rgba(255, 255, 255, 0.1)" } // グリッド線を薄く
+          ticks: { color: "#aaa" },
+          grid: { color: "rgba(255, 255, 255, 0.1)" },
         },
         y: {
           ticks: {
-            color: "#eee", // 書籍タイトルを白っぽくして見やすく
+            color: "#eee",
             font: { size: 11 },
-            // 💡 タイトルが長すぎる場合に15文字で省略（...）する処理を追加
-            callback: function(value) {
+            callback: function (value) {
               const label = this.getLabelForValue(value);
               return label.length > 15 ? label.substr(0, 15) + "..." : label;
-            }
+            },
           },
-          grid: { display: false } // 横棒グラフの見栄えのためにY軸のグリッドを隠す
-        }
+          grid: { display: false },
+        },
       },
-      // 💡 左側の余白を広げて文字がはみ出さないようにする
       layout: {
-        padding: { left: 20 }
-      }
+        padding: { left: 10 },
+      },
     },
   });
 
-  // カテゴリ別集計（学習時間・進捗率）
+  // ===== カテゴリ別集計（学習時間・進捗率）=====
   const categoryMap = new Map();
   filteredTasks.forEach((t) => {
     const name = t.category_name || "(言語不問)";
@@ -446,9 +463,13 @@ function renderCharts() {
     if (t.status === "完了") entry.done += 1;
   });
 
-  const categoryNames = Array.from(categoryMap.keys());
-  const categoryTimeData = categoryNames.map(
-    (name) => minutesToHours(categoryMap.get(name).time),
+  // 🛠️ 【機能追加】進捗（タスク）が1件以上あるカテゴリ名だけを抽出するよう修正
+  const categoryNames = Array.from(categoryMap.keys()).filter(
+    (name) => categoryMap.get(name).total > 0
+  );
+  
+  const categoryTimeData = categoryNames.map((name) =>
+    minutesToHours(categoryMap.get(name).time),
   );
   const categoryProgressData = categoryNames.map((name) => {
     const entry = categoryMap.get(name);
@@ -458,29 +479,38 @@ function renderCharts() {
     (_, i) => CHART_COLORS[i % CHART_COLORS.length],
   );
 
-  // カテゴリ別学習時間（縦棒グラフ）— 時間単位
+  // カテゴリ別学習時間（縦棒グラフ）
   chartCategoryTime = new Chart(
     document.getElementById("chart-category-time"),
     {
       type: "bar",
       data: {
-        labels: categoryNames,
+        labels: categoryNames.length > 0 ? categoryNames : ["データなし"],
         datasets: [
           {
             label: "学習時間（時間）",
-            data: categoryTimeData,
-            backgroundColor: categoryColors,
+            data: categoryTimeData.length > 0 ? categoryTimeData : [],
+            backgroundColor: categoryColors.length > 0 ? categoryColors : ["#808080"],
           },
         ],
       },
       options: {
         maintainAspectRatio: false,
         responsive: true,
+        aspectRatio: 2.5, // 💡【追加】横幅に対して適切な高さを強制確保させる（つぶれ防止）
         plugins: { legend: { display: false } },
         scales: {
+          x: {
+            ticks: { color: "#aaa" },
+            grid: { color: "rgba(255, 255, 255, 0.1)" },
+          },
           y: {
             beginAtZero: true,
-            ticks: { callback: (v) => v + "h" },
+            ticks: {
+              color: "#aaa",
+              callback: (v) => v + "h",
+            },
+            grid: { color: "rgba(255, 255, 255, 0.1)" },
           },
         },
       },
@@ -488,17 +518,26 @@ function renderCharts() {
   );
 
   // カテゴリ別進捗率（横棒グラフ）
+  // 🛠️ 【機能追加】件数に応じて高さを小さく（細く）調節するロジックを反映
+  const categoryProgressWrapper = document.getElementById("category-wrapper-js");
+  if (categoryProgressWrapper) {
+    const catBarHeight = categoryNames.length > 6 ? 32 : 45;
+    categoryProgressWrapper.style.height = `${Math.max(categoryNames.length * catBarHeight, 200)}px`;
+  }
+
   chartCategoryProgress = new Chart(
     document.getElementById("chart-category-progress"),
     {
       type: "bar",
       data: {
-        labels: categoryNames,
+        labels: categoryNames.length > 0 ? categoryNames : ["データなし"],
         datasets: [
           {
             label: "進捗率(%)",
-            data: categoryProgressData,
-            backgroundColor: categoryColors,
+            data: categoryProgressData.length > 0 ? categoryProgressData : [],
+            backgroundColor: categoryColors.length > 0 ? categoryColors : ["#808080"],
+            // 💡 件数が多いときは棒を細めにする
+            barPercentage: categoryNames.length > 6 ? 0.6 : 0.8,
           },
         ],
       },
@@ -507,7 +546,28 @@ function renderCharts() {
         maintainAspectRatio: false,
         responsive: true,
         plugins: { legend: { display: false } },
-        scales: { x: { min: 0, max: 100 } },
+        scales: {
+          x: {
+            min: 0,
+            max: 100,
+            ticks: { color: "#aaa" },
+            grid: { color: "rgba(255, 255, 255, 0.1)" },
+          },
+          y: {
+            ticks: {
+              color: "#eee",
+              font: { size: 11 },
+              callback: function (value) {
+                const label = this.getLabelForValue(value);
+                return label.length > 15 ? label.substr(0, 15) + "..." : label;
+              },
+            },
+            grid: { display: false },
+          },
+        },
+        layout: {
+          padding: { left: 20 },
+        },
       },
     },
   );
@@ -554,6 +614,7 @@ function renderCharts() {
     return Math.round((count / totalAllTasks) * 100);
   });
 
+  // 進捗率推移グラフの初期化
   chartProgress = new Chart(document.getElementById("chart-progress"), {
     type: "line",
     data: {
@@ -562,20 +623,19 @@ function renderCharts() {
         {
           label: "予定進捗（%）",
           data: plannedProgressData,
-          borderColor: "#9FE1CB",
+          borderColor: "#e6a817",
           backgroundColor: "transparent",
           borderWidth: 2,
-          pointRadius: 3,
-          tension: 0.3,
+          tension: 0.2,
         },
         {
           label: "実績進捗（%）",
           data: actualProgressData,
-          borderColor: "#1D9E75",
-          backgroundColor: "transparent",
-          borderWidth: 2,
-          pointRadius: 3,
-          tension: 0.3,
+          borderColor: "#4d7fd4",
+          backgroundColor: "rgba(77, 127, 212, 0.1)",
+          borderWidth: 3,
+          fill: true,
+          tension: 0.2,
         },
       ],
     },
@@ -584,24 +644,28 @@ function renderCharts() {
       maintainAspectRatio: false,
       plugins: {
         legend: {
-          display: true,
           position: "bottom",
-          labels: {
-            color: "#aaa",
-            font: { size: 12 },
-            usePointStyle: true,
-            pointStyleWidth: 10,
-          },
+          labels: { color: "#aaa" },
         },
       },
       scales: {
+        x: {
+          ticks: { color: "#aaa" },
+          grid: { color: "rgba(255, 255, 255, 0.1)" },
+        },
         y: {
-          beginAtZero: true,
           min: 0,
           max: 100,
-          ticks: { callback: (v) => v + "%" },
+          ticks: {
+            color: "#aaa",
+            callback: (v) => v + "%",
+          },
+          grid: { color: "rgba(255, 255, 255, 0.1)" },
         },
       },
     },
   });
-}
+  // 💡【追加】描画直後のタイミングズレによるつぶれを、強制的にリサイズして引き伸ばす
+  if (chartDaily) chartDaily.resize();
+  if (chartCategoryTime) chartCategoryTime.resize();
+} // renderCharts 関数の閉じ括弧
