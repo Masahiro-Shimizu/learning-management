@@ -527,17 +527,44 @@ function createTaskRowHtml(task, steps) {
 function bindTableEvents() {
   document.querySelectorAll("#task-table-body .group-row").forEach((row) => {
     row.addEventListener("click", (e) => {
-      // + ボタンまたは編集ボタンのクリックは行の開閉をスキップ
       if (
         e.target.closest(".btn-edit-group") ||
         e.target.closest(".btn-add-task-table")
       )
         return;
-      row.classList.toggle("collapsed");
+
+      const isCollapsed = row.classList.toggle("collapsed");
       const toggle = row.querySelector(".group-row-toggle");
-      toggle.textContent = row.classList.contains("collapsed") ? "▸" : "▾";
+      toggle.textContent = isCollapsed ? "▸" : "▾";
+
+      const groupId = row.dataset.groupId;
+
+      // localStorage から現在の「閉じているIDリスト」を読み込む
+      let collapsedGroups = JSON.parse(
+        localStorage.getItem("collapsedTableGroups") || "[]"
+      );
+
+      if (isCollapsed) {
+        // 閉じたらリストに追加
+        if (!collapsedGroups.includes(groupId)) collapsedGroups.push(groupId);
+      } else {
+        // 開いたらリストから削除
+        collapsedGroups = collapsedGroups.filter((id) => id !== groupId);
+      }
+      // localStorage に保存
+      localStorage.setItem(
+        "collapsedTableGroups",
+        JSON.stringify(collapsedGroups)
+      );
+
+      // 子タスクの表示/非表示の切り替え
+      let nextRow = row.nextElementSibling;
+      while (nextRow && nextRow.classList.contains("task-row")) {
+        nextRow.style.display = isCollapsed ? "none" : "";
+        nextRow = nextRow.nextElementSibling;
+      }
     });
-  });
+  }); // 💡 不要だった「};」をスッキリ整理しました
 
   // テーブルビューの「+ 子タスク追加」ボタン
   document
@@ -569,7 +596,7 @@ function bindTableEvents() {
       }
     });
   });
-}
+} // 💡 bindTableEvents の終わりの括弧をここに正しく配置しました
 
 function renderTable(data) {
   const { groups, tasks, stepsByTaskId } = data;
@@ -580,18 +607,40 @@ function renderTable(data) {
     const childTasks = tasks.filter((t) => t.group_id === group.id);
     tbody.insertAdjacentHTML(
       "beforeend",
-      createGroupRowHtml(group, childTasks.length),
+      createGroupRowHtml(group, childTasks.length)
     );
     childTasks.forEach((task) => {
       tbody.insertAdjacentHTML(
         "beforeend",
-        createTaskRowHtml(task, stepsByTaskId[task.id] || []),
+        createTaskRowHtml(task, stepsByTaskId[task.id] || [])
       );
     });
   });
 
+  // 保存された開閉状態をリロード時に再現する
+  const collapsedGroups = JSON.parse(
+    localStorage.getItem("collapsedTableGroups") || "[]"
+  );
+
+  collapsedGroups.forEach((groupId) => {
+    const row = tbody.querySelector(`.group-row[data-group-id="${groupId}"]`);
+    if (row) {
+      row.classList.add("collapsed");
+      const toggle = row.querySelector(".group-row-toggle");
+      if (toggle) toggle.textContent = "▸";
+
+      // 属する子タスクを最初から非表示にする
+      let nextRow = row.nextElementSibling;
+      while (nextRow && nextRow.classList.contains("task-row")) {
+        nextRow.style.display = "none";
+        nextRow = nextRow.nextElementSibling;
+      }
+    }
+  });
+
   bindTableEvents();
 }
+
 
 // ===== カレンダービュー =====
 
