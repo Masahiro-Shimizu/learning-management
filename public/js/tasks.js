@@ -92,8 +92,10 @@ function createTaskCardHtml(task, steps = []) {
   const dateHtml = displayDate
     ? `<span class="task-card-meta-item">${CALENDAR_ICON}${displayDate}</span>`
     : "";
+  // 【修正前】const timeHtml = minutes ? `<span class="task-card-meta-item">${CLOCK_ICON}${minutes}分</span>` : "";
+  // 【修正後】
   const timeHtml = minutes
-    ? `<span class="task-card-meta-item">${CLOCK_ICON}${minutes}分</span>`
+    ? `<span class="task-card-meta-item">${CLOCK_ICON}${minutesToHours(minutes)}h</span>`
     : "";
   const stepBadgeHtml = createStepBadgeHtml(steps);
 
@@ -280,10 +282,12 @@ async function openTaskEditModal(taskId) {
     task.end_planned_date ? task.end_planned_date.slice(0, 10) : "";
   document.getElementById("task-start-date").value =
     task.start_date ? task.start_date.slice(0, 10) : "";
-  document.getElementById("task-end-date").value =
-    task.end_date ? task.end_date.slice(0, 10) : "";
-  document.getElementById("task-study-time").value = task.study_time || "";
-  document.getElementById("task-planned-study-time").value = task.planned_study_time || "";
+  // --- 該当箇所の周辺を以下のように書き換えます ---
+  document.getElementById("task-end-date").value = task.end_date ? task.end_date.slice(0, 10) : "";
+
+  // 【変更】分単位を時間単位(h)に変換してモーダルに表示する
+  document.getElementById("task-study-time").value = task.study_time ? minutesToHours(task.study_time) : "";
+  document.getElementById("task-planned-study-time").value = task.planned_study_time ? minutesToHours(task.planned_study_time) : "";
   document.getElementById("task-memo").value = task.memo || "";
 
   showStepSection(true);
@@ -422,7 +426,10 @@ function createTaskRowHtml(task, steps) {
   const dotClass = TASK_STATUS_DOT_CLASS[task.status] || "todo";
   const plannedDate = formatDateShort(task.start_planned_date) || "－";
   const completedDate = formatDateShort(task.end_date) || "－";
-  const minutes = task.study_time != null ? `${task.study_time}分` : "－";
+  // 【修正前】const minutes = task.study_time != null ? `${task.study_time}分` : "－";
+  // 【修正後】
+  const minutes = task.study_time != null ? `${minutesToHours(task.study_time)}h` : "－";
+
   const stepBadge =
     steps && steps.length > 0
       ? `<span class="task-step-badge">${steps.filter((s) => s.is_completed).length}/${steps.length}</span>`
@@ -937,22 +944,30 @@ document.getElementById("btn-task-save").addEventListener("click", async () => {
 
   const groupId = document.getElementById("task-modal").dataset.groupId;
   const taskId = document.getElementById("task-modal").dataset.taskId;
+  // --- 該当箇所の周辺を以下のように書き換えます ---
+  const studyTimeInput = document.getElementById("task-study-time").value;
+  const plannedStudyTimeInput = document.getElementById("task-planned-study-time").value;
+  
   const body = {
-    group_id: groupId,
-    title,
-    type_id: document.getElementById("task-type").value,
-    category_id: document.getElementById("task-category").value,
-    granularity: document.getElementById("task-granularity").value || null,
-    book_id: document.getElementById("task-book-id").value || null,
-    status: document.getElementById("task-status").value,
-    start_planned_date: document.getElementById("task-start-planned-date").value || null,
-    end_planned_date: document.getElementById("task-end-planned-date").value || null,
-    start_date: document.getElementById("task-start-date").value || null,
-    end_date: document.getElementById("task-end-date").value || null,
-    study_time: document.getElementById("task-study-time").value || null,
-    planned_study_time: document.getElementById("task-planned-study-time").value || null,
-    memo: document.getElementById("task-memo").value || null,
+      group_id: groupId,
+      title,
+      type_id: document.getElementById("task-type").value,
+      category_id: document.getElementById("task-category").value,
+      granularity: document.getElementById("task-granularity").value || null,
+      book_id: document.getElementById("task-book-id").value || null,
+      status: document.getElementById("task-status").value,
+      start_planned_date: document.getElementById("task-start-planned-date").value || null,
+      end_planned_date: document.getElementById("task-end-planned-date").value || null,
+      start_date: document.getElementById("task-start-date").value || null,
+      end_date: document.getElementById("task-end-date").value || null,
+      
+      // 【変更】入力された時間（h）を分単位に直してバックエンドへ保存
+      study_time: studyTimeInput ? Math.round(parseFloat(studyTimeInput) * 60) : null,
+      planned_study_time: plannedStudyTimeInput ? Math.round(parseFloat(plannedStudyTimeInput) * 60) : null,
+      
+      memo: document.getElementById("task-memo").value || null,
   };
+  
 
   if (taskId) {
     await api(`/api/tasks/${taskId}`, "PUT", body);
@@ -1019,7 +1034,14 @@ function getTaskModalSnapshot() {
   const snapshot = {};
   ids.forEach((id) => {
     const el = document.getElementById(id);
-    snapshot[id] = el ? el.value : "";
+    let value = el ? el.value : "";
+    
+    // 【追加】変更検知の際も「時間」の入力値を「分」に揃えて判定のブレを防ぐ
+    if ((id === "task-study-time" || id === "task-planned-study-time") && value) {
+      value = String(Math.round(parseFloat(value) * 60));
+    }
+    
+    snapshot[id] = value;
   });
   snapshot.steps = Array.from(document.querySelectorAll("#step-list .step-item")).map((li) => ({
     title: li.querySelector(".step-item-title")?.textContent ?? "",
@@ -1027,6 +1049,7 @@ function getTaskModalSnapshot() {
   }));
   return JSON.stringify(snapshot);
 }
+
 
 function markTaskModalClean() {
   document.getElementById("task-modal").dataset.initialSnapshot = getTaskModalSnapshot();

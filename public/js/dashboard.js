@@ -140,6 +140,7 @@ function renderCharts() {
   let filteredTasks = [];
   let labels = [];
   let dailyData = []; // 分単位
+  let dailyPlannedData = []; // 【追加】予定時間（分単位）用の配列
 
   if (currentPeriod === "week") {
     const monday = getWeekStart(viewDate);
@@ -149,19 +150,25 @@ function renderCharts() {
       return d;
     });
 
-    // 日曜日（weekDates[6]）をそのまま利用
     const sunday = new Date(weekDates[6]);
     sunday.setHours(23, 59, 59, 999);
 
     labels = ["月", "火", "水", "木", "金", "土", "日"];
+    
+    // 実績時間の集計
     dailyData = weekDates.map((weekDate) =>
       tasks
-        .filter((t) => {
-          if (!t.end_date) return false;
-          return isSameDay(new Date(t.end_date), weekDate);
-        })
+        .filter((t) => t.end_date && isSameDay(new Date(t.end_date), weekDate))
         .reduce((sum, t) => sum + (t.study_time || 0), 0),
     );
+
+    // 【追加】予定時間の集計（end_planned_dateを基準に曜日ごとに集計）
+    dailyPlannedData = weekDates.map((weekDate) =>
+      tasks
+        .filter((t) => t.end_planned_date && isSameDay(new Date(t.end_planned_date), weekDate))
+        .reduce((sum, t) => sum + (t.planned_study_time || 0), 0),
+    );
+
     filteredTasks = tasks.filter((t) => {
       if (!t.end_date) return false;
       const d = new Date(t.end_date);
@@ -173,15 +180,23 @@ function renderCharts() {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
     labels = Array.from({ length: daysInMonth }, (_, i) => `${i + 1}`);
+    
+    // 実績時間の集計
     dailyData = Array.from({ length: daysInMonth }, (_, i) => {
       const date = new Date(year, month, i + 1);
       return tasks
-        .filter((t) => {
-          if (!t.end_date) return false;
-          return isSameDay(new Date(t.end_date), date);
-        })
+        .filter((t) => t.end_date && isSameDay(new Date(t.end_date), date))
         .reduce((sum, t) => sum + (t.study_time || 0), 0);
     });
+
+    // 【追加】予定時間の集計（end_planned_dateを基準に日にちごとに集計）
+    dailyPlannedData = Array.from({ length: daysInMonth }, (_, i) => {
+      const date = new Date(year, month, i + 1);
+      return tasks
+        .filter((t) => t.end_planned_date && isSameDay(new Date(t.end_planned_date), date))
+        .reduce((sum, t) => sum + (t.planned_study_time || 0), 0);
+    });
+
     filteredTasks = tasks.filter((t) => {
       if (!t.end_date) return false;
       const d = new Date(t.end_date);
@@ -193,6 +208,8 @@ function renderCharts() {
       "1月","2月","3月","4月","5月","6月",
       "7月","8月","9月","10月","11月","12月",
     ];
+    
+    // 実績時間の集計
     dailyData = Array.from({ length: 12 }, (_, i) =>
       tasks
         .filter((t) => {
@@ -202,12 +219,25 @@ function renderCharts() {
         })
         .reduce((sum, t) => sum + (t.study_time || 0), 0),
     );
+
+    // 【追加】予定時間の集計（end_planned_dateを基準に月ごとに集計）
+    dailyPlannedData = Array.from({ length: 12 }, (_, i) =>
+      tasks
+        .filter((t) => {
+          if (!t.end_planned_date) return false;
+          const d = new Date(t.end_planned_date);
+          return d.getFullYear() === year && d.getMonth() === i;
+        })
+        .reduce((sum, t) => sum + (t.planned_study_time || 0), 0),
+    );
+
     filteredTasks = tasks.filter((t) => {
       if (!t.end_date) return false;
       const d = new Date(t.end_date);
       return d.getFullYear() === year;
     });
   }
+
 
   // ===== サマリーカード更新 =====
 
@@ -301,57 +331,64 @@ function renderCharts() {
   if (chartCategoryProgress) chartCategoryProgress.destroy();
 
   // 日別学習時間（棒グラフ）— 時間単位
-  const dailyHours = dailyData.map(minutesToHours);
-  const dailyCanvas = document.getElementById("chart-daily");
-  const ctx = dailyCanvas.getContext("2d");
-  const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-  gradient.addColorStop(0, "hsl(234 70% 58%)");
-  gradient.addColorStop(1, "hsla(234, 70%, 58%, 0.25)");
-
-  // 予定時間の平均（時間単位）
-  const avgPlannedHours = minutesToHours(
-    tasks.reduce((sum, t) => sum + (t.planned_study_time || 0), 0) /
-      Math.max(labels.length, 1),
-  );
-
-  chartDaily = new Chart(dailyCanvas, {
-    type: "bar",
-    data: {
-      labels,
-      datasets: [
-        {
-          label: "予定時間（時間）",
-          data: dailyData.map(() => avgPlannedHours),
-          backgroundColor: "#B5D4F4",
-        },
-        {
-          label: "実績時間（時間）",
-          data: dailyHours,
-          backgroundColor: gradient,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      aspectRatio: 2.5,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: {
-          ticks: { color: "#aaa" },
-          grid: { color: "rgba(255, 255, 255, 0.1)" },
-        },
-        y: {
-          beginAtZero: true,
-          ticks: {
-            color: "#aaa",
-            callback: (v) => v + "h",
+    // 日別学習時間（棒グラフ）— 時間単位
+    const dailyHours = dailyData.map(minutesToHours);
+    const dailyPlannedHours = dailyPlannedData.map(minutesToHours); // 【追加】予定時間を時間単位に変換
+    const dailyCanvas = document.getElementById("chart-daily");
+    const ctx = dailyCanvas.getContext("2d");
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, "hsl(234 70% 58%)");
+    gradient.addColorStop(1, "hsla(234, 70%, 58%, 0.25)");
+  
+    chartDaily = new Chart(dailyCanvas, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "予定時間（時間）",
+            data: dailyPlannedHours, // 【変更】一律の平均値から、リアルな日別予定データへ
+            backgroundColor: "rgba(245, 158, 11, 0.35)", 
+            borderColor: "rgba(245, 158, 11, 0.7)",      
+            borderWidth: 1,
+            borderRadius: 3,          
+            barPercentage: 0.7,       
+            categoryPercentage: 0.75,
           },
-          grid: { color: "rgba(255, 255, 255, 0.1)" },
+          {
+            label: "実績時間（時間）",
+            data: dailyHours,
+            backgroundColor: gradient, 
+            borderRadius: 3,          
+            barPercentage: 0.7,
+            categoryPercentage: 0.75,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        aspectRatio: 2.5,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: {
+            stacked: false, 
+            ticks: { color: "#aaa" },
+            grid: { display: false }, 
+          },
+          y: {
+            stacked: false,
+            beginAtZero: true,
+            ticks: {
+              color: "#aaa",
+              callback: (v) => v + "h",
+            },
+            grid: { color: "rgba(255, 255, 255, 0.05)" },
+          },
         },
       },
-    },
-  });
+    });
+  
 
   // ステータス別件数（ドーナツグラフ）
   chartStatus = new Chart(document.getElementById("chart-status"), {
