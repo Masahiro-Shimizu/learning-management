@@ -8,7 +8,6 @@ let taskCategoryOptions = [];
 
 async function loadTaskTypeOptions() {
   taskTypeOptions = await api("/api/task-types");
-
   const select = document.getElementById("task-type");
   select.innerHTML = "";
   taskTypeOptions.forEach((type) => {
@@ -21,7 +20,6 @@ async function loadTaskTypeOptions() {
 
 async function loadTaskCategoryOptions() {
   taskCategoryOptions = await api("/api/task-categories");
-
   const select = document.getElementById("task-category");
   select.innerHTML = "";
   taskCategoryOptions.forEach((category) => {
@@ -33,50 +31,29 @@ async function loadTaskCategoryOptions() {
 }
 
 const TASK_TYPE_COLOR_CLASSES = [
-  "book",
-  "video",
-  "article",
-  "practice",
-  "teal",
-  "rose",
-  "lime",
+  "book", "video", "article", "practice", "teal", "rose", "lime",
 ];
 
 function getTypeInfo(typeName) {
   if (!typeName) return { label: "", class: "default" };
-
   let hash = 0;
   for (let i = 0; i < typeName.length; i++) {
-    hash =
-      (hash * 31 + typeName.charCodeAt(i)) % TASK_TYPE_COLOR_CLASSES.length;
+    hash = (hash * 31 + typeName.charCodeAt(i)) % TASK_TYPE_COLOR_CLASSES.length;
   }
-  const colorClass = TASK_TYPE_COLOR_CLASSES[hash];
-
-  return { label: typeName, class: colorClass };
+  return { label: typeName, class: TASK_TYPE_COLOR_CLASSES[hash] };
 }
 
 const TASK_CATEGORY_COLOR_CLASSES = [
-  "indigo",
-  "amber",
-  "teal",
-  "rose",
-  "lime",
-  "sky",
-  "violet",
+  "indigo", "amber", "teal", "rose", "lime", "sky", "violet",
 ];
 
 function getCategoryInfo(categoryName) {
   if (!categoryName) return { label: "", class: "default" };
-
   let hash = 0;
   for (let i = 0; i < categoryName.length; i++) {
-    hash =
-      (hash * 31 + categoryName.charCodeAt(i)) %
-      TASK_CATEGORY_COLOR_CLASSES.length;
+    hash = (hash * 31 + categoryName.charCodeAt(i)) % TASK_CATEGORY_COLOR_CLASSES.length;
   }
-  const colorClass = TASK_CATEGORY_COLOR_CLASSES[hash];
-
-  return { label: categoryName, class: colorClass };
+  return { label: categoryName, class: TASK_CATEGORY_COLOR_CLASSES[hash] };
 }
 
 function createCategoryBadgeHtml(categoryName) {
@@ -92,11 +69,7 @@ function formatDateShort(dateStr) {
 }
 
 function getTaskDisplayDate(task) {
-  const raw =
-    task.start_planned_date ||
-    task.end_planned_date ||
-    task.start_date ||
-    task.end_date;
+  const raw = task.start_planned_date || task.end_planned_date || task.start_date || task.end_date;
   return formatDateShort(raw);
 }
 
@@ -125,11 +98,7 @@ function createTaskCardHtml(task, steps = []) {
   const stepBadgeHtml = createStepBadgeHtml(steps);
 
   return `
-    <article
-      class="task-card task-card--${typeInfo.class}"
-      data-task-id="${task.id}"
-      tabindex="0"
-    >
+    <article class="task-card task-card--${typeInfo.class}" data-task-id="${task.id}" tabindex="0">
       <div class="task-card-badges">
         <span class="task-type-badge task-type-badge--${typeInfo.class}">${typeInfo.label}</span>
         ${categoryBadgeHtml}
@@ -170,19 +139,10 @@ function createGroupCardHtml(group, childTasks, stepsByTaskId) {
     <div class="group-card" data-group-id="${group.id}">
       <div class="group-card-header">
         <p class="group-card-title">${group.title}</p>
-        <button
-          type="button"
-          class="btn-edit-group"
-          data-group-id="${group.id}"
-          aria-label="親タスクを編集"
-        >編集</button>
+        <button type="button" class="btn-edit-group" data-group-id="${group.id}" aria-label="親タスクを編集">編集</button>
       </div>
       <div class="group-card-children hidden">
-        <button
-          type="button"
-          class="btn-add-task"
-          data-group-id="${group.id}"
-        >+ 子タスク追加</button>
+        <button type="button" class="btn-add-task" data-group-id="${group.id}">+ 子タスク追加</button>
         ${childrenHTML}
       </div>
     </div>
@@ -239,9 +199,7 @@ function showStepSection(show) {
 function updateCardStepBadge(taskId) {
   const steps = Array.from(document.querySelectorAll("#step-list .step-item"));
   const total = steps.length;
-  const completed = steps.filter((li) =>
-    li.classList.contains("completed"),
-  ).length;
+  const completed = steps.filter((li) => li.classList.contains("completed")).length;
   const text = `${completed}/${total}`;
 
   const card = document.querySelector(`.task-card[data-task-id="${taskId}"]`);
@@ -277,10 +235,8 @@ document.getElementById("step-list").addEventListener("change", async (e) => {
   const li = e.target.closest(".step-item");
   const stepId = li.dataset.stepId;
   const isCompleted = e.target.checked;
-
   await api(`/api/steps/${stepId}`, "PUT", { is_completed: isCompleted });
   li.classList.toggle("completed", isCompleted);
-
   const taskId = document.getElementById("task-modal").dataset.taskId;
   updateCardStepBadge(taskId);
 });
@@ -289,10 +245,8 @@ document.getElementById("step-list").addEventListener("click", async (e) => {
   if (!e.target.classList.contains("btn-step-delete")) return;
   const li = e.target.closest(".step-item");
   const stepId = li.dataset.stepId;
-
   await api(`/api/steps/${stepId}`, "DELETE");
   li.remove();
-
   const taskId = document.getElementById("task-modal").dataset.taskId;
   updateCardStepBadge(taskId);
 });
@@ -301,15 +255,10 @@ document.getElementById("btn-step-add").addEventListener("click", async () => {
   const input = document.getElementById("step-new-title");
   const title = input.value.trim();
   if (!title) return;
-
   const taskId = document.getElementById("task-modal").dataset.taskId;
   const newStep = await api(`/api/tasks/${taskId}/steps`, "POST", { title });
-
-  document
-    .getElementById("step-list")
-    .insertAdjacentHTML("beforeend", createStepItemHtml(newStep));
+  document.getElementById("step-list").insertAdjacentHTML("beforeend", createStepItemHtml(newStep));
   input.value = "";
-
   updateCardStepBadge(taskId);
 });
 
@@ -327,18 +276,14 @@ async function openTaskEditModal(taskId) {
   document.getElementById("task-status").value = task.status;
   document.getElementById("task-start-planned-date").value =
     task.start_planned_date ? task.start_planned_date.slice(0, 10) : "";
-  document.getElementById("task-end-planned-date").value = task.end_planned_date
-    ? task.end_planned_date.slice(0, 10)
-    : "";
-  document.getElementById("task-start-date").value = task.start_date
-    ? task.start_date.slice(0, 10)
-    : "";
-  document.getElementById("task-end-date").value = task.end_date
-    ? task.end_date.slice(0, 10)
-    : "";
+  document.getElementById("task-end-planned-date").value =
+    task.end_planned_date ? task.end_planned_date.slice(0, 10) : "";
+  document.getElementById("task-start-date").value =
+    task.start_date ? task.start_date.slice(0, 10) : "";
+  document.getElementById("task-end-date").value =
+    task.end_date ? task.end_date.slice(0, 10) : "";
   document.getElementById("task-study-time").value = task.study_time || "";
-  document.getElementById("task-planned-study-time").value =
-    task.planned_study_time || "";
+  document.getElementById("task-planned-study-time").value = task.planned_study_time || "";
   document.getElementById("task-memo").value = task.memo || "";
 
   showStepSection(true);
@@ -409,7 +354,6 @@ async function fetchTaskViewData() {
 function renderKanban(data) {
   const { groups, tasks, stepsByTaskId } = data;
 
-  // 再描画前に、開いている親カードのgroup-idを記録しておく
   const expandedGroupIds = new Set();
   document.querySelectorAll(".group-card").forEach((card) => {
     const children = card.querySelector(".group-card-children");
@@ -428,13 +372,8 @@ function renderKanban(data) {
     const status = calcStatus(group.id, tasks);
     statusCounts[status]++;
     const childTasks = tasks.filter((t) => t.group_id === group.id);
-    const container = document.querySelector(
-      `.kanban-cards[data-status="${status}"]`,
-    );
-    container.insertAdjacentHTML(
-      "beforeend",
-      createGroupCardHtml(group, childTasks, stepsByTaskId),
-    );
+    const container = document.querySelector(`.kanban-cards[data-status="${status}"]`);
+    container.insertAdjacentHTML("beforeend", createGroupCardHtml(group, childTasks, stepsByTaskId));
   });
 
   Object.entries(statusCounts).forEach(([status, count]) => {
@@ -442,7 +381,6 @@ function renderKanban(data) {
     if (badge) badge.textContent = count;
   });
 
-  // 展開状態を復元
   document.querySelectorAll(".group-card").forEach((card) => {
     if (expandedGroupIds.has(card.dataset.groupId)) {
       const children = card.querySelector(".group-card-children");
@@ -470,19 +408,8 @@ function createGroupRowHtml(group, childCount) {
       </td>
       <td>
         <div style="display:flex;gap:4px;justify-content:flex-end;align-items:center;">
-          <button
-            type="button"
-            class="btn-add-task-table"
-            data-group-id="${group.id}"
-            aria-label="子タスクを追加"
-            title="子タスクを追加"
-          >+</button>
-          <button
-            type="button"
-            class="btn-edit-group"
-            data-group-id="${group.id}"
-            aria-label="親タスクを編集"
-          >編集</button>
+          <button type="button" class="btn-add-task-table" data-group-id="${group.id}" aria-label="子タスクを追加" title="子タスクを追加">+</button>
+          <button type="button" class="btn-edit-group" data-group-id="${group.id}" aria-label="親タスクを編集">編集</button>
         </div>
       </td>
     </tr>
@@ -527,63 +454,44 @@ function createTaskRowHtml(task, steps) {
 function bindTableEvents() {
   document.querySelectorAll("#task-table-body .group-row").forEach((row) => {
     row.addEventListener("click", (e) => {
-      if (
-        e.target.closest(".btn-edit-group") ||
-        e.target.closest(".btn-add-task-table")
-      )
-        return;
+      if (e.target.closest(".btn-edit-group") || e.target.closest(".btn-add-task-table")) return;
 
       const isCollapsed = row.classList.toggle("collapsed");
       const toggle = row.querySelector(".group-row-toggle");
       toggle.textContent = isCollapsed ? "▸" : "▾";
 
       const groupId = row.dataset.groupId;
-
-      // localStorage から現在の「閉じているIDリスト」を読み込む
-      let collapsedGroups = JSON.parse(
-        localStorage.getItem("collapsedTableGroups") || "[]"
-      );
-
+      let collapsedGroups = JSON.parse(localStorage.getItem("collapsedTableGroups") || "[]");
       if (isCollapsed) {
-        // 閉じたらリストに追加
         if (!collapsedGroups.includes(groupId)) collapsedGroups.push(groupId);
       } else {
-        // 開いたらリストから削除
         collapsedGroups = collapsedGroups.filter((id) => id !== groupId);
       }
-      // localStorage に保存
-      localStorage.setItem(
-        "collapsedTableGroups",
-        JSON.stringify(collapsedGroups)
-      );
+      localStorage.setItem("collapsedTableGroups", JSON.stringify(collapsedGroups));
 
-      // 子タスクの表示/非表示の切り替え
+      // 子タスク行の表示/非表示
       let nextRow = row.nextElementSibling;
       while (nextRow && nextRow.classList.contains("task-row")) {
         nextRow.style.display = isCollapsed ? "none" : "";
         nextRow = nextRow.nextElementSibling;
       }
     });
-  }); // 💡 不要だった「};」をスッキリ整理しました
+  });
 
   // テーブルビューの「+ 子タスク追加」ボタン
-  document
-    .querySelectorAll("#task-table-body .btn-add-task-table")
-    .forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        openTaskModal(btn.dataset.groupId);
-      });
+  document.querySelectorAll("#task-table-body .btn-add-task-table").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openTaskModal(btn.dataset.groupId);
     });
+  });
 
-  document
-    .querySelectorAll("#task-table-body .btn-edit-group")
-    .forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        openGroupEditModal(btn.dataset.groupId);
-      });
+  document.querySelectorAll("#task-table-body .btn-edit-group").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openGroupEditModal(btn.dataset.groupId);
     });
+  });
 
   document.querySelectorAll("#task-table-body .task-row").forEach((row) => {
     row.addEventListener("click", () => {
@@ -596,7 +504,7 @@ function bindTableEvents() {
       }
     });
   });
-} // 💡 bindTableEvents の終わりの括弧をここに正しく配置しました
+}
 
 function renderTable(data) {
   const { groups, tasks, stepsByTaskId } = data;
@@ -605,31 +513,20 @@ function renderTable(data) {
 
   groups.forEach((group) => {
     const childTasks = tasks.filter((t) => t.group_id === group.id);
-    tbody.insertAdjacentHTML(
-      "beforeend",
-      createGroupRowHtml(group, childTasks.length)
-    );
+    tbody.insertAdjacentHTML("beforeend", createGroupRowHtml(group, childTasks.length));
     childTasks.forEach((task) => {
-      tbody.insertAdjacentHTML(
-        "beforeend",
-        createTaskRowHtml(task, stepsByTaskId[task.id] || [])
-      );
+      tbody.insertAdjacentHTML("beforeend", createTaskRowHtml(task, stepsByTaskId[task.id] || []));
     });
   });
 
-  // 保存された開閉状態をリロード時に再現する
-  const collapsedGroups = JSON.parse(
-    localStorage.getItem("collapsedTableGroups") || "[]"
-  );
-
+  // localStorage から折りたたみ状態を復元
+  const collapsedGroups = JSON.parse(localStorage.getItem("collapsedTableGroups") || "[]");
   collapsedGroups.forEach((groupId) => {
     const row = tbody.querySelector(`.group-row[data-group-id="${groupId}"]`);
     if (row) {
       row.classList.add("collapsed");
       const toggle = row.querySelector(".group-row-toggle");
       if (toggle) toggle.textContent = "▸";
-
-      // 属する子タスクを最初から非表示にする
       let nextRow = row.nextElementSibling;
       while (nextRow && nextRow.classList.contains("task-row")) {
         nextRow.style.display = "none";
@@ -640,7 +537,6 @@ function renderTable(data) {
 
   bindTableEvents();
 }
-
 
 // ===== カレンダービュー =====
 
@@ -692,8 +588,7 @@ function renderCalendar(data) {
   const year = calendarDate.getFullYear();
   const month = calendarDate.getMonth();
 
-  document.getElementById("calendar-month-label").textContent =
-    `${year}年${month + 1}月`;
+  document.getElementById("calendar-month-label").textContent = `${year}年${month + 1}月`;
 
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
@@ -704,17 +599,11 @@ function renderCalendar(data) {
   grid.innerHTML = "";
 
   ["日", "月", "火", "水", "木", "金", "土"].forEach((label) => {
-    grid.insertAdjacentHTML(
-      "beforeend",
-      `<div class="calendar-weekday">${label}</div>`,
-    );
+    grid.insertAdjacentHTML("beforeend", `<div class="calendar-weekday">${label}</div>`);
   });
 
   for (let i = 0; i < startWeekday; i++) {
-    grid.insertAdjacentHTML(
-      "beforeend",
-      `<div class="calendar-cell calendar-cell--empty"></div>`,
-    );
+    grid.insertAdjacentHTML("beforeend", `<div class="calendar-cell calendar-cell--empty"></div>`);
   }
 
   for (let day = 1; day <= daysInMonth; day++) {
@@ -729,20 +618,15 @@ function renderCalendar(data) {
     const chipsHtml = visibleTasks
       .map((t) => createCalendarChipHtml(t, stepsByTaskId[t.id] || []))
       .join("");
-    const moreHtml =
-      remaining > 0
-        ? `<div class="calendar-chip-more">+${remaining}件</div>`
-        : "";
+    const moreHtml = remaining > 0 ? `<div class="calendar-chip-more">+${remaining}件</div>` : "";
 
     grid.insertAdjacentHTML(
       "beforeend",
-      `
-        <div class="calendar-cell">
-          <div class="calendar-cell-date">${day}</div>
-          ${chipsHtml}
-          ${moreHtml}
-        </div>
-      `,
+      `<div class="calendar-cell">
+        <div class="calendar-cell-date">${day}</div>
+        ${chipsHtml}
+        ${moreHtml}
+      </div>`,
     );
   }
 
@@ -776,7 +660,6 @@ function createTimelineBarHtml(task, daysInMonth, monthStart, monthEnd) {
   let end = getDateOnly(task.end_planned_date);
 
   if (!start && !end) return "";
-
   if (!start) start = end;
   if (!end) end = start;
   if (end < start) end = start;
@@ -796,9 +679,7 @@ function createTimelineBarHtml(task, daysInMonth, monthStart, monthEnd) {
 
 function bindTimelineEvents() {
   document.querySelectorAll(".timeline-bar").forEach((bar) => {
-    bar.addEventListener("click", () => {
-      openTaskEditModal(bar.dataset.taskId);
-    });
+    bar.addEventListener("click", () => openTaskEditModal(bar.dataset.taskId));
     bar.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
@@ -835,7 +716,6 @@ function bindTimelineEvents() {
         monthPicker.click();
       }
     };
-
     monthLabel.addEventListener("click", openMonthPicker);
     monthLabel.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
@@ -843,9 +723,8 @@ function bindTimelineEvents() {
         openMonthPicker();
       }
     });
-
     monthPicker.addEventListener("change", (e) => {
-      const value = e.target.value; // "YYYY-MM"
+      const value = e.target.value;
       if (!value) return;
       const [year, month] = value.split("-").map(Number);
       timelineDate = new Date(year, month - 1, 1);
@@ -867,15 +746,13 @@ function renderTimeline(data) {
   const grid = document.getElementById("timeline-grid");
   grid.innerHTML = "";
 
-  const axisCellsHtml = Array.from({ length: daysInMonth }, (_, i) => {
-    const day = i + 1;
-    return `<div class="timeline-axis-cell">${day}</div>`;
-  }).join("");
+  const axisCellsHtml = Array.from({ length: daysInMonth }, (_, i) =>
+    `<div class="timeline-axis-cell">${i + 1}</div>`,
+  ).join("");
 
   grid.insertAdjacentHTML(
     "beforeend",
-    `
-      <div class="timeline-row">
+    `<div class="timeline-row">
         <div class="timeline-row-header timeline-row-header--axis">
           <div class="timeline-month-nav">
             <button type="button" id="btn-timeline-prev" class="btn btn-secondary" aria-label="前の月">＜</button>
@@ -889,13 +766,11 @@ function renderTimeline(data) {
             ${axisCellsHtml}
           </div>
         </div>
-      </div>
-    `,
+      </div>`,
   );
 
   const today = new Date();
-  const isCurrentMonth =
-    today.getFullYear() === year && today.getMonth() === month;
+  const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
   const todayLeftPercent = isCurrentMonth
     ? ((today.getDate() - 1) / daysInMonth) * 100
     : null;
@@ -908,58 +783,40 @@ function renderTimeline(data) {
     if (hideCompleted) {
       childTasks = childTasks.filter((t) => t.status !== "完了");
     }
-    // フィルタ後に子タスクが0件の親グループ行は描画しない
     if (hideCompleted && childTasks.length === 0) return;
 
     const barsHtml = childTasks
       .map((task) => {
-        const result = createTimelineBarHtml(
-          task,
-          daysInMonth,
-          monthStart,
-          monthEnd,
-        );
+        const result = createTimelineBarHtml(task, daysInMonth, monthStart, monthEnd);
         if (!result) return "";
         const index = childTasks.indexOf(task);
         const top = 8 + index * 28;
-        return `
-          <div
-            class="timeline-bar"
-            data-task-id="${task.id}"
-            tabindex="0"
-            style="left: ${result.leftPercent}%; width: ${result.widthPercent}%; top: ${top}px;"
-          >
+        return `<div class="timeline-bar" data-task-id="${task.id}" tabindex="0" style="left: ${result.leftPercent}%; width: ${result.widthPercent}%; top: ${top}px;">
             <span class="timeline-bar-title">${task.title}</span>
-          </div>
-        `;
+          </div>`;
       })
       .join("");
 
     const trackHeight = Math.max(40, childTasks.length * 28 + 16);
-    const todayLineHtml =
-      todayLeftPercent !== null
-        ? `<div class="timeline-today-line" style="left: ${todayLeftPercent}%;"></div>`
-        : "";
+    const todayLineHtml = todayLeftPercent !== null
+      ? `<div class="timeline-today-line" style="left: ${todayLeftPercent}%;"></div>`
+      : "";
 
     grid.insertAdjacentHTML(
       "beforeend",
-      `
-        <div class="timeline-row">
+      `<div class="timeline-row">
           <div class="timeline-row-header">${group.title}</div>
           <div class="timeline-track" style="min-height: ${trackHeight}px;">
             ${todayLineHtml}
             ${barsHtml}
           </div>
-        </div>
-      `,
+        </div>`,
     );
   });
 
   bindTimelineEvents();
 
-  // DOM生成後にラベル・ピッカーの値をセット
-  document.getElementById("timeline-month-label").textContent =
-    `${year}年${month + 1}月`;
+  document.getElementById("timeline-month-label").textContent = `${year}年${month + 1}月`;
   const monthPicker = document.getElementById("timeline-month-picker");
   if (monthPicker) {
     monthPicker.value = `${year}-${String(month + 1).padStart(2, "0")}`;
@@ -987,22 +844,15 @@ function openAddTaskGroupPicker(groups) {
   }
 }
 
-// カレンダー/タイムラインの「+ 子タスク追加」ボタンにイベントをバインド
 function bindAddTaskButtons(groups) {
   const calBtn = document.getElementById("btn-add-task-calendar");
-  if (calBtn) {
-    calBtn.onclick = () => openAddTaskGroupPicker(groups);
-  }
+  if (calBtn) calBtn.onclick = () => openAddTaskGroupPicker(groups);
 
   const tlBtn = document.getElementById("btn-add-task-timeline");
-  if (tlBtn) {
-    tlBtn.onclick = () => openAddTaskGroupPicker(groups);
-  }
+  if (tlBtn) tlBtn.onclick = () => openAddTaskGroupPicker(groups);
 
-  // タイムライン「完了タスクを非表示」チェックボックス
   const hideCheckbox = document.getElementById("timeline-hide-completed");
   if (hideCheckbox) {
-    // 重複バインド防止のためonchangeで上書き
     hideCheckbox.onchange = () => renderTimeline(lastTaskViewData);
   }
 }
@@ -1034,9 +884,7 @@ function switchView(view) {
 switchView(currentView);
 
 document.querySelectorAll(".view-tab").forEach((tab) => {
-  tab.addEventListener("click", () => {
-    switchView(tab.dataset.view);
-  });
+  tab.addEventListener("click", () => switchView(tab.dataset.view));
 });
 
 function openTaskModal(groupId, status = "未着手") {
@@ -1044,8 +892,7 @@ function openTaskModal(groupId, status = "未着手") {
   document.getElementById("task-modal").dataset.taskId = "";
   document.getElementById("task-title").value = "";
   document.getElementById("task-type").value = taskTypeOptions[0]?.id ?? "";
-  document.getElementById("task-category").value =
-    taskCategoryOptions[0]?.id ?? "";
+  document.getElementById("task-category").value = taskCategoryOptions[0]?.id ?? "";
   document.getElementById("task-granularity").value = "";
   document.getElementById("task-book-id").value = "";
   document.getElementById("task-status").value = status;
@@ -1066,9 +913,7 @@ function openTaskModal(groupId, status = "未着手") {
 
 renderTaskViews();
 
-document.getElementById("btn-add-group").addEventListener("click", () => {
-  openGroupModal();
-});
+document.getElementById("btn-add-group").addEventListener("click", () => openGroupModal());
 
 document.querySelectorAll(".kanban-add-btn").forEach((btn) => {
   btn.addEventListener("click", (e) => {
@@ -1077,13 +922,8 @@ document.querySelectorAll(".kanban-add-btn").forEach((btn) => {
   });
 });
 
-document
-  .getElementById("btn-group-close")
-  .addEventListener("click", closeGroupModalWithConfirm);
-
-document
-  .getElementById("btn-task-close")
-  .addEventListener("click", closeTaskModalWithConfirm);
+document.getElementById("btn-group-close").addEventListener("click", closeGroupModalWithConfirm);
+document.getElementById("btn-task-close").addEventListener("click", closeTaskModalWithConfirm);
 
 document.getElementById("btn-group-add-task").addEventListener("click", () => {
   const groupId = document.getElementById("group-modal").dataset.groupId;
@@ -1093,44 +933,25 @@ document.getElementById("btn-group-add-task").addEventListener("click", () => {
 
 document.getElementById("btn-task-save").addEventListener("click", async () => {
   const title = document.getElementById("task-title").value;
-  if (!title) {
-    alert("タイトルを入力してください");
-    return;
-  }
+  if (!title) { alert("タイトルを入力してください"); return; }
 
   const groupId = document.getElementById("task-modal").dataset.groupId;
   const taskId = document.getElementById("task-modal").dataset.taskId;
-  const typeId = document.getElementById("task-type").value;
-  const categoryId = document.getElementById("task-category").value;
-  const granularity = document.getElementById("task-granularity").value || null;
-  const bookId = document.getElementById("task-book-id").value || null;
-  const status = document.getElementById("task-status").value;
-  const startPlannedDate =
-    document.getElementById("task-start-planned-date").value || null;
-  const endPlannedDate =
-    document.getElementById("task-end-planned-date").value || null;
-  const startDate = document.getElementById("task-start-date").value || null;
-  const endDate = document.getElementById("task-end-date").value || null;
-  const studyTime = document.getElementById("task-study-time").value || null;
-  const plannedStudyTime =
-    document.getElementById("task-planned-study-time").value || null;
-  const memo = document.getElementById("task-memo").value || null;
-
   const body = {
     group_id: groupId,
     title,
-    type_id: typeId,
-    category_id: categoryId,
-    granularity,
-    book_id: bookId,
-    status,
-    start_planned_date: startPlannedDate,
-    end_planned_date: endPlannedDate,
-    start_date: startDate,
-    end_date: endDate,
-    study_time: studyTime,
-    planned_study_time: plannedStudyTime,
-    memo,
+    type_id: document.getElementById("task-type").value,
+    category_id: document.getElementById("task-category").value,
+    granularity: document.getElementById("task-granularity").value || null,
+    book_id: document.getElementById("task-book-id").value || null,
+    status: document.getElementById("task-status").value,
+    start_planned_date: document.getElementById("task-start-planned-date").value || null,
+    end_planned_date: document.getElementById("task-end-planned-date").value || null,
+    start_date: document.getElementById("task-start-date").value || null,
+    end_date: document.getElementById("task-end-date").value || null,
+    study_time: document.getElementById("task-study-time").value || null,
+    planned_study_time: document.getElementById("task-planned-study-time").value || null,
+    memo: document.getElementById("task-memo").value || null,
   };
 
   if (taskId) {
@@ -1144,97 +965,71 @@ document.getElementById("btn-task-save").addEventListener("click", async () => {
   renderTaskViews();
 });
 
-document
-  .getElementById("btn-task-delete")
-  .addEventListener("click", async () => {
-    const taskId = document.getElementById("task-modal").dataset.taskId;
-    if (!taskId) return;
-    if (!confirm("削除しますか？")) return;
-    await api(`/api/tasks/${taskId}`, "DELETE");
-    document.getElementById("task-modal").dataset.taskId = "";
-    markTaskModalClean();
-    document.getElementById("task-modal").classList.add("hidden");
-    renderTaskViews();
-  });
+document.getElementById("btn-task-delete").addEventListener("click", async () => {
+  const taskId = document.getElementById("task-modal").dataset.taskId;
+  if (!taskId) return;
+  if (!confirm("削除しますか？")) return;
+  await api(`/api/tasks/${taskId}`, "DELETE");
+  document.getElementById("task-modal").dataset.taskId = "";
+  markTaskModalClean();
+  document.getElementById("task-modal").classList.add("hidden");
+  renderTaskViews();
+});
 
-document
-  .getElementById("btn-group-delete")
-  .addEventListener("click", async () => {
-    const groupId = document.getElementById("group-modal").dataset.groupId;
-    if (!groupId) return;
-    if (!confirm("削除しますか？")) return;
-    await api(`/api/groups/${groupId}`, "DELETE");
-    document.getElementById("group-modal").dataset.groupId = "";
+document.getElementById("btn-group-delete").addEventListener("click", async () => {
+  const groupId = document.getElementById("group-modal").dataset.groupId;
+  if (!groupId) return;
+  if (!confirm("削除しますか？")) return;
+  await api(`/api/groups/${groupId}`, "DELETE");
+  document.getElementById("group-modal").dataset.groupId = "";
+  markGroupModalClean();
+  document.getElementById("group-modal").classList.add("hidden");
+  renderTaskViews();
+});
+
+document.getElementById("btn-group-save").addEventListener("click", async () => {
+  const title = document.getElementById("group-title").value;
+  if (!title) { alert("タイトルを入力してください"); return; }
+
+  const memo = document.getElementById("group-memo").value || null;
+  const groupId = document.getElementById("group-modal").dataset.groupId;
+
+  if (groupId) {
+    await api(`/api/groups/${groupId}`, "PUT", { title, memo });
     markGroupModalClean();
     document.getElementById("group-modal").classList.add("hidden");
-    renderTaskViews();
-  });
+  } else {
+    const newGroup = await api("/api/groups", "POST", { title, memo });
+    document.getElementById("group-modal").dataset.groupId = newGroup.id;
+    document.getElementById("btn-group-add-task-wrapper").classList.remove("hidden");
+    markGroupModalClean();
+  }
 
-document
-  .getElementById("btn-group-save")
-  .addEventListener("click", async () => {
-    const title = document.getElementById("group-title").value;
-    if (!title) {
-      alert("タイトルを入力してください");
-      return;
-    }
-
-    const memo = document.getElementById("group-memo").value || null;
-    const groupId = document.getElementById("group-modal").dataset.groupId;
-
-    if (groupId) {
-      await api(`/api/groups/${groupId}`, "PUT", { title, memo });
-      markGroupModalClean();
-      document.getElementById("group-modal").classList.add("hidden");
-    } else {
-      const newGroup = await api("/api/groups", "POST", { title, memo });
-      document.getElementById("group-modal").dataset.groupId = newGroup.id;
-      document
-        .getElementById("btn-group-add-task-wrapper")
-        .classList.remove("hidden");
-      markGroupModalClean();
-    }
-
-    renderTaskViews();
-  });
+  renderTaskViews();
+});
 
 // ===== タスクモーダル：未保存確認つき開閉処理 =====
 
 function getTaskModalSnapshot() {
   const ids = [
-    "task-title",
-    "task-type",
-    "task-category",
-    "task-granularity",
-    "task-book-id",
-    "task-status",
-    "task-start-planned-date",
-    "task-end-planned-date",
-    "task-start-date",
-    "task-end-date",
-    "task-planned-study-time",
-    "task-study-time",
-    "task-memo",
+    "task-title", "task-type", "task-category", "task-granularity",
+    "task-book-id", "task-status", "task-start-planned-date", "task-end-planned-date",
+    "task-start-date", "task-end-date", "task-planned-study-time", "task-study-time", "task-memo",
   ];
   const snapshot = {};
   ids.forEach((id) => {
     const el = document.getElementById(id);
     snapshot[id] = el ? el.value : "";
   });
-
-  snapshot.steps = Array.from(
-    document.querySelectorAll("#step-list .step-item"),
-  ).map((li) => ({
+  snapshot.steps = Array.from(document.querySelectorAll("#step-list .step-item")).map((li) => ({
     title: li.querySelector(".step-item-title")?.textContent ?? "",
     completed: li.classList.contains("completed"),
   }));
-
   return JSON.stringify(snapshot);
 }
 
 function markTaskModalClean() {
-  document.getElementById("task-modal").dataset.initialSnapshot =
-    getTaskModalSnapshot();
+  document.getElementById("task-modal").dataset.initialSnapshot = getTaskModalSnapshot();
 }
 
 function isTaskModalDirty() {
@@ -1246,22 +1041,15 @@ function isTaskModalDirty() {
 
 function closeTaskModalWithConfirm() {
   if (isTaskModalDirty()) {
-    const ok = confirm(
-      "編集の内容は保存されていません。閉じてもよろしいですか？",
-    );
+    const ok = confirm("編集の内容は保存されていません。閉じてもよろしいですか？");
     if (!ok) return;
   }
   document.getElementById("task-modal").classList.add("hidden");
 }
 
-document
-  .getElementById("btn-task-close-x")
-  .addEventListener("click", closeTaskModalWithConfirm);
-
+document.getElementById("btn-task-close-x").addEventListener("click", closeTaskModalWithConfirm);
 document.getElementById("task-modal").addEventListener("click", (e) => {
-  if (e.target.id === "task-modal") {
-    closeTaskModalWithConfirm();
-  }
+  if (e.target.id === "task-modal") closeTaskModalWithConfirm();
 });
 
 // ===== 親タスクモーダル：未保存確認つき開閉処理 =====
@@ -1277,8 +1065,7 @@ function getGroupModalSnapshot() {
 }
 
 function markGroupModalClean() {
-  document.getElementById("group-modal").dataset.initialSnapshot =
-    getGroupModalSnapshot();
+  document.getElementById("group-modal").dataset.initialSnapshot = getGroupModalSnapshot();
 }
 
 function isGroupModalDirty() {
@@ -1290,20 +1077,13 @@ function isGroupModalDirty() {
 
 function closeGroupModalWithConfirm() {
   if (isGroupModalDirty()) {
-    const ok = confirm(
-      "編集の内容は保存されていません。閉じてもよろしいですか？",
-    );
+    const ok = confirm("編集の内容は保存されていません。閉じてもよろしいですか？");
     if (!ok) return;
   }
   document.getElementById("group-modal").classList.add("hidden");
 }
 
-document
-  .getElementById("btn-group-close-x")
-  .addEventListener("click", closeGroupModalWithConfirm);
-
+document.getElementById("btn-group-close-x").addEventListener("click", closeGroupModalWithConfirm);
 document.getElementById("group-modal").addEventListener("click", (e) => {
-  if (e.target.id === "group-modal") {
-    closeGroupModalWithConfirm();
-  }
+  if (e.target.id === "group-modal") closeGroupModalWithConfirm();
 });

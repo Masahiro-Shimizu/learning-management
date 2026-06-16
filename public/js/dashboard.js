@@ -148,10 +148,9 @@ function renderCharts() {
       d.setDate(monday.getDate() + i);
       return d;
     });
-    
-    // 🛠️ 【修正】配列ではなく、ちゃんと7番目の日付（日曜日）を生成して代入
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
+
+    // 日曜日（weekDates[6]）をそのまま利用
+    const sunday = new Date(weekDates[6]);
     sunday.setHours(23, 59, 59, 999);
 
     labels = ["月", "火", "水", "木", "金", "土", "日"];
@@ -220,7 +219,7 @@ function renderCharts() {
   const periodHours = minutesToHours(periodTotalMinutes);
   document.getElementById("period-study-time").textContent = periodHours;
 
-  // 先週・先月・前年との比較（サブテキスト）
+  // 先週・先月・前年との比較
   let prevFilteredTasks = [];
   if (currentPeriod === "week") {
     const monday = getWeekStart(viewDate);
@@ -289,7 +288,6 @@ function renderCharts() {
 
   // ===== グラフ =====
 
-  // ステータス別件数
   const todo = filteredTasks.filter((t) => t.status === "未着手").length;
   const inprogress = filteredTasks.filter((t) => t.status === "進行中").length;
   const done = filteredTasks.filter((t) => t.status === "完了").length;
@@ -312,10 +310,10 @@ function renderCharts() {
 
   // 予定時間の平均（時間単位）
   const avgPlannedHours = minutesToHours(
-    filteredTasks.reduce((sum, t) => sum + (t.planned_time || 0), 0),
+    tasks.reduce((sum, t) => sum + (t.planned_study_time || 0), 0) /
+      Math.max(labels.length, 1),
   );
-  
-  // 日別学習時間（棒グラフ）の初期化
+
   chartDaily = new Chart(dailyCanvas, {
     type: "bar",
     data: {
@@ -336,7 +334,7 @@ function renderCharts() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      aspectRatio: 2.5, // 💡【追加】横幅に対して適切な高さを強制確保させる（つぶれ防止）
+      aspectRatio: 2.5,
       plugins: { legend: { display: false } },
       scales: {
         x: {
@@ -387,23 +385,23 @@ function renderCharts() {
     },
   });
 
-    // ===== 書籍別進捗率（横棒グラフ）=====
-    const bookProgress = books
+  // ===== 書籍別進捗率（横棒グラフ）=====
+  const bookProgress = books
     .map((book) => {
       const total = book.task_count || 0;
       const completed = Number(book.completed_count) || 0;
       const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
-      return { title: book.title, rate, total }; // 💡 total（タスク数）も一緒に返す
+      return { title: book.title, rate, total };
     })
-    // 🛠️ 【機能追加】タスク数が1件以上ある（進捗が存在する）書籍だけを表示
-    .filter((b) => b.total > 0);
+    .filter((b) => b.total > 0); // タスク数が1件以上ある書籍のみ表示
 
-  // 書籍数に合わせて親要素の高さを動的に引き伸ばす
+  // 書籍数に合わせて親要素の高さを動的計算
   const booksWrapper = document.getElementById("books-wrapper-js");
   if (booksWrapper) {
-     const barHeight = bookProgress.length > 6 ? 32 : 45;
-     booksWrapper.style.height = `${Math.max(bookProgress.length * barHeight, 250)}px`;
+    const barHeight = bookProgress.length > 6 ? 32 : 45;
+    booksWrapper.style.height = `${Math.max(bookProgress.length * barHeight, 250)}px`;
   }
+
   chartBooks = new Chart(document.getElementById("chart-books"), {
     type: "bar",
     data: {
@@ -415,7 +413,6 @@ function renderCharts() {
           backgroundColor: bookProgress.map(
             (_, i) => CHART_COLORS[i % CHART_COLORS.length],
           ),
-          // 💡 件数が多いときは棒自体の太さ（％）を自動で最適化する
           barPercentage: bookProgress.length > 6 ? 0.6 : 0.8,
         },
       ],
@@ -444,9 +441,7 @@ function renderCharts() {
           grid: { display: false },
         },
       },
-      layout: {
-        padding: { left: 10 },
-      },
+      layout: { padding: { left: 10 } },
     },
   });
 
@@ -463,11 +458,10 @@ function renderCharts() {
     if (t.status === "完了") entry.done += 1;
   });
 
-  // 🛠️ 【機能追加】進捗（タスク）が1件以上あるカテゴリ名だけを抽出するよう修正
+  // タスク1件以上あるカテゴリのみ表示
   const categoryNames = Array.from(categoryMap.keys()).filter(
-    (name) => categoryMap.get(name).total > 0
+    (name) => categoryMap.get(name).total > 0,
   );
-  
   const categoryTimeData = categoryNames.map((name) =>
     minutesToHours(categoryMap.get(name).time),
   );
@@ -497,7 +491,7 @@ function renderCharts() {
       options: {
         maintainAspectRatio: false,
         responsive: true,
-        aspectRatio: 2.5, // 💡【追加】横幅に対して適切な高さを強制確保させる（つぶれ防止）
+        aspectRatio: 2.5,
         plugins: { legend: { display: false } },
         scales: {
           x: {
@@ -518,7 +512,6 @@ function renderCharts() {
   );
 
   // カテゴリ別進捗率（横棒グラフ）
-  // 🛠️ 【機能追加】件数に応じて高さを小さく（細く）調節するロジックを反映
   const categoryProgressWrapper = document.getElementById("category-wrapper-js");
   if (categoryProgressWrapper) {
     const catBarHeight = categoryNames.length > 6 ? 32 : 45;
@@ -536,7 +529,6 @@ function renderCharts() {
             label: "進捗率(%)",
             data: categoryProgressData.length > 0 ? categoryProgressData : [],
             backgroundColor: categoryColors.length > 0 ? categoryColors : ["#808080"],
-            // 💡 件数が多いときは棒を細めにする
             barPercentage: categoryNames.length > 6 ? 0.6 : 0.8,
           },
         ],
@@ -565,9 +557,7 @@ function renderCharts() {
             grid: { display: false },
           },
         },
-        layout: {
-          padding: { left: 20 },
-        },
+        layout: { padding: { left: 20 } },
       },
     },
   );
@@ -614,7 +604,6 @@ function renderCharts() {
     return Math.round((count / totalAllTasks) * 100);
   });
 
-  // 進捗率推移グラフの初期化
   chartProgress = new Chart(document.getElementById("chart-progress"), {
     type: "line",
     data: {
@@ -665,7 +654,8 @@ function renderCharts() {
       },
     },
   });
-  // 💡【追加】描画直後のタイミングズレによるつぶれを、強制的にリサイズして引き伸ばす
+
+  // 描画直後のつぶれ防止
   if (chartDaily) chartDaily.resize();
   if (chartCategoryTime) chartCategoryTime.resize();
-} // renderCharts 関数の閉じ括弧
+}
