@@ -7,20 +7,21 @@
 ### 画面キャプチャ
 
 <details>
-  <summary>📸 タスク登録・編集ダイアログのスクリーンショット（クリックで展開）</summary>
-  <img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/91017af2-28a3-4b8b-9b00-69bf114359db" />
-<img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/68a220fa-6131-44cf-9904-b0b39b96dcd7" />
-<img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/96780cfa-d2c8-4fcd-af35-d6d02132830a" />
-<img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/f08d99c0-cd93-4767-970c-da9c5b6421c8" />
-<img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/f65e1dc2-5c5d-4d26-87bc-2163d52856da" />
-<img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/b8cdc335-0e58-4974-ad37-44b0e7f4516b" />
-<img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/d879877d-cdb3-4087-a1cd-74665fa04493" />
-<img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/598bf207-cdac-4f64-bb79-3da6a18e8324" />
-<img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/a14dc95c-eb90-4c8c-b3d5-fea5364ecda5" />
-<img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/cdc3371f-d86a-4b92-ad38-3f6aad286fc8" />
-<img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/14476e01-d8ae-402d-bdfa-3342486ec972" />
-<img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/c04c64e4-1b21-4769-880f-141004650f0f" />
-<img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/790a37c6-4ddd-46bf-b996-6b05431aafe8" />
+  <summary>（クリックで展開）</summary>
+  <img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/9e962aa8-ac0a-400e-8e96-9ecb142d7632" />
+<img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/71a27f31-e1ea-4b24-920b-df2ea6224541" />
+<img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/58ae19b0-e05c-4e08-a941-69737f02a74a" />
+<img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/840c9732-d765-4aa3-8d85-ebe29e76eca8" />
+<img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/58a096f6-aab6-4ce1-95a3-78d7d09397da" />
+<img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/d87e8ed1-1b6f-446f-abbf-fb3d2428a65d" />
+<img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/9f1649ca-25a9-4fb9-8e5c-15eb163840b8" />
+<img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/a0439f7d-547f-4fbb-bbf6-0c2792b65bea" />
+<img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/c48cfad0-d416-4dc8-a212-27c14ec49a28" />
+<img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/d4bf2844-884d-40c1-bfc4-c022e9d57f53" />
+<img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/2496c5e0-0b22-49de-a150-737fd30a9771" />
+<img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/3a4221a2-001d-4671-8119-d3aa94f4bf78" />
+<img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/f34bfe81-a041-4fee-9638-09e2eae1f5e8" />
+<img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/caa5f8c3-066c-408e-83c0-3b26592f81d5" />
 </details>
 
 ## 1. 共通レイアウト（サイドナビゲーション）
