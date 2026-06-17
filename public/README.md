@@ -8,6 +8,8 @@
 
 <details>
   <summary>（クリックで展開）</summary>
+  <img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/8a6c7235-9427-48c0-b916-3e0822f36367" />
+<img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/539ac41c-4d81-49ef-9e5f-ef14a9e0842b" />
   <img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/9e962aa8-ac0a-400e-8e96-9ecb142d7632" />
 <img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/71a27f31-e1ea-4b24-920b-df2ea6224541" />
 <img width="1440" height="900" alt="Image" src="https://github.com/user-attachments/assets/58ae19b0-e05c-4e08-a941-69737f02a74a" />
