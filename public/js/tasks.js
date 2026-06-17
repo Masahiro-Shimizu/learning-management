@@ -31,27 +31,42 @@ async function loadTaskCategoryOptions() {
 }
 
 const TASK_TYPE_COLOR_CLASSES = [
-  "book", "video", "article", "practice", "teal", "rose", "lime",
+  "book",
+  "video",
+  "article",
+  "practice",
+  "teal",
+  "rose",
+  "lime",
 ];
 
 function getTypeInfo(typeName) {
   if (!typeName) return { label: "", class: "default" };
   let hash = 0;
   for (let i = 0; i < typeName.length; i++) {
-    hash = (hash * 31 + typeName.charCodeAt(i)) % TASK_TYPE_COLOR_CLASSES.length;
+    hash =
+      (hash * 31 + typeName.charCodeAt(i)) % TASK_TYPE_COLOR_CLASSES.length;
   }
   return { label: typeName, class: TASK_TYPE_COLOR_CLASSES[hash] };
 }
 
 const TASK_CATEGORY_COLOR_CLASSES = [
-  "indigo", "amber", "teal", "rose", "lime", "sky", "violet",
+  "indigo",
+  "amber",
+  "teal",
+  "rose",
+  "lime",
+  "sky",
+  "violet",
 ];
 
 function getCategoryInfo(categoryName) {
   if (!categoryName) return { label: "", class: "default" };
   let hash = 0;
   for (let i = 0; i < categoryName.length; i++) {
-    hash = (hash * 31 + categoryName.charCodeAt(i)) % TASK_CATEGORY_COLOR_CLASSES.length;
+    hash =
+      (hash * 31 + categoryName.charCodeAt(i)) %
+      TASK_CATEGORY_COLOR_CLASSES.length;
   }
   return { label: categoryName, class: TASK_CATEGORY_COLOR_CLASSES[hash] };
 }
@@ -69,7 +84,11 @@ function formatDateShort(dateStr) {
 }
 
 function getTaskDisplayDate(task) {
-  const raw = task.start_planned_date || task.end_planned_date || task.start_date || task.end_date;
+  const raw =
+    task.start_planned_date ||
+    task.end_planned_date ||
+    task.start_date ||
+    task.end_date;
   return formatDateShort(raw);
 }
 
@@ -201,7 +220,9 @@ function showStepSection(show) {
 function updateCardStepBadge(taskId) {
   const steps = Array.from(document.querySelectorAll("#step-list .step-item"));
   const total = steps.length;
-  const completed = steps.filter((li) => li.classList.contains("completed")).length;
+  const completed = steps.filter((li) =>
+    li.classList.contains("completed"),
+  ).length;
   const text = `${completed}/${total}`;
 
   const card = document.querySelector(`.task-card[data-task-id="${taskId}"]`);
@@ -259,7 +280,9 @@ document.getElementById("btn-step-add").addEventListener("click", async () => {
   if (!title) return;
   const taskId = document.getElementById("task-modal").dataset.taskId;
   const newStep = await api(`/api/tasks/${taskId}/steps`, "POST", { title });
-  document.getElementById("step-list").insertAdjacentHTML("beforeend", createStepItemHtml(newStep));
+  document
+    .getElementById("step-list")
+    .insertAdjacentHTML("beforeend", createStepItemHtml(newStep));
   input.value = "";
   updateCardStepBadge(taskId);
 });
@@ -278,16 +301,23 @@ async function openTaskEditModal(taskId) {
   document.getElementById("task-status").value = task.status;
   document.getElementById("task-start-planned-date").value =
     task.start_planned_date ? task.start_planned_date.slice(0, 10) : "";
-  document.getElementById("task-end-planned-date").value =
-    task.end_planned_date ? task.end_planned_date.slice(0, 10) : "";
-  document.getElementById("task-start-date").value =
-    task.start_date ? task.start_date.slice(0, 10) : "";
+  document.getElementById("task-end-planned-date").value = task.end_planned_date
+    ? task.end_planned_date.slice(0, 10)
+    : "";
+  document.getElementById("task-start-date").value = task.start_date
+    ? task.start_date.slice(0, 10)
+    : "";
   // --- 該当箇所の周辺を以下のように書き換えます ---
-  document.getElementById("task-end-date").value = task.end_date ? task.end_date.slice(0, 10) : "";
+  document.getElementById("task-end-date").value = task.end_date
+    ? task.end_date.slice(0, 10)
+    : "";
 
   // 【変更】分単位を時間単位(h)に変換してモーダルに表示する
-  document.getElementById("task-study-time").value = task.study_time ? minutesToHours(task.study_time) : "";
-  document.getElementById("task-planned-study-time").value = task.planned_study_time ? minutesToHours(task.planned_study_time) : "";
+  document.getElementById("task-study-time").value = task.study_time
+    ? minutesToHours(task.study_time)
+    : "";
+  document.getElementById("task-planned-study-time").value =
+    task.planned_study_time ? minutesToHours(task.planned_study_time) : "";
   document.getElementById("task-memo").value = task.memo || "";
 
   showStepSection(true);
@@ -376,8 +406,13 @@ function renderKanban(data) {
     const status = calcStatus(group.id, tasks);
     statusCounts[status]++;
     const childTasks = tasks.filter((t) => t.group_id === group.id);
-    const container = document.querySelector(`.kanban-cards[data-status="${status}"]`);
-    container.insertAdjacentHTML("beforeend", createGroupCardHtml(group, childTasks, stepsByTaskId));
+    const container = document.querySelector(
+      `.kanban-cards[data-status="${status}"]`,
+    );
+    container.insertAdjacentHTML(
+      "beforeend",
+      createGroupCardHtml(group, childTasks, stepsByTaskId),
+    );
   });
 
   Object.entries(statusCounts).forEach(([status, count]) => {
@@ -428,7 +463,8 @@ function createTaskRowHtml(task, steps) {
   const completedDate = formatDateShort(task.end_date) || "－";
   // 【修正前】const minutes = task.study_time != null ? `${task.study_time}分` : "－";
   // 【修正後】
-  const minutes = task.study_time != null ? `${minutesToHours(task.study_time)}h` : "－";
+  const minutes =
+    task.study_time != null ? `${minutesToHours(task.study_time)}h` : "－";
 
   const stepBadge =
     steps && steps.length > 0
@@ -461,20 +497,29 @@ function createTaskRowHtml(task, steps) {
 function bindTableEvents() {
   document.querySelectorAll("#task-table-body .group-row").forEach((row) => {
     row.addEventListener("click", (e) => {
-      if (e.target.closest(".btn-edit-group") || e.target.closest(".btn-add-task-table")) return;
+      if (
+        e.target.closest(".btn-edit-group") ||
+        e.target.closest(".btn-add-task-table")
+      )
+        return;
 
       const isCollapsed = row.classList.toggle("collapsed");
       const toggle = row.querySelector(".group-row-toggle");
       toggle.textContent = isCollapsed ? "▸" : "▾";
 
       const groupId = row.dataset.groupId;
-      let collapsedGroups = JSON.parse(localStorage.getItem("collapsedTableGroups") || "[]");
+      let collapsedGroups = JSON.parse(
+        localStorage.getItem("collapsedTableGroups") || "[]",
+      );
       if (isCollapsed) {
         if (!collapsedGroups.includes(groupId)) collapsedGroups.push(groupId);
       } else {
         collapsedGroups = collapsedGroups.filter((id) => id !== groupId);
       }
-      localStorage.setItem("collapsedTableGroups", JSON.stringify(collapsedGroups));
+      localStorage.setItem(
+        "collapsedTableGroups",
+        JSON.stringify(collapsedGroups),
+      );
 
       // 子タスク行の表示/非表示
       let nextRow = row.nextElementSibling;
@@ -486,19 +531,23 @@ function bindTableEvents() {
   });
 
   // テーブルビューの「+ 子タスク追加」ボタン
-  document.querySelectorAll("#task-table-body .btn-add-task-table").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      openTaskModal(btn.dataset.groupId);
+  document
+    .querySelectorAll("#task-table-body .btn-add-task-table")
+    .forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openTaskModal(btn.dataset.groupId);
+      });
     });
-  });
 
-  document.querySelectorAll("#task-table-body .btn-edit-group").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      openGroupEditModal(btn.dataset.groupId);
+  document
+    .querySelectorAll("#task-table-body .btn-edit-group")
+    .forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openGroupEditModal(btn.dataset.groupId);
+      });
     });
-  });
 
   document.querySelectorAll("#task-table-body .task-row").forEach((row) => {
     row.addEventListener("click", () => {
@@ -520,14 +569,22 @@ function renderTable(data) {
 
   groups.forEach((group) => {
     const childTasks = tasks.filter((t) => t.group_id === group.id);
-    tbody.insertAdjacentHTML("beforeend", createGroupRowHtml(group, childTasks.length));
+    tbody.insertAdjacentHTML(
+      "beforeend",
+      createGroupRowHtml(group, childTasks.length),
+    );
     childTasks.forEach((task) => {
-      tbody.insertAdjacentHTML("beforeend", createTaskRowHtml(task, stepsByTaskId[task.id] || []));
+      tbody.insertAdjacentHTML(
+        "beforeend",
+        createTaskRowHtml(task, stepsByTaskId[task.id] || []),
+      );
     });
   });
 
   // localStorage から折りたたみ状態を復元
-  const collapsedGroups = JSON.parse(localStorage.getItem("collapsedTableGroups") || "[]");
+  const collapsedGroups = JSON.parse(
+    localStorage.getItem("collapsedTableGroups") || "[]",
+  );
   collapsedGroups.forEach((groupId) => {
     const row = tbody.querySelector(`.group-row[data-group-id="${groupId}"]`);
     if (row) {
@@ -595,7 +652,8 @@ function renderCalendar(data) {
   const year = calendarDate.getFullYear();
   const month = calendarDate.getMonth();
 
-  document.getElementById("calendar-month-label").textContent = `${year}年${month + 1}月`;
+  document.getElementById("calendar-month-label").textContent =
+    `${year}年${month + 1}月`;
 
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
@@ -606,11 +664,17 @@ function renderCalendar(data) {
   grid.innerHTML = "";
 
   ["日", "月", "火", "水", "木", "金", "土"].forEach((label) => {
-    grid.insertAdjacentHTML("beforeend", `<div class="calendar-weekday">${label}</div>`);
+    grid.insertAdjacentHTML(
+      "beforeend",
+      `<div class="calendar-weekday">${label}</div>`,
+    );
   });
 
   for (let i = 0; i < startWeekday; i++) {
-    grid.insertAdjacentHTML("beforeend", `<div class="calendar-cell calendar-cell--empty"></div>`);
+    grid.insertAdjacentHTML(
+      "beforeend",
+      `<div class="calendar-cell calendar-cell--empty"></div>`,
+    );
   }
 
   for (let day = 1; day <= daysInMonth; day++) {
@@ -625,7 +689,10 @@ function renderCalendar(data) {
     const chipsHtml = visibleTasks
       .map((t) => createCalendarChipHtml(t, stepsByTaskId[t.id] || []))
       .join("");
-    const moreHtml = remaining > 0 ? `<div class="calendar-chip-more">+${remaining}件</div>` : "";
+    const moreHtml =
+      remaining > 0
+        ? `<div class="calendar-chip-more">+${remaining}件</div>`
+        : "";
 
     grid.insertAdjacentHTML(
       "beforeend",
@@ -753,8 +820,9 @@ function renderTimeline(data) {
   const grid = document.getElementById("timeline-grid");
   grid.innerHTML = "";
 
-  const axisCellsHtml = Array.from({ length: daysInMonth }, (_, i) =>
-    `<div class="timeline-axis-cell">${i + 1}</div>`,
+  const axisCellsHtml = Array.from(
+    { length: daysInMonth },
+    (_, i) => `<div class="timeline-axis-cell">${i + 1}</div>`,
   ).join("");
 
   grid.insertAdjacentHTML(
@@ -777,13 +845,15 @@ function renderTimeline(data) {
   );
 
   const today = new Date();
-  const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+  const isCurrentMonth =
+    today.getFullYear() === year && today.getMonth() === month;
   const todayLeftPercent = isCurrentMonth
     ? ((today.getDate() - 1) / daysInMonth) * 100
     : null;
 
   // 完了タスク非表示フィルタ
-  const hideCompleted = document.getElementById("timeline-hide-completed")?.checked ?? false;
+  const hideCompleted =
+    document.getElementById("timeline-hide-completed")?.checked ?? false;
 
   groups.forEach((group) => {
     let childTasks = tasks.filter((t) => t.group_id === group.id);
@@ -794,7 +864,12 @@ function renderTimeline(data) {
 
     const barsHtml = childTasks
       .map((task) => {
-        const result = createTimelineBarHtml(task, daysInMonth, monthStart, monthEnd);
+        const result = createTimelineBarHtml(
+          task,
+          daysInMonth,
+          monthStart,
+          monthEnd,
+        );
         if (!result) return "";
         const index = childTasks.indexOf(task);
         const top = 8 + index * 28;
@@ -805,9 +880,10 @@ function renderTimeline(data) {
       .join("");
 
     const trackHeight = Math.max(40, childTasks.length * 28 + 16);
-    const todayLineHtml = todayLeftPercent !== null
-      ? `<div class="timeline-today-line" style="left: ${todayLeftPercent}%;"></div>`
-      : "";
+    const todayLineHtml =
+      todayLeftPercent !== null
+        ? `<div class="timeline-today-line" style="left: ${todayLeftPercent}%;"></div>`
+        : "";
 
     grid.insertAdjacentHTML(
       "beforeend",
@@ -823,7 +899,8 @@ function renderTimeline(data) {
 
   bindTimelineEvents();
 
-  document.getElementById("timeline-month-label").textContent = `${year}年${month + 1}月`;
+  document.getElementById("timeline-month-label").textContent =
+    `${year}年${month + 1}月`;
   const monthPicker = document.getElementById("timeline-month-picker");
   if (monthPicker) {
     monthPicker.value = `${year}-${String(month + 1).padStart(2, "0")}`;
@@ -872,19 +949,28 @@ async function renderTaskViews() {
   renderCalendar(data);
   renderTimeline(data);
   bindAddTaskButtons(data.groups);
+
+  const btnAddGroupCalendar = document.getElementById("btn-add-group-calendar");
+  if (btnAddGroupCalendar) {
+    btnAddGroupCalendar.onclick = () => openGroupModal();
+  }
 }
 
 function switchView(view) {
   currentView = view;
   localStorage.setItem("taskView", view);
-
   document.querySelectorAll(".view-tab").forEach((tab) => {
     tab.classList.toggle("active", tab.dataset.view === view);
   });
-
   document.querySelectorAll(".view-panel").forEach((panel) => {
     panel.classList.toggle("hidden", panel.dataset.viewPanel !== view);
   });
+
+  // カレンダービューのみ右上「+ 親タスク追加」を非表示
+  const btnAddGroup = document.getElementById("btn-add-group");
+  if (btnAddGroup) {
+    btnAddGroup.style.display = view === "calendar" ? "none" : "";
+  }
 }
 
 // 初期ビューを復元
@@ -899,7 +985,8 @@ function openTaskModal(groupId, status = "未着手") {
   document.getElementById("task-modal").dataset.taskId = "";
   document.getElementById("task-title").value = "";
   document.getElementById("task-type").value = taskTypeOptions[0]?.id ?? "";
-  document.getElementById("task-category").value = taskCategoryOptions[0]?.id ?? "";
+  document.getElementById("task-category").value =
+    taskCategoryOptions[0]?.id ?? "";
   document.getElementById("task-granularity").value = "";
   document.getElementById("task-book-id").value = "";
   document.getElementById("task-status").value = status;
@@ -920,7 +1007,9 @@ function openTaskModal(groupId, status = "未着手") {
 
 renderTaskViews();
 
-document.getElementById("btn-add-group").addEventListener("click", () => openGroupModal());
+document
+  .getElementById("btn-add-group")
+  .addEventListener("click", () => openGroupModal());
 
 document.querySelectorAll(".kanban-add-btn").forEach((btn) => {
   btn.addEventListener("click", (e) => {
@@ -929,8 +1018,12 @@ document.querySelectorAll(".kanban-add-btn").forEach((btn) => {
   });
 });
 
-document.getElementById("btn-group-close").addEventListener("click", closeGroupModalWithConfirm);
-document.getElementById("btn-task-close").addEventListener("click", closeTaskModalWithConfirm);
+document
+  .getElementById("btn-group-close")
+  .addEventListener("click", closeGroupModalWithConfirm);
+document
+  .getElementById("btn-task-close")
+  .addEventListener("click", closeTaskModalWithConfirm);
 
 document.getElementById("btn-group-add-task").addEventListener("click", () => {
   const groupId = document.getElementById("group-modal").dataset.groupId;
@@ -940,34 +1033,44 @@ document.getElementById("btn-group-add-task").addEventListener("click", () => {
 
 document.getElementById("btn-task-save").addEventListener("click", async () => {
   const title = document.getElementById("task-title").value;
-  if (!title) { alert("タイトルを入力してください"); return; }
+  if (!title) {
+    alert("タイトルを入力してください");
+    return;
+  }
 
   const groupId = document.getElementById("task-modal").dataset.groupId;
   const taskId = document.getElementById("task-modal").dataset.taskId;
   // --- 該当箇所の周辺を以下のように書き換えます ---
   const studyTimeInput = document.getElementById("task-study-time").value;
-  const plannedStudyTimeInput = document.getElementById("task-planned-study-time").value;
-  
+  const plannedStudyTimeInput = document.getElementById(
+    "task-planned-study-time",
+  ).value;
+
   const body = {
-      group_id: groupId,
-      title,
-      type_id: document.getElementById("task-type").value,
-      category_id: document.getElementById("task-category").value,
-      granularity: document.getElementById("task-granularity").value || null,
-      book_id: document.getElementById("task-book-id").value || null,
-      status: document.getElementById("task-status").value,
-      start_planned_date: document.getElementById("task-start-planned-date").value || null,
-      end_planned_date: document.getElementById("task-end-planned-date").value || null,
-      start_date: document.getElementById("task-start-date").value || null,
-      end_date: document.getElementById("task-end-date").value || null,
-      
-      // 【変更】入力された時間（h）を分単位に直してバックエンドへ保存
-      study_time: studyTimeInput ? Math.round(parseFloat(studyTimeInput) * 60) : null,
-      planned_study_time: plannedStudyTimeInput ? Math.round(parseFloat(plannedStudyTimeInput) * 60) : null,
-      
-      memo: document.getElementById("task-memo").value || null,
+    group_id: groupId,
+    title,
+    type_id: document.getElementById("task-type").value,
+    category_id: document.getElementById("task-category").value,
+    granularity: document.getElementById("task-granularity").value || null,
+    book_id: document.getElementById("task-book-id").value || null,
+    status: document.getElementById("task-status").value,
+    start_planned_date:
+      document.getElementById("task-start-planned-date").value || null,
+    end_planned_date:
+      document.getElementById("task-end-planned-date").value || null,
+    start_date: document.getElementById("task-start-date").value || null,
+    end_date: document.getElementById("task-end-date").value || null,
+
+    // 【変更】入力された時間（h）を分単位に直してバックエンドへ保存
+    study_time: studyTimeInput
+      ? Math.round(parseFloat(studyTimeInput) * 60)
+      : null,
+    planned_study_time: plannedStudyTimeInput
+      ? Math.round(parseFloat(plannedStudyTimeInput) * 60)
+      : null,
+
+    memo: document.getElementById("task-memo").value || null,
   };
-  
 
   if (taskId) {
     await api(`/api/tasks/${taskId}`, "PUT", body);
@@ -980,79 +1083,105 @@ document.getElementById("btn-task-save").addEventListener("click", async () => {
   renderTaskViews();
 });
 
-document.getElementById("btn-task-delete").addEventListener("click", async () => {
-  const taskId = document.getElementById("task-modal").dataset.taskId;
-  if (!taskId) return;
-  if (!confirm("削除しますか？")) return;
-  await api(`/api/tasks/${taskId}`, "DELETE");
-  document.getElementById("task-modal").dataset.taskId = "";
-  markTaskModalClean();
-  document.getElementById("task-modal").classList.add("hidden");
-  renderTaskViews();
-});
+document
+  .getElementById("btn-task-delete")
+  .addEventListener("click", async () => {
+    const taskId = document.getElementById("task-modal").dataset.taskId;
+    if (!taskId) return;
+    if (!confirm("削除しますか？")) return;
+    await api(`/api/tasks/${taskId}`, "DELETE");
+    document.getElementById("task-modal").dataset.taskId = "";
+    markTaskModalClean();
+    document.getElementById("task-modal").classList.add("hidden");
+    renderTaskViews();
+  });
 
-document.getElementById("btn-group-delete").addEventListener("click", async () => {
-  const groupId = document.getElementById("group-modal").dataset.groupId;
-  if (!groupId) return;
-  if (!confirm("削除しますか？")) return;
-  await api(`/api/groups/${groupId}`, "DELETE");
-  document.getElementById("group-modal").dataset.groupId = "";
-  markGroupModalClean();
-  document.getElementById("group-modal").classList.add("hidden");
-  renderTaskViews();
-});
-
-document.getElementById("btn-group-save").addEventListener("click", async () => {
-  const title = document.getElementById("group-title").value;
-  if (!title) { alert("タイトルを入力してください"); return; }
-
-  const memo = document.getElementById("group-memo").value || null;
-  const groupId = document.getElementById("group-modal").dataset.groupId;
-
-  if (groupId) {
-    await api(`/api/groups/${groupId}`, "PUT", { title, memo });
+document
+  .getElementById("btn-group-delete")
+  .addEventListener("click", async () => {
+    const groupId = document.getElementById("group-modal").dataset.groupId;
+    if (!groupId) return;
+    if (!confirm("削除しますか？")) return;
+    await api(`/api/groups/${groupId}`, "DELETE");
+    document.getElementById("group-modal").dataset.groupId = "";
     markGroupModalClean();
     document.getElementById("group-modal").classList.add("hidden");
-  } else {
-    const newGroup = await api("/api/groups", "POST", { title, memo });
-    document.getElementById("group-modal").dataset.groupId = newGroup.id;
-    document.getElementById("btn-group-add-task-wrapper").classList.remove("hidden");
-    markGroupModalClean();
-  }
+    renderTaskViews();
+  });
 
-  renderTaskViews();
-});
+document
+  .getElementById("btn-group-save")
+  .addEventListener("click", async () => {
+    const title = document.getElementById("group-title").value;
+    if (!title) {
+      alert("タイトルを入力してください");
+      return;
+    }
+
+    const memo = document.getElementById("group-memo").value || null;
+    const groupId = document.getElementById("group-modal").dataset.groupId;
+
+    if (groupId) {
+      await api(`/api/groups/${groupId}`, "PUT", { title, memo });
+      markGroupModalClean();
+      document.getElementById("group-modal").classList.add("hidden");
+    } else {
+      const newGroup = await api("/api/groups", "POST", { title, memo });
+      document.getElementById("group-modal").dataset.groupId = newGroup.id;
+      document
+        .getElementById("btn-group-add-task-wrapper")
+        .classList.remove("hidden");
+      markGroupModalClean();
+    }
+
+    renderTaskViews();
+  });
 
 // ===== タスクモーダル：未保存確認つき開閉処理 =====
 
 function getTaskModalSnapshot() {
   const ids = [
-    "task-title", "task-type", "task-category", "task-granularity",
-    "task-book-id", "task-status", "task-start-planned-date", "task-end-planned-date",
-    "task-start-date", "task-end-date", "task-planned-study-time", "task-study-time", "task-memo",
+    "task-title",
+    "task-type",
+    "task-category",
+    "task-granularity",
+    "task-book-id",
+    "task-status",
+    "task-start-planned-date",
+    "task-end-planned-date",
+    "task-start-date",
+    "task-end-date",
+    "task-planned-study-time",
+    "task-study-time",
+    "task-memo",
   ];
   const snapshot = {};
   ids.forEach((id) => {
     const el = document.getElementById(id);
     let value = el ? el.value : "";
-    
+
     // 【追加】変更検知の際も「時間」の入力値を「分」に揃えて判定のブレを防ぐ
-    if ((id === "task-study-time" || id === "task-planned-study-time") && value) {
+    if (
+      (id === "task-study-time" || id === "task-planned-study-time") &&
+      value
+    ) {
       value = String(Math.round(parseFloat(value) * 60));
     }
-    
+
     snapshot[id] = value;
   });
-  snapshot.steps = Array.from(document.querySelectorAll("#step-list .step-item")).map((li) => ({
+  snapshot.steps = Array.from(
+    document.querySelectorAll("#step-list .step-item"),
+  ).map((li) => ({
     title: li.querySelector(".step-item-title")?.textContent ?? "",
     completed: li.classList.contains("completed"),
   }));
   return JSON.stringify(snapshot);
 }
 
-
 function markTaskModalClean() {
-  document.getElementById("task-modal").dataset.initialSnapshot = getTaskModalSnapshot();
+  document.getElementById("task-modal").dataset.initialSnapshot =
+    getTaskModalSnapshot();
 }
 
 function isTaskModalDirty() {
@@ -1064,13 +1193,17 @@ function isTaskModalDirty() {
 
 function closeTaskModalWithConfirm() {
   if (isTaskModalDirty()) {
-    const ok = confirm("編集の内容は保存されていません。閉じてもよろしいですか？");
+    const ok = confirm(
+      "編集の内容は保存されていません。閉じてもよろしいですか？",
+    );
     if (!ok) return;
   }
   document.getElementById("task-modal").classList.add("hidden");
 }
 
-document.getElementById("btn-task-close-x").addEventListener("click", closeTaskModalWithConfirm);
+document
+  .getElementById("btn-task-close-x")
+  .addEventListener("click", closeTaskModalWithConfirm);
 document.getElementById("task-modal").addEventListener("click", (e) => {
   if (e.target.id === "task-modal") closeTaskModalWithConfirm();
 });
@@ -1088,7 +1221,8 @@ function getGroupModalSnapshot() {
 }
 
 function markGroupModalClean() {
-  document.getElementById("group-modal").dataset.initialSnapshot = getGroupModalSnapshot();
+  document.getElementById("group-modal").dataset.initialSnapshot =
+    getGroupModalSnapshot();
 }
 
 function isGroupModalDirty() {
@@ -1100,13 +1234,17 @@ function isGroupModalDirty() {
 
 function closeGroupModalWithConfirm() {
   if (isGroupModalDirty()) {
-    const ok = confirm("編集の内容は保存されていません。閉じてもよろしいですか？");
+    const ok = confirm(
+      "編集の内容は保存されていません。閉じてもよろしいですか？",
+    );
     if (!ok) return;
   }
   document.getElementById("group-modal").classList.add("hidden");
 }
 
-document.getElementById("btn-group-close-x").addEventListener("click", closeGroupModalWithConfirm);
+document
+  .getElementById("btn-group-close-x")
+  .addEventListener("click", closeGroupModalWithConfirm);
 document.getElementById("group-modal").addEventListener("click", (e) => {
   if (e.target.id === "group-modal") closeGroupModalWithConfirm();
 });

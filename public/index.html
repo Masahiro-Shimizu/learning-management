@@ -77,14 +77,28 @@
             </div>
             <div class="period-controls">
               <div class="period-toggle">
-                <button class="btn btn-period active" data-period="week">週</button>
+                <button class="btn btn-period active" data-period="week">
+                  週
+                </button>
                 <button class="btn btn-period" data-period="month">月</button>
                 <button class="btn btn-period" data-period="year">年</button>
               </div>
               <div class="period-nav">
-                <button id="period-prev-btn" class="btn-period-nav" aria-label="前へ">&lt;</button>
+                <button
+                  id="period-prev-btn"
+                  class="btn-period-nav"
+                  aria-label="前へ"
+                >
+                  &lt;
+                </button>
                 <span id="period-label" class="period-label"></span>
-                <button id="period-next-btn" class="btn-period-nav" aria-label="次へ">&gt;</button>
+                <button
+                  id="period-next-btn"
+                  class="btn-period-nav"
+                  aria-label="次へ"
+                >
+                  &gt;
+                </button>
               </div>
             </div>
           </div>
@@ -94,7 +108,9 @@
             <!-- ① 期間の学習時間（週/月/年トグル連動） -->
             <div class="summary-card">
               <div class="summary-card-header">
-                <p class="summary-card-label" id="period-study-label">今週の学習時間</p>
+                <p class="summary-card-label" id="period-study-label">
+                  今週の学習時間
+                </p>
                 <span class="summary-card-icon">⏱️</span>
               </div>
               <p class="summary-card-value">
@@ -191,7 +207,10 @@
                   <p class="chart-card-title">カテゴリ別進捗率</p>
                   <span class="chart-card-unit">%</span>
                 </div>
-                <div class="chart-category-progress-wrapper" id="category-wrapper-js">
+                <div
+                  class="chart-category-progress-wrapper"
+                  id="category-wrapper-js"
+                >
                   <canvas id="chart-category-progress"></canvas>
                 </div>
               </div>
@@ -224,10 +243,18 @@
           </div>
 
           <div class="view-tabs">
-            <button type="button" class="view-tab" data-view="kanban">カンバン</button>
-            <button type="button" class="view-tab" data-view="table">テーブル</button>
-            <button type="button" class="view-tab" data-view="calendar">カレンダー</button>
-            <button type="button" class="view-tab" data-view="timeline">タイムライン</button>
+            <button type="button" class="view-tab" data-view="kanban">
+              カンバン
+            </button>
+            <button type="button" class="view-tab" data-view="table">
+              テーブル
+            </button>
+            <button type="button" class="view-tab" data-view="calendar">
+              カレンダー
+            </button>
+            <button type="button" class="view-tab" data-view="timeline">
+              タイムライン
+            </button>
           </div>
 
           <!-- カンバンビュー -->
@@ -236,33 +263,63 @@
               <div class="kanban-column">
                 <div class="kanban-header">
                   <div class="kanban-header-left">
-                    <span class="kanban-status-dot kanban-status-dot--todo" aria-hidden="true"></span>
+                    <span
+                      class="kanban-status-dot kanban-status-dot--todo"
+                      aria-hidden="true"
+                    ></span>
                     <span class="kanban-header-title">未着手</span>
                     <span class="kanban-count" data-count-for="未着手">0</span>
                   </div>
-                  <button type="button" class="kanban-add-btn" data-status="未着手" aria-label="未着手にタスクを追加">+</button>
+                  <button
+                    type="button"
+                    class="kanban-add-btn"
+                    data-status="未着手"
+                    aria-label="未着手にタスクを追加"
+                  >
+                    +
+                  </button>
                 </div>
                 <div class="kanban-cards" data-status="未着手"></div>
               </div>
               <div class="kanban-column">
                 <div class="kanban-header">
                   <div class="kanban-header-left">
-                    <span class="kanban-status-dot kanban-status-dot--inprogress" aria-hidden="true"></span>
+                    <span
+                      class="kanban-status-dot kanban-status-dot--inprogress"
+                      aria-hidden="true"
+                    ></span>
                     <span class="kanban-header-title">進行中</span>
                     <span class="kanban-count" data-count-for="進行中">0</span>
                   </div>
-                  <button type="button" class="kanban-add-btn" data-status="進行中" aria-label="進行中にタスクを追加">+</button>
+                  <button
+                    type="button"
+                    class="kanban-add-btn"
+                    data-status="進行中"
+                    aria-label="進行中にタスクを追加"
+                  >
+                    +
+                  </button>
                 </div>
                 <div class="kanban-cards" data-status="進行中"></div>
               </div>
               <div class="kanban-column">
                 <div class="kanban-header">
                   <div class="kanban-header-left">
-                    <span class="kanban-status-dot kanban-status-dot--done" aria-hidden="true"></span>
+                    <span
+                      class="kanban-status-dot kanban-status-dot--done"
+                      aria-hidden="true"
+                    ></span>
                     <span class="kanban-header-title">完了</span>
                     <span class="kanban-count" data-count-for="完了">0</span>
                   </div>
-                  <button type="button" class="kanban-add-btn" data-status="完了" aria-label="完了にタスクを追加">+</button>
+                  <button
+                    type="button"
+                    class="kanban-add-btn"
+                    data-status="完了"
+                    aria-label="完了にタスクを追加"
+                  >
+                    +
+                  </button>
                 </div>
                 <div class="kanban-cards" data-status="完了"></div>
               </div>
@@ -300,7 +357,9 @@
               >
                 ＜
               </button>
-              <span id="calendar-month-label" class="calendar-month-label"></span>
+              <span id="calendar-month-label" class="calendar-month-label"
+                >2026年6月</span
+              >
               <button
                 type="button"
                 id="btn-calendar-next"
@@ -309,21 +368,50 @@
               >
                 ＞
               </button>
-              <button
-                type="button"
-                id="btn-add-task-calendar"
-                class="btn btn-primary btn-add-task-view"
-              >
-                + 子タスク追加
-              </button>
+
+              <!-- ★ここからボタンのグループとして囲んで復活させます -->
+              <div class="calendar-header-actions">
+                <button
+                  type="button"
+                  id="btn-add-group-calendar"
+                  class="btn btn-primary"
+                >
+                  + 親タスク追加
+                </button>
+                <button
+                  type="button"
+                  id="btn-add-task-calendar"
+                  class="btn btn-primary"
+                >
+                  + 子タスク追加
+                </button>
+              </div>
+              <!-- ★ここまで -->
             </div>
             <div class="calendar-grid" id="calendar-grid"></div>
           </div>
 
           <!-- タイムラインビュー -->
           <div class="view-panel hidden" data-view-panel="timeline">
-            <div class="timeline-toolbar" style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;">
-              <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;color:var(--color-text-secondary);cursor:pointer;">
+            <div
+              class="timeline-toolbar"
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 8px 0;
+              "
+            >
+              <label
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                  font-size: 0.85rem;
+                  color: var(--color-text-secondary);
+                  cursor: pointer;
+                "
+              >
                 <input type="checkbox" id="timeline-hide-completed" />
                 完了タスクを非表示
               </label>
@@ -357,7 +445,12 @@
           <div id="book-search-results"></div>
           <div class="book-toolbar">
             <div class="search">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
                 <circle cx="11" cy="11" r="7" />
                 <path d="m21 21-4-4" />
               </svg>
@@ -379,8 +472,18 @@
             <h3>タスク種別</h3>
             <p class="settings-sub">タスクの「種別」項目を管理します。</p>
             <div class="settings-add-row">
-              <input type="text" id="task-type-new-name" placeholder="新しい種別名" />
-              <button type="button" id="btn-task-type-add" class="btn btn-primary">追加</button>
+              <input
+                type="text"
+                id="task-type-new-name"
+                placeholder="新しい種別名"
+              />
+              <button
+                type="button"
+                id="btn-task-type-add"
+                class="btn btn-primary"
+              >
+                追加
+              </button>
             </div>
             <ul id="task-type-list" class="settings-list"></ul>
           </div>
@@ -409,13 +512,27 @@
         <textarea id="group-memo"></textarea>
 
         <div class="modal-actions">
-          <button type="button" id="btn-group-delete" class="btn btn-danger">削除</button>
+          <button type="button" id="btn-group-delete" class="btn btn-danger">
+            削除
+          </button>
           <div class="task-actions-right">
-            <button type="button" id="btn-group-close" class="btn btn-secondary">キャンセル</button>
-            <button type="button" id="btn-group-save" class="btn btn-primary">保存</button>
+            <button
+              type="button"
+              id="btn-group-close"
+              class="btn btn-secondary"
+            >
+              キャンセル
+            </button>
+            <button type="button" id="btn-group-save" class="btn btn-primary">
+              保存
+            </button>
           </div>
         </div>
-        <div id="btn-group-add-task-wrapper" class="hidden" style="margin-top: 12px">
+        <div
+          id="btn-group-add-task-wrapper"
+          class="hidden"
+          style="margin-top: 12px"
+        >
           <button
             type="button"
             id="btn-group-add-task"
@@ -519,16 +636,28 @@
           <label>ステップ</label>
           <ul id="step-list"></ul>
           <div class="step-add-row">
-            <input type="text" id="step-new-title" placeholder="新しいステップ" />
-            <button type="button" id="btn-step-add" class="btn btn-secondary">追加</button>
+            <input
+              type="text"
+              id="step-new-title"
+              placeholder="新しいステップ"
+            />
+            <button type="button" id="btn-step-add" class="btn btn-secondary">
+              追加
+            </button>
           </div>
         </div>
 
         <div class="task-actions">
-          <button type="button" id="btn-task-delete" class="btn btn-danger">削除</button>
+          <button type="button" id="btn-task-delete" class="btn btn-danger">
+            削除
+          </button>
           <div class="task-actions-right">
-            <button type="button" id="btn-task-close" class="btn btn-secondary">キャンセル</button>
-            <button type="button" id="btn-task-save" class="btn btn-primary">保存</button>
+            <button type="button" id="btn-task-close" class="btn btn-secondary">
+              キャンセル
+            </button>
+            <button type="button" id="btn-task-save" class="btn btn-primary">
+              保存
+            </button>
           </div>
         </div>
       </div>
@@ -557,15 +686,23 @@
         <textarea id="book-memo"></textarea>
 
         <div class="modal-actions">
-          <button type="button" id="btn-book-delete" class="btn btn-danger">削除</button>
-          <div style="display:flex; gap: 8px;">
-            <button type="button" id="btn-book-close" class="btn btn-secondary">キャンセル</button>
-            <button type="button" id="btn-book-save" class="btn btn-primary">保存</button>
+          <button type="button" id="btn-book-delete" class="btn btn-danger">
+            削除
+          </button>
+          <div style="display: flex; gap: 8px">
+            <button type="button" id="btn-book-close" class="btn btn-secondary">
+              キャンセル
+            </button>
+            <button type="button" id="btn-book-save" class="btn btn-primary">
+              保存
+            </button>
           </div>
         </div>
       </div>
     </div>
 
-    <script>lucide.createIcons();</script>
+    <script>
+      lucide.createIcons();
+    </script>
   </body>
 </html>

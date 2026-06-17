@@ -514,9 +514,11 @@
 .calendar-header {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: center; /* トグル要素を中央に集める */
   margin-bottom: var(--space-16);
   min-height: 38px;
+  position: relative; /* ★右端ボタンの配置基準にする */
+  width: 100%; /* ★ヘッダーの横幅をいっぱいに広げる */
 }
 
 .calendar-month-label {
@@ -526,9 +528,15 @@
   text-align: center;
 }
 
-/* 「+ 子タスク追加」ボタンを右端に寄せる */
-.calendar-header .btn-add-task-view {
-  margin-left: auto;
+/* 右側のボタングループをまとめて右端に固定 */
+.calendar-header-actions {
+  display: flex !important;
+  gap: var(--space-8, 8px); /* ボタン同士の隙間 */
+  position: absolute !important; /* 中央寄せの計算から除外して浮かせる */
+  right: 0 !important; /* 右端に固定 */
+  top: 50% !important;
+  transform: translateY(-50%) !important; /* 上下の中央を揃える */
+  z-index: 10;
 }
 
 /* カレンダーグリッド：display:block + inline-block 方式で7列均等分割 */
@@ -852,6 +860,13 @@
   flex-shrink: 0;
   padding: 1px 5px;
   font-size: 0.65rem;
+}
+
+/* カレンダーヘッダーの右端ボタングループ */
+.calendar-header-actions {
+  display: flex;
+  gap: var(--space-8);
+  margin-left: auto;
 }
 
 @media (max-width: 1024px) {
