@@ -641,11 +641,28 @@
 /* ===== タイムラインビュー ===== */
 
 .timeline-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: flex !important;
+  justify-content: space-between !important; /* 左端と右端に綺麗に分ける */
+  align-items: center !important;
   padding: 8px 0;
   margin-bottom: var(--space-8);
+  width: 100% !important;
+}
+
+/* 「完了タスクを非表示」ラベルのスタイル */
+.timeline-hide-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+/* 右側のボタングループを横並びにする（カレンダーと統一） */
+.timeline-header-actions {
+  display: flex !important;
+  gap: var(--space-8, 8px); /* ボタン同士の隙間 */
 }
 
 .timeline-wrapper {

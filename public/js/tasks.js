@@ -137,7 +137,14 @@ function createTaskCardHtml(task, steps = []) {
 function calcStatus(groupId, tasks) {
   const children = tasks.filter((t) => t.group_id === groupId);
   if (children.length === 0) return "未着手";
-  if (children.every((t) => t.status === "完了")) return "完了";
+
+  const currentYear = new Date().getFullYear();
+  const completedThisYear = (t) =>
+    t.status === "完了" &&
+    t.end_date &&
+    new Date(t.end_date).getFullYear() === currentYear;
+
+  if (children.every(completedThisYear)) return "完了";
   if (children.every((t) => t.status === "未着手")) return "未着手";
   return "進行中";
 }
@@ -966,10 +973,12 @@ function switchView(view) {
     panel.classList.toggle("hidden", panel.dataset.viewPanel !== view);
   });
 
-  // カレンダービューのみ右上「+ 親タスク追加」を非表示
+  // カレンダービューとタイムラインビューのときに右上「+ 親タスク追加」を非表示にする
   const btnAddGroup = document.getElementById("btn-add-group");
   if (btnAddGroup) {
-    btnAddGroup.style.display = view === "calendar" ? "none" : "";
+    // ★「calendar」または「timeline」の場合に非表示（none）にします
+    btnAddGroup.style.display =
+      view === "calendar" || view === "timeline" ? "none" : "";
   }
 }
 

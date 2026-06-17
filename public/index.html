@@ -393,35 +393,30 @@
 
           <!-- タイムラインビュー -->
           <div class="view-panel hidden" data-view-panel="timeline">
-            <div
-              class="timeline-toolbar"
-              style="
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 8px 0;
-              "
-            >
-              <label
-                style="
-                  display: flex;
-                  align-items: center;
-                  gap: 6px;
-                  font-size: 0.85rem;
-                  color: var(--color-text-secondary);
-                  cursor: pointer;
-                "
-              >
+            <div class="timeline-toolbar">
+              <!-- 左側：チェックボックス -->
+              <label class="timeline-hide-label">
                 <input type="checkbox" id="timeline-hide-completed" />
                 完了タスクを非表示
               </label>
-              <button
-                type="button"
-                id="btn-add-task-timeline"
-                class="btn btn-primary"
-              >
-                + 子タスク追加
-              </button>
+
+              <!-- 右側：ボタングループ（★ここを新しく囲んで親ボタンを配置） -->
+              <div class="timeline-header-actions">
+                <button
+                  type="button"
+                  id="btn-add-group-timeline"
+                  class="btn btn-primary"
+                >
+                  + 親タスク追加
+                </button>
+                <button
+                  type="button"
+                  id="btn-add-task-timeline"
+                  class="btn btn-primary"
+                >
+                  + 子タスク追加
+                </button>
+              </div>
             </div>
             <div class="timeline-wrapper">
               <div class="timeline-grid" id="timeline-grid"></div>
