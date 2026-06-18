@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="css/dashboard.css" />
     <link rel="stylesheet" href="css/tasks.css" />
     <link rel="stylesheet" href="css/books.css" />
+    <link rel="stylesheet" href="css/mandala.css" />
     <link rel="stylesheet" href="css/modal.css" />
     <link rel="stylesheet" href="css/settings.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -24,6 +25,7 @@
     <script src="js/books.js" defer></script>
     <script src="js/dashboard.js" defer></script>
     <script src="js/settings.js" defer></script>
+    <script src="js/mandala.js" defer></script>
     <script src="js/app.js" defer></script>
   </head>
   <body>
@@ -53,6 +55,12 @@
             <a href="#page-books">
               <i data-lucide="book-open" class="nav-icon"></i>
               <span>書籍マスタ</span>
+            </a>
+          </li>
+          <li>
+            <a href="#page-mandala">
+              <i data-lucide="grid-3x3" class="nav-icon"></i>
+              <span>マンダラチャート</span>
             </a>
           </li>
         </ul>
@@ -457,6 +465,62 @@
             </div>
           </div>
           <div id="book-list"></div>
+        </section>
+
+        <!-- ===== マンダラチャート ===== -->
+        <section id="page-mandala">
+          <div class="mandala-header">
+            <div>
+              <h2>マンダラチャート</h2>
+              <p class="mandala-sub">
+                9×9マスで目標を構造化します。中心テーマ → 8サブテーマ →
+                各8アクション。
+              </p>
+            </div>
+          </div>
+
+          <div class="mandala-new-row">
+            <input
+              type="text"
+              id="mandala-new-title"
+              placeholder="新しいマンダラのタイトル（例：2026年の目標）"
+            />
+            <button
+              type="button"
+              id="btn-mandala-create"
+              class="btn btn-primary"
+            >
+              + 新規作成
+            </button>
+          </div>
+
+          <div id="mandala-list" class="mandala-list"></div>
+
+          <div id="mandala-chart-area" class="mandala-chart-area">
+            <div class="mandala-chart-title-row">
+              <h3 id="mandala-chart-title"></h3>
+              <span id="mandala-save-status" class="mandala-save-status"></span>
+            </div>
+            <div id="mandala-grid-wrapper" class="mandala-grid-wrapper"></div>
+            <div class="mandala-legend">
+              <div class="mandala-legend-item">
+                <div
+                  class="mandala-legend-dot mandala-legend-dot--center"
+                ></div>
+                <span>中心テーマ</span>
+              </div>
+              <div class="mandala-legend-item">
+                <div class="mandala-legend-dot mandala-legend-dot--sub"></div>
+                <span>サブテーマ（8個）</span>
+              </div>
+              <div class="mandala-legend-item">
+                <div
+                  class="mandala-legend-dot mandala-legend-dot--action"
+                ></div>
+                <span>アクション（各8個）</span>
+              </div>
+            </div>
+          </div>
         </section>
 
         <!-- ===== 設定 ===== -->

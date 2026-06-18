@@ -8,6 +8,7 @@ const bookRoutes = require("./routes/books");
 const groupRoutes = require("./routes/groups");
 const taskTypeRoutes = require("./routes/task_types");
 const taskCategoriesRouter = require("./routes/task_categories");
+const mandalaRoutes = require("./routes/mandala");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,6 +23,7 @@ app.use("/api/tasks", require("./routes/steps")); // ステップ一覧・作成
 app.use("/api/steps", require("./routes/steps")); // ステップ単体の更新・削除用
 app.use("/api/task-types", taskTypeRoutes);
 app.use("/api/task-categories", taskCategoriesRouter);
+app.use("/api/mandalas", mandalaRoutes);
 
 app.get("/{*path}", (req, res) => {
   res.sendFile(path.join(__dirname, "..", "public", "index.html"));

@@ -1,0 +1,320 @@
+/* ===== マンダラチャートページ ===== */
+
+#page-mandala {
+    padding: var(--space-32);
+  }
+  
+  .mandala-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-24);
+  }
+  
+  .mandala-header h2 {
+    font-family: "Syne", sans-serif;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+  }
+  
+  .mandala-sub {
+    font-size: 0.85rem;
+    color: var(--color-text-tertiary);
+    margin-top: var(--space-4);
+  }
+  
+  /* ===== マンダラ一覧 ===== */
+  
+  .mandala-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+    margin-bottom: var(--space-24);
+  }
+  
+  .mandala-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-8);
+    padding: var(--space-8) var(--space-16);
+    background: var(--color-bg-card);
+    border-radius: 8px;
+    border: 1px solid rgb(255 255 255 / 0.06);
+    cursor: pointer;
+    transition: border-color 0.15s, background-color 0.15s;
+  }
+  
+  .mandala-list-item:hover {
+    border-color: var(--color-accent-primary);
+    background: var(--color-bg-modal);
+  }
+  
+  .mandala-list-item.active {
+    border-color: var(--color-accent-primary);
+    background: rgb(99 102 241 / 0.08);
+  }
+  
+  .mandala-list-title {
+    font-weight: 600;
+    color: var(--color-text-primary);
+    flex: 1;
+  }
+  
+  .mandala-list-meta {
+    font-size: 0.78rem;
+    color: var(--color-text-tertiary);
+  }
+  
+  .mandala-list-actions {
+    display: flex;
+    gap: var(--space-4);
+  }
+  
+  /* ===== 新規作成フォーム ===== */
+  
+  .mandala-new-row {
+    display: flex;
+    gap: var(--space-8);
+    margin-bottom: var(--space-24);
+    max-width: 480px;
+  }
+  
+  .mandala-new-row input {
+    flex: 1;
+    padding: var(--space-8) var(--space-16);
+    border-radius: 6px;
+    border: 1px solid rgb(255 255 255 / 0.1);
+    background-color: var(--color-bg-card);
+    color: var(--color-text-primary);
+    font-family: "DM Sans", sans-serif;
+    font-size: 1rem;
+  }
+  
+  /* ===== マンダラチャート本体 ===== */
+  
+  .mandala-chart-area {
+    display: none;
+  }
+  
+  .mandala-chart-area.visible {
+    display: block;
+  }
+  
+  .mandala-chart-title-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-16);
+    margin-bottom: var(--space-16);
+  }
+  
+  .mandala-chart-title-row h3 {
+    font-family: "Syne", sans-serif;
+    font-size: 1.1rem;
+    color: var(--color-text-primary);
+    flex: 1;
+  }
+  
+  /* 9×9グリッド */
+  .mandala-grid {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 3px;
+    background: rgb(255 255 255 / 0.04);
+    border: 1px solid rgb(255 255 255 / 0.08);
+    border-radius: 12px;
+    padding: 3px;
+    max-width: 900px;
+  }
+  
+  /* 3×3ブロックの区切り線 */
+  .mandala-grid .mandala-cell:nth-child(3n) {
+    margin-right: 2px;
+  }
+  
+  /* セル */
+  .mandala-cell {
+    position: relative;
+    aspect-ratio: 1;
+    min-height: 72px;
+  }
+  
+  .mandala-cell textarea {
+    width: 100%;
+    height: 100%;
+    min-height: 72px;
+    resize: none;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.72rem;
+    line-height: 1.4;
+    background: var(--color-bg-card);
+    color: var(--color-text-primary);
+    transition: background-color 0.15s, box-shadow 0.15s;
+    overflow: hidden;
+    word-break: break-all;
+  }
+  
+  .mandala-cell textarea:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-accent-primary);
+    background: var(--color-bg-modal);
+    z-index: 1;
+  }
+  
+  /* 中心セル（4,4 = 0ベース） */
+  .mandala-cell--center textarea {
+    background: linear-gradient(135deg, hsl(234 70% 30%) 0%, hsl(38 90% 30%) 130%);
+    color: var(--color-text-primary);
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-align: center;
+  }
+  
+  .mandala-cell--center textarea:focus {
+    box-shadow: 0 0 0 2px var(--color-accent-secondary);
+  }
+  
+  /* 各3×3ブロックの中心（サブテーマ）セル */
+  .mandala-cell--sub-center textarea {
+    background: rgb(99 102 241 / 0.2);
+    color: #a5b4fc;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-align: center;
+  }
+  
+  .mandala-cell--sub-center textarea:focus {
+    box-shadow: 0 0 0 2px #a5b4fc;
+    background: rgb(99 102 241 / 0.3);
+  }
+  
+  /* 3×3ブロックの境界を強調するためのブロック区切り */
+  .mandala-block-gap-right {
+    margin-right: 6px !important;
+  }
+  
+  .mandala-block-gap-bottom {
+    margin-bottom: 6px !important;
+  }
+  
+  /* ブロック区切り用ラッパー */
+  .mandala-grid-wrapper {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 6px;
+    max-width: 900px;
+  }
+  
+  .mandala-block {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 3px;
+    background: rgb(255 255 255 / 0.03);
+    border-radius: 8px;
+    padding: 3px;
+    border: 1px solid rgb(255 255 255 / 0.06);
+  }
+  
+  /* 中心ブロック */
+  .mandala-block--center-block {
+    border-color: rgb(99 102 241 / 0.3);
+    background: rgb(99 102 241 / 0.04);
+  }
+  
+  /* セルの高さ */
+  .mandala-cell textarea {
+    min-height: 68px;
+  }
+  
+  /* 自動保存インジケーター */
+  .mandala-save-status {
+    font-size: 0.78rem;
+    color: var(--color-text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .mandala-save-status.saving {
+    color: var(--color-accent-secondary);
+  }
+  
+  .mandala-save-status.saved {
+    color: var(--color-status-done);
+  }
+  
+  /* レジェンド */
+  .mandala-legend {
+    display: flex;
+    gap: var(--space-16);
+    margin-top: var(--space-16);
+    flex-wrap: wrap;
+  }
+  
+  .mandala-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: var(--color-text-tertiary);
+  }
+  
+  .mandala-legend-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  
+  .mandala-legend-dot--center {
+    background: linear-gradient(135deg, hsl(234 70% 45%) 0%, hsl(38 90% 45%) 130%);
+  }
+  
+  .mandala-legend-dot--sub {
+    background: rgb(99 102 241 / 0.4);
+  }
+  
+  .mandala-legend-dot--action {
+    background: var(--color-bg-card);
+    border: 1px solid rgb(255 255 255 / 0.1);
+  }
+  
+  /* ライトモード調整 */
+  html.light .mandala-cell textarea {
+    background: var(--color-bg-card);
+    border: 1px solid rgb(0 0 0 / 0.08);
+  }
+  
+  html.light .mandala-cell--sub-center textarea {
+    background: rgb(99 102 241 / 0.12);
+  }
+  
+  html.light .mandala-block {
+    border-color: rgb(0 0 0 / 0.08);
+  }
+  
+  html.light .mandala-block--center-block {
+    border-color: rgb(99 102 241 / 0.3);
+  }
+  
+  @media (max-width: 768px) {
+    #page-mandala {
+      padding: var(--space-16);
+    }
+  
+    .mandala-grid-wrapper {
+      max-width: 100%;
+    }
+  
+    .mandala-cell textarea {
+      min-height: 52px;
+      font-size: 0.65rem;
+      padding: 4px 5px;
+    }
+  }

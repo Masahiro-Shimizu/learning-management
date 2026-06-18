@@ -5,6 +5,7 @@ const pages = document.querySelectorAll("main section");
 let booksInitialized = false;
 let dashboardInitialized = false;
 let settingsInitialized = false;
+let mandalaInitialized = false;
 
 function showPage() {
   const pageId = location.hash.substring(1) || "page-dashboard";
@@ -34,6 +35,11 @@ function showPage() {
   if (pageId === "page-settings" && !settingsInitialized) {
     initSettings();
     settingsInitialized = true;
+  }
+
+  if (pageId === "page-mandala" && !mandalaInitialized) {
+    initMandala();
+    mandalaInitialized = true;
   }
 }
 
