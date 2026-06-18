@@ -886,6 +886,20 @@
   margin-left: auto;
 }
 
+/* タイムラインの日付軸セルの配置調整 */
+.timeline-axis {
+  display: grid;
+}
+
+.timeline-axis-cell {
+  text-align: center;
+  padding: 4px 0;
+  font-size: 12px;
+  color: var(--color-text-secondary, #aaa);
+  border-right: 1px solid rgba(255, 255, 255, 0.05); /* うっすら縦線を入れる */
+  min-width: 40px; /* 最小幅を確保 */
+}
+
 @media (max-width: 1024px) {
   .kanban {
     grid-template-columns: 1fr;

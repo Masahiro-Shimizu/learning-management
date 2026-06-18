@@ -605,17 +605,17 @@ function renderTable(data) {
     });
   });
 
-  // ➕ 修正: 既存のCSSクラス（btn btn-primary）を適用して色と形を完全に統一
+  // ➕ 追記: 毎回 tbody の最下部にインライン親タスク追加行を入れる (7列分結合)
   tbody.insertAdjacentHTML(
     "beforeend",
-    `<tr class="inline-add-row" style="background-color: transparent;">
-        <td colspan="7" style="padding: 10px; border-top: 1px solid #333;">
-          <div class="inline-add-container" style="display: flex; align-items: center; gap: 12px; box-sizing: border-box; width: 100%;">
-            <input type="text" id="inline-parent-title" placeholder="+ 新しい親タスクを追加..." style="flex: 1; min-width: 0; padding: 8px 12px; background: #1e1e24; border: 1px dashed #555; color: #fff; border-radius: 4px; font-size: 14px;" />
-            <button type="button" id="btn-inline-parent-save" class="btn btn-primary" style="cursor: pointer; white-space: nowrap; flex-shrink: 0;">保存</button>
-          </div>
-        </td>
-      </tr>`,
+    `<tr class="inline-add-row">
+          <td colspan="7">
+            <div class="inline-add-container" style="display:flex; gap:8px; padding:4px;">
+              <input type="text" id="inline-parent-title" placeholder="+ 新しい親タスクを追加..." style="flex:1; padding:4px;" />
+              <button type="button" id="btn-inline-parent-save">保存</button>
+            </div>
+          </td>
+        </tr>`,
   );
 
   // localStorage から折りたたみ状態を復元
@@ -922,24 +922,15 @@ function renderTimeline(data) {
     (_, i) => `<div class="timeline-axis-cell">${i + 1}</div>`,
   ).join("");
 
-  // 🔍 修正箇所: grid.insertAdjacentHTML("beforeend", `...`) の中身を以下に差し替え
   grid.insertAdjacentHTML(
     "beforeend",
     `<div class="timeline-row">
-          <div class="timeline-row-header timeline-row-header--axis">
-            <div class="timeline-month-nav">
-              <button type="button" id="btn-timeline-prev" class="btn btn-secondary" aria-label="前の月">＜</button>
-              <span id="timeline-month-label" class="timeline-month-label" role="button" tabindex="0"></span>
-              <button type="button" id="btn-timeline-next" class="btn btn-secondary" aria-label="次の月">＞</button>
-              <input type="month" id="timeline-month-picker" class="timeline-month-picker" aria-label="年月を選択" />
-            </div>
+        <div class="timeline-track">
+          <div class="timeline-axis" style="grid-template-columns: repeat(${daysInMonth}, 1fr);">
+            ${axisCellsHtml}
           </div>
-          <div class="timeline-track" style="overflow-x: auto;">
-            <div class="timeline-axis" style="display: grid; grid-template-columns: repeat(${daysInMonth}, minmax(40px, 1fr)); width: 100%;">
-              ${axisCellsHtml}
-            </div>
-          </div>
-        </div>`,
+        </div>
+      </div>`,
   );
 
   const today = new Date();
