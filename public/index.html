@@ -375,25 +375,6 @@
               >
                 ＞
               </button>
-
-              <!-- ★ここからボタンのグループとして囲んで復活させます -->
-              <div class="calendar-header-actions">
-                <button
-                  type="button"
-                  id="btn-add-group-calendar"
-                  class="btn btn-primary"
-                >
-                  + 親タスク追加
-                </button>
-                <button
-                  type="button"
-                  id="btn-add-task-calendar"
-                  class="btn btn-primary"
-                >
-                  + 子タスク追加
-                </button>
-              </div>
-              <!-- ★ここまで -->
             </div>
             <div class="calendar-grid" id="calendar-grid"></div>
           </div>
@@ -401,29 +382,11 @@
           <!-- タイムラインビュー -->
           <div class="view-panel hidden" data-view-panel="timeline">
             <div class="timeline-toolbar">
-              <!-- 左側：チェックボックス -->
+              <!-- 完了タスク非表示チェックボックスのみ（子タスク追加ボタンは廃止） -->
               <label class="timeline-hide-label">
                 <input type="checkbox" id="timeline-hide-completed" />
                 完了タスクを非表示
               </label>
-
-              <!-- 右側：ボタングループ（★ここを新しく囲んで親ボタンを配置） -->
-              <div class="timeline-header-actions">
-                <button
-                  type="button"
-                  id="btn-add-group-timeline"
-                  class="btn btn-primary"
-                >
-                  + 親タスク追加
-                </button>
-                <button
-                  type="button"
-                  id="btn-add-task-timeline"
-                  class="btn btn-primary"
-                >
-                  + 子タスク追加
-                </button>
-              </div>
             </div>
             <div class="timeline-wrapper">
               <div class="timeline-grid" id="timeline-grid"></div>
@@ -756,6 +719,28 @@
             </button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- ===== グループ選択モーダル（カレンダー・タイムラインからの子タスク追加用） ===== -->
+    <div id="group-picker-modal" class="modal hidden">
+      <div class="modal-content" style="width: 360px">
+        <div class="modal-header">
+          <h3>追加先の親タスクを選択</h3>
+          <button
+            type="button"
+            id="btn-group-picker-close"
+            class="btn-modal-close"
+            aria-label="閉じる"
+          >
+            ✕
+          </button>
+        </div>
+        <ul
+          id="group-picker-list"
+          class="settings-list"
+          style="max-height: 360px; overflow-y: auto"
+        ></ul>
       </div>
     </div>
 

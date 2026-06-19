@@ -514,11 +514,11 @@
 .calendar-header {
   display: flex;
   align-items: center;
-  justify-content: center; /* トグル要素を中央に集める */
+  justify-content: center;
+  gap: var(--space-16);
   margin-bottom: var(--space-16);
   min-height: 38px;
-  position: relative; /* ★右端ボタンの配置基準にする */
-  width: 100%; /* ★ヘッダーの横幅をいっぱいに広げる */
+  width: 100%;
 }
 
 .calendar-month-label {
@@ -526,17 +526,6 @@
   font-weight: 600;
   min-width: 110px;
   text-align: center;
-}
-
-/* 右側のボタングループをまとめて右端に固定 */
-.calendar-header-actions {
-  display: flex !important;
-  gap: var(--space-8, 8px); /* ボタン同士の隙間 */
-  position: absolute !important; /* 中央寄せの計算から除外して浮かせる */
-  right: 0 !important; /* 右端に固定 */
-  top: 50% !important;
-  transform: translateY(-50%) !important; /* 上下の中央を揃える */
-  z-index: 10;
 }
 
 /* カレンダーグリッド：display:block + inline-block 方式で7列均等分割 */
@@ -564,7 +553,7 @@
   vertical-align: top;
 }
 
-/* 日付セル */
+/* 日付セル：クリックでその日に子タスクを追加できるため cursor を明示 */
 .calendar-cell {
   display: inline-flex !important;
   flex-direction: column;
@@ -577,6 +566,12 @@
   border-bottom: 1px solid rgb(255 255 255 / 0.06);
   box-sizing: border-box;
   vertical-align: top;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.calendar-cell:hover {
+  background-color: rgb(255 255 255 / 0.03);
 }
 
 /* 左端（日曜日）の列の左ボーダーを消して二重線を防ぐ */
@@ -587,6 +582,7 @@
 
 .calendar-cell.calendar-cell--empty {
   background-color: rgb(0 0 0 / 0.15);
+  cursor: default;
 }
 
 .calendar-cell-date {
@@ -642,7 +638,7 @@
 
 .timeline-toolbar {
   display: flex !important;
-  justify-content: space-between !important; /* 左端と右端に綺麗に分ける */
+  justify-content: flex-start !important;
   align-items: center !important;
   padding: 8px 0;
   margin-bottom: var(--space-8);
@@ -657,12 +653,6 @@
   font-size: 0.85rem;
   color: var(--color-text-secondary);
   cursor: pointer;
-}
-
-/* 右側のボタングループを横並びにする（カレンダーと統一） */
-.timeline-header-actions {
-  display: flex !important;
-  gap: var(--space-8, 8px); /* ボタン同士の隙間 */
 }
 
 .timeline-wrapper {
@@ -750,9 +740,11 @@
   border: 0;
 }
 
+/* トラックの空きスペースをクリックすると子タスク追加できるため cursor を明示 */
 .timeline-track {
   position: relative;
   min-height: 40px;
+  cursor: pointer;
 }
 
 .timeline-axis {
@@ -877,27 +869,6 @@
   flex-shrink: 0;
   padding: 1px 5px;
   font-size: 0.65rem;
-}
-
-/* カレンダーヘッダーの右端ボタングループ */
-.calendar-header-actions {
-  display: flex;
-  gap: var(--space-8);
-  margin-left: auto;
-}
-
-/* タイムラインの日付軸セルの配置調整 */
-.timeline-axis {
-  display: grid;
-}
-
-.timeline-axis-cell {
-  text-align: center;
-  padding: 4px 0;
-  font-size: 12px;
-  color: var(--color-text-secondary, #aaa);
-  border-right: 1px solid rgba(255, 255, 255, 0.05); /* うっすら縦線を入れる */
-  min-width: 40px; /* 最小幅を確保 */
 }
 
 @media (max-width: 1024px) {

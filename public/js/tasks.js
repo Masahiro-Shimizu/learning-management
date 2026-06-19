@@ -605,7 +605,7 @@ function renderTable(data) {
     });
   });
 
-  // ➕ 修正: 既存のCSSクラス（btn btn-primary）を適用して色と形を完全に統一
+  // 親タスク（グループ）をその場でインライン追加できる行（Notion風）
   tbody.insertAdjacentHTML(
     "beforeend",
     `<tr class="inline-add-row" style="background-color: transparent;">
@@ -671,18 +671,20 @@ function createCalendarChipHtml(task, steps) {
 
 function bindCalendarEvents() {
   document.querySelectorAll(".calendar-chip").forEach((chip) => {
-    chip.addEventListener("click", () => {
+    chip.addEventListener("click", (e) => {
+      e.stopPropagation();
       openTaskEditModal(chip.dataset.taskId);
     });
     chip.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
+        e.stopPropagation();
         openTaskEditModal(chip.dataset.taskId);
       }
     });
   });
 
-  // ➕ 追記: 日付セルの空きスペースクリックイベント
+  // 日付セルの空きスペースクリックで、その日を開始予定日にした子タスク追加
   document.querySelectorAll(".calendar-cell").forEach((cell) => {
     cell.addEventListener("click", (e) => {
       // 既存のタスクチップや「もっと見る」をクリックした場合は発火させない
@@ -748,7 +750,6 @@ function renderCalendar(data) {
         ? `<div class="calendar-chip-more">+${remaining}件</div>`
         : "";
 
-    // ⚡ 変更: div要素に data-date 属性を付与
     grid.insertAdjacentHTML(
       "beforeend",
       `<div class="calendar-cell" data-date="${cellDateStr}">
@@ -808,10 +809,14 @@ function createTimelineBarHtml(task, daysInMonth, monthStart, monthEnd) {
 
 function bindTimelineEvents() {
   document.querySelectorAll(".timeline-bar").forEach((bar) => {
-    bar.addEventListener("click", () => openTaskEditModal(bar.dataset.taskId));
+    bar.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openTaskEditModal(bar.dataset.taskId);
+    });
     bar.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
+        e.stopPropagation();
         openTaskEditModal(bar.dataset.taskId);
       }
     });
@@ -861,7 +866,7 @@ function bindTimelineEvents() {
     });
   }
 
-  // ➕ 追記: タイムライントラックのクリックで子タスク追加
+  // タイムライントラックの空きスペースクリックで、クリックした日を開始予定日にした子タスク追加
   document.querySelectorAll(".timeline-track").forEach((track) => {
     track.addEventListener("click", (e) => {
       // 既存のタスクバーや、最上部の日付ヘッダー軸のクリックは除外
@@ -922,7 +927,6 @@ function renderTimeline(data) {
     (_, i) => `<div class="timeline-axis-cell">${i + 1}</div>`,
   ).join("");
 
-  // 🔍 修正箇所: grid.insertAdjacentHTML("beforeend", `...`) の中身を以下に差し替え
   grid.insertAdjacentHTML(
     "beforeend",
     `<div class="timeline-row">
@@ -1010,29 +1014,53 @@ function renderTimeline(data) {
 let currentView = localStorage.getItem("taskView") ?? "kanban";
 let lastTaskViewData = null;
 
-// ⚡ 変更: 日付（plannedDate）を引き回せるように拡張
+// ===== グループ選択モーダル（カレンダー・タイムラインからの子タスク追加用）=====
+// prompt() による番号入力ではなく、一覧から選んでもらう方式に変更
+
+function closeGroupPickerModal() {
+  document.getElementById("group-picker-modal").classList.add("hidden");
+}
+
 function openAddTaskGroupPicker(groups, plannedDate = null) {
-  if (groups.length === 0) return;
+  if (!groups || groups.length === 0) return;
+
   if (groups.length === 1) {
     openTaskModal(groups[0].id, "未着手", plannedDate);
     return;
   }
-  const names = groups.map((g, i) => `${i + 1}: ${g.title}`).join("\n");
-  const input = prompt(`追加先のグループ番号を入力してください:\n${names}`);
-  if (!input) return;
-  const idx = parseInt(input, 10) - 1;
-  if (idx >= 0 && idx < groups.length) {
-    openTaskModal(groups[idx].id, "未着手", plannedDate);
-  }
+
+  const list = document.getElementById("group-picker-list");
+  list.innerHTML = "";
+
+  groups.forEach((group) => {
+    const li = document.createElement("li");
+    li.className = "settings-list-item";
+    li.style.cursor = "pointer";
+
+    const nameSpan = document.createElement("span");
+    nameSpan.className = "settings-list-name";
+    nameSpan.textContent = group.title;
+    li.appendChild(nameSpan);
+
+    li.addEventListener("click", () => {
+      closeGroupPickerModal();
+      openTaskModal(group.id, "未着手", plannedDate);
+    });
+
+    list.appendChild(li);
+  });
+
+  document.getElementById("group-picker-modal").classList.remove("hidden");
 }
 
+document
+  .getElementById("btn-group-picker-close")
+  .addEventListener("click", closeGroupPickerModal);
+document.getElementById("group-picker-modal").addEventListener("click", (e) => {
+  if (e.target.id === "group-picker-modal") closeGroupPickerModal();
+});
+
 function bindAddTaskButtons(groups) {
-  const calBtn = document.getElementById("btn-add-task-calendar");
-  if (calBtn) calBtn.onclick = () => openAddTaskGroupPicker(groups);
-
-  const tlBtn = document.getElementById("btn-add-task-timeline");
-  if (tlBtn) tlBtn.onclick = () => openAddTaskGroupPicker(groups);
-
   const hideCheckbox = document.getElementById("timeline-hide-completed");
   if (hideCheckbox) {
     hideCheckbox.onchange = () => renderTimeline(lastTaskViewData);
@@ -1047,11 +1075,6 @@ async function renderTaskViews() {
   renderCalendar(data);
   renderTimeline(data);
   bindAddTaskButtons(data.groups);
-
-  const btnAddGroupCalendar = document.getElementById("btn-add-group-calendar");
-  if (btnAddGroupCalendar) {
-    btnAddGroupCalendar.onclick = () => openGroupModal();
-  }
 }
 
 function switchView(view) {
@@ -1063,12 +1086,6 @@ function switchView(view) {
   document.querySelectorAll(".view-panel").forEach((panel) => {
     panel.classList.toggle("hidden", panel.dataset.viewPanel !== view);
   });
-
-  const btnAddGroup = document.getElementById("btn-add-group");
-  if (btnAddGroup) {
-    btnAddGroup.style.display =
-      view === "calendar" || view === "timeline" ? "none" : "";
-  }
 }
 
 // 初期ビューを復元
@@ -1078,7 +1095,7 @@ document.querySelectorAll(".view-tab").forEach((tab) => {
   tab.addEventListener("click", () => switchView(tab.dataset.view));
 });
 
-// ⚡ 変更: plannedDate 引数を追加し、初期値にセットする
+// plannedDate 引数を渡すと開始予定日・終了予定日に自動セットする
 function openTaskModal(groupId, status = "未着手", plannedDate = null) {
   document.getElementById("task-modal").dataset.groupId = groupId;
   document.getElementById("task-modal").dataset.taskId = "";
@@ -1090,7 +1107,6 @@ function openTaskModal(groupId, status = "未着手", plannedDate = null) {
   document.getElementById("task-book-id").value = "";
   document.getElementById("task-status").value = status;
 
-  // ⚡ 自動反映ロジック
   document.getElementById("task-start-planned-date").value = plannedDate || "";
   document.getElementById("task-end-planned-date").value = plannedDate || "";
 
@@ -1108,10 +1124,6 @@ function openTaskModal(groupId, status = "未着手", plannedDate = null) {
 }
 
 renderTaskViews();
-
-document
-  .getElementById("btn-add-group")
-  ?.addEventListener("click", () => openGroupModal());
 
 document.querySelectorAll(".kanban-add-btn").forEach((btn) => {
   btn.addEventListener("click", (e) => {
