@@ -154,6 +154,46 @@ function calcStatus(groupId, tasks) {
   return "進行中";
 }
 
+// ===== グループの並び替え（ビューごとに異なる基準を使用） =====
+
+// テーブルビュー用：グループの created_at 降順（新しいものが上）
+function sortGroupsByCreatedAtDesc(groups) {
+  return [...groups].sort((a, b) => {
+    const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+    return bTime - aTime;
+  });
+}
+
+// タイムラインビュー用：グループ内子タスクの最も早い start_planned_date 昇順
+// 日付情報を持つ子タスクが1件もないグループは末尾に id 順で配置
+function sortGroupsByEarliestPlannedDate(groups, tasks) {
+  const withDate = [];
+  const withoutDate = [];
+
+  groups.forEach((group) => {
+    const dates = tasks
+      // 型の違いを無視するために String() で比較、または == を使用
+      .filter(
+        (t) => String(t.group_id) === String(group.id) && t.start_planned_date,
+      )
+      .map((t) => new Date(t.start_planned_date).getTime())
+      .filter((time) => !Number.isNaN(time));
+
+    if (dates.length === 0) {
+      withoutDate.push(group);
+    } else {
+      withDate.push({ group, earliest: Math.min(...dates) });
+    }
+  });
+
+  withDate.sort((a, b) => a.earliest - b.earliest);
+  // id の比較も安全にするために数値に変換
+  withoutDate.sort((a, b) => Number(a.id) - Number(b.id));
+
+  return [...withDate.map((entry) => entry.group), ...withoutDate];
+}
+
 function groupStepsByTaskId(allSteps) {
   const map = {};
   allSteps.forEach((step) => {
@@ -310,17 +350,18 @@ async function openTaskEditModal(taskId) {
   document.getElementById("task-granularity").value = task.granularity || "";
   document.getElementById("task-book-id").value = task.book_id || "";
   document.getElementById("task-status").value = task.status;
-  document.getElementById("task-start-planned-date").value =
-    task.start_planned_date ? task.start_planned_date.slice(0, 10) : "";
-  document.getElementById("task-end-planned-date").value = task.end_planned_date
-    ? task.end_planned_date.slice(0, 10)
-    : "";
-  document.getElementById("task-start-date").value = task.start_date
-    ? task.start_date.slice(0, 10)
-    : "";
-  document.getElementById("task-end-date").value = task.end_date
-    ? task.end_date.slice(0, 10)
-    : "";
+  document.getElementById("task-start-planned-date").value = formatDateForInput(
+    task.start_planned_date,
+  );
+  document.getElementById("task-end-planned-date").value = formatDateForInput(
+    task.end_planned_date,
+  );
+  document.getElementById("task-start-date").value = formatDateForInput(
+    task.start_date,
+  );
+  document.getElementById("task-end-date").value = formatDateForInput(
+    task.end_date,
+  );
 
   // 分単位を時間単位(h)に変換してモーダルに表示する
   document.getElementById("task-study-time").value = task.study_time
@@ -587,11 +628,20 @@ function bindTableEvents() {
 }
 
 function renderTable(data) {
+  // ===== ここに仕込む =====
+  console.log("--- renderTable data ---");
+  if (data.groups && data.groups.length > 0)
+    console.log("Groupの構造:", data.groups[0]);
+  if (data.tasks && data.tasks.length > 0)
+    console.log("Taskの構造:", data.tasks[0]);
+  // =======================
   const { groups, tasks, stepsByTaskId } = data;
   const tbody = document.getElementById("task-table-body");
   tbody.innerHTML = "";
 
-  groups.forEach((group) => {
+  const sortedGroups = sortGroupsByCreatedAtDesc(groups);
+
+  sortedGroups.forEach((group) => {
     const childTasks = tasks.filter((t) => t.group_id === group.id);
     tbody.insertAdjacentHTML(
       "beforeend",
@@ -654,6 +704,16 @@ function formatDateForCompare(dateStr) {
   return `${y}-${m}-${d}`;
 }
 
+// ↓ここを追加
+// <input type="date"> にセットする日付文字列を返す（タイムゾーン問題回避）。
+// APIから返る日付値は mysql2 の timezone:'+09:00' 設定によりJSTのDateとして
+// シリアライズされ、JSON化時にUTC文字列(...Z)へ変換されるため、
+// .slice(0,10) で先頭を切り出すと1日前の日付になることがある。
+// 必ず getFullYear/getMonth/getDate() でローカル基準に変換してから文字列化する。
+function formatDateForInput(dateStr) {
+  return formatDateForCompare(dateStr) || "";
+}
+
 function createCalendarChipHtml(task, steps) {
   const categoryBadgeHtml = createCategoryBadgeHtml(task.category_name);
   const stepBadge =
@@ -670,33 +730,38 @@ function createCalendarChipHtml(task, steps) {
 }
 
 function bindCalendarEvents() {
-  document.querySelectorAll(".calendar-chip").forEach((chip) => {
-    chip.addEventListener("click", (e) => {
+  // 🔴 帯状のタスクバー（旧：calendar-chip）に対するクリック・キーボードイベント
+  document.querySelectorAll(".calendar-task-bar").forEach((bar) => {
+    // 既存：クリックで編集モーダルを開く
+    bar.addEventListener("click", (e) => {
       e.stopPropagation();
-      openTaskEditModal(chip.dataset.taskId);
+      if (typeof openTaskEditModal === "function") {
+        openTaskEditModal(bar.dataset.taskId);
+      }
     });
-    chip.addEventListener("keydown", (e) => {
+    // 既存：キーボード（Enter/スペース）で編集モーダルを開く
+    bar.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         e.stopPropagation();
-        openTaskEditModal(chip.dataset.taskId);
+        if (typeof openTaskEditModal === "function") {
+          openTaskEditModal(bar.dataset.taskId);
+        }
       }
     });
   });
 
-  // 日付セルの空きスペースクリックで、その日を開始予定日にした子タスク追加
+  // 既存：日付セルの空きスペースクリックで、その日を開始予定日にした子タスク追加
   document.querySelectorAll(".calendar-cell").forEach((cell) => {
     cell.addEventListener("click", (e) => {
-      // 既存のタスクチップや「もっと見る」をクリックした場合は発火させない
-      if (
-        e.target.closest(".calendar-chip") ||
-        e.target.closest(".calendar-chip-more")
-      )
-        return;
+      // 🔴 判定対象を「.calendar-task-bar」に変更（「もっと見る」は帯状化につき不要なため除外）
+      if (e.target.closest(".calendar-task-bar")) return;
 
       const date = cell.dataset.date;
       if (date && lastTaskViewData) {
-        openAddTaskGroupPicker(lastTaskViewData.groups, date);
+        if (typeof openAddTaskGroupPicker === "function") {
+          openAddTaskGroupPicker(lastTaskViewData.groups, date);
+        }
       }
     });
   });
@@ -711,14 +776,10 @@ function renderCalendar(data) {
   document.getElementById("calendar-month-label").textContent =
     `${year}年${month + 1}月`;
 
-  const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
-  const startWeekday = firstDay.getDay();
-  const daysInMonth = lastDay.getDate();
-
   const grid = document.getElementById("calendar-grid");
   grid.innerHTML = "";
 
+  // 1. 曜日ヘッダーの描画（日〜土）
   ["日", "月", "火", "水", "木", "金", "土"].forEach((label) => {
     grid.insertAdjacentHTML(
       "beforeend",
@@ -726,41 +787,172 @@ function renderCalendar(data) {
     );
   });
 
-  for (let i = 0; i < startWeekday; i++) {
-    grid.insertAdjacentHTML(
-      "beforeend",
-      `<div class="calendar-cell calendar-cell--empty"></div>`,
-    );
+  // 2. カレンダーの表示期間（6週間分 = 42日）の配列を正確に作成する
+  const firstDay = new Date(year, month, 1);
+  const startWeekday = firstDay.getDay(); // 今月の1日目の曜日 (0〜6)
+
+  const calendarDays = [];
+  const renderStartDate = new Date(year, month, 1 - startWeekday);
+
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(renderStartDate);
+    d.setDate(renderStartDate.getDate() + i);
+    calendarDays.push(d);
   }
 
-  for (let day = 1; day <= daysInMonth; day++) {
-    const cellDateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    const dayTasks = tasks.filter(
-      (t) => formatDateForCompare(t.start_planned_date) === cellDateStr,
-    );
+  // 3. 週（1行）ごとに、グリッド背景と「重ねるタスクバー用レイヤー」を生成して配置
+  let gridHtml = "";
+  for (let week = 0; week < 6; week++) {
+    let cellsHtml = "";
+    let isCurrentMonthWeek = false;
 
-    const visibleTasks = dayTasks.slice(0, 3);
-    const remaining = dayTasks.length - visibleTasks.length;
+    for (let day = 0; day < 7; day++) {
+      const currentLabelDate = calendarDays[week * 7 + day];
+      const isCurrentMonth = currentLabelDate.getMonth() === month;
+      if (isCurrentMonth) isCurrentMonthWeek = true;
 
-    const chipsHtml = visibleTasks
-      .map((t) => createCalendarChipHtml(t, stepsByTaskId[t.id] || []))
-      .join("");
-    const moreHtml =
-      remaining > 0
-        ? `<div class="calendar-chip-more">+${remaining}件</div>`
-        : "";
+      const cellDateStr = `${currentLabelDate.getFullYear()}-${String(currentLabelDate.getMonth() + 1).padStart(2, "0")}-${String(currentLabelDate.getDate()).padStart(2, "0")}`;
 
-    grid.insertAdjacentHTML(
-      "beforeend",
-      `<div class="calendar-cell" data-date="${cellDateStr}">
-            <div class="calendar-cell-date">${day}</div>
-            ${chipsHtml}
-            ${moreHtml}
-          </div>`,
-    );
+      cellsHtml += `
+        <div class="calendar-cell ${isCurrentMonth ? "" : "calendar-cell--empty"}" data-date="${cellDateStr}" style="min-height: 110px; border: 1px solid #222; box-sizing: border-box;">
+          <div class="calendar-cell-date" style="padding: 4px 8px; color: ${isCurrentMonth ? "#aaa" : "#444"};">${currentLabelDate.getDate()}</div>
+        </div>
+      `;
+    }
+
+    if (week === 5 && !isCurrentMonthWeek) continue;
+
+    gridHtml += `
+      <div class="calendar-week-row" style="position: relative; grid-column: span 7;">
+        <div class="calendar-week-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); width: 100%;">
+          ${cellsHtml}
+        </div>
+        <div class="calendar-bar-layer" style="position: absolute; top: 28px; left: 0; width: 100%; height: calc(100% - 28px); pointer-events: none;"></div>
+      </div>
+    `;
   }
+  grid.insertAdjacentHTML("beforeend", gridHtml);
+
+  // 補助関数: 日付オブジェクトを安全にタイムゾーン無しの YYYY-MM-DD 文字列にする
+  const toIsoDateStr = (dateObj) => {
+    const y = dateObj.getFullYear();
+    const m = String(dateObj.getMonth() + 1).padStart(2, "0");
+    const d = String(dateObj.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
+
+  // 4. 各週の枠に対して、期間がまたがるタスクを帯状に計算して配置
+  const weekRows = grid.querySelectorAll(".calendar-week-row");
+  weekRows.forEach((row, weekIdx) => {
+    const layer = row.querySelector(".calendar-bar-layer");
+
+    // この1週間の開始日と終了日をタイムスタンプで正確に取得
+    const weekStart = new Date(calendarDays[weekIdx * 7]).setHours(0, 0, 0, 0);
+    const weekEnd = new Date(calendarDays[weekIdx * 7 + 6]).setHours(
+      23,
+      59,
+      59,
+      999,
+    );
+
+    // この週に被っているタスクを絞り込む
+    const weekTasks = tasks.filter((task) => {
+      if (!task.start_planned_date) return false;
+      // タイムゾーンのズレを防ぐため、一度日付のみの文字列にしてからパース
+      const taskStartStr = formatDateForInput(task.start_planned_date);
+      const taskEndStr = task.end_planned_date
+        ? formatDateForInput(task.end_planned_date)
+        : taskStartStr;
+
+      const start = new Date(taskStartStr).setHours(0, 0, 0, 0);
+      const end = new Date(taskEndStr).setHours(0, 0, 0, 0);
+      return start <= weekEnd && end >= weekStart;
+    });
+
+    // 日付の古い順（昇順）にソートして階段状を保証
+    weekTasks.sort((a, b) => {
+      const aTime = a.start_planned_date
+        ? new Date(a.start_planned_date.substring(0, 10)).getTime()
+        : 0;
+      const bTime = b.start_planned_date
+        ? new Date(b.start_planned_date.substring(0, 10)).getTime()
+        : 0;
+      return aTime - bTime;
+    });
+
+    // 計算して配置
+    weekTasks.forEach((task, taskIdx) => {
+      const taskStartStr = formatDateForInput(task.start_planned_date);
+      const taskEndStr = task.end_planned_date
+        ? formatDateForInput(task.end_planned_date)
+        : taskStartStr;
+
+      const taskStart = new Date(taskStartStr).setHours(0, 0, 0, 0);
+      const taskEnd = new Date(taskEndStr).setHours(0, 0, 0, 0);
+
+      // 🔴 【修正】1日のズレをなくすため、Math.round で安全に日数を計算
+      const startDiff = Math.max(
+        0,
+        Math.round((taskStart - weekStart) / (1000 * 60 * 60 * 24)),
+      );
+      const endDiff = Math.min(
+        6,
+        Math.round((taskEnd - weekStart) / (1000 * 60 * 60 * 24)),
+      );
+      const durationDays = endDiff - startDiff + 1;
+
+      const leftPercent = (startDiff / 7) * 100;
+      const widthPercent = (durationDays / 7) * 100;
+      const topPx = taskIdx * 24;
+
+      const categoryBadgeHtml = createCategoryBadgeHtml(task.category_name);
+      const steps = stepsByTaskId[task.id] || [];
+      const stepBadge =
+        steps.length > 0
+          ? `<span class="calendar-chip-badge" style="background: #333; color: #aaa; padding: 0 4px; border-radius: 3px; font-size: 10px; margin-left: auto; flex-shrink: 0;">${steps.filter((s) => s.is_completed).length}/${steps.length}</span>`
+          : "";
+
+      const barHtml = `
+        <div class="calendar-task-bar" data-task-id="${task.id}" style="
+          position: absolute;
+          left: calc(${leftPercent}% + 4px);
+          width: calc(${widthPercent}% - 8px);
+          top: ${topPx}px;
+          height: 20px;
+          background-color: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          color: #fff;
+          font-size: 12px;
+          padding: 2px 6px;
+          border-radius: 4px;
+          cursor: pointer;
+          pointer-events: auto;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        ">
+          ${categoryBadgeHtml}
+          <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">${task.title}</span>
+          ${stepBadge}
+        </div>
+      `;
+      layer.insertAdjacentHTML("beforeend", barHtml);
+    });
+  });
 
   bindCalendarEvents();
+}
+
+// 補助用：日付オブジェクトを "YYYY-MM-DD" にする関数
+function formatDateStr(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 document.getElementById("btn-calendar-prev").addEventListener("click", () => {
@@ -808,20 +1000,127 @@ function createTimelineBarHtml(task, daysInMonth, monthStart, monthEnd) {
 }
 
 function bindTimelineEvents() {
+  const year = timelineDate.getFullYear();
+  const month = timelineDate.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
   document.querySelectorAll(".timeline-bar").forEach((bar) => {
+    // 既存：クリックでモーダルを開く
     bar.addEventListener("click", (e) => {
       e.stopPropagation();
       openTaskEditModal(bar.dataset.taskId);
     });
-    bar.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
+
+    // 🔴 左右のツマミ（リサイズハンドル）のドラッグ処理
+    let isResizing = false;
+    let resizeDirection = ""; // "left" または "right"
+    let startX = 0;
+    let startLeft = 0;
+    let startWidth = 0;
+    let trackWidth = 0;
+
+    bar.querySelectorAll(".timeline-resize-handle").forEach((handle) => {
+      handle.addEventListener("mousedown", (e) => {
         e.preventDefault();
-        e.stopPropagation();
-        openTaskEditModal(bar.dataset.taskId);
-      }
+        e.stopPropagation(); // バー本体のクリックイベントを防止
+
+        isResizing = true;
+        resizeDirection = handle.classList.contains("handle-left")
+          ? "left"
+          : "right";
+        startX = e.clientX;
+
+        const track = bar.closest(".timeline-track");
+        trackWidth = track.getBoundingClientRect().width;
+
+        // 現在のバーの位置と幅をピクセル値で取得
+        startLeft = bar.offsetLeft;
+        startWidth = bar.offsetWidth;
+
+        const onMouseMove = (moveEvent) => {
+          if (!isResizing) return;
+          const deltaX = moveEvent.clientX - startX;
+
+          if (resizeDirection === "left") {
+            // 左端を動かす：幅を縮めて、位置を右にずらす
+            let newLeft = startLeft + deltaX;
+            let newWidth = startWidth - deltaX;
+            if (newWidth > 15) {
+              // 最小幅制限
+              bar.style.left = `${(newLeft / trackWidth) * 100}%`;
+              bar.style.width = `${(newWidth / trackWidth) * 100}%`;
+            }
+          } else {
+            // 右端を動かす：位置は固定で幅だけ変える
+            let newWidth = startWidth + deltaX;
+            if (newWidth > 15) {
+              bar.style.width = `${(newWidth / trackWidth) * 100}%`;
+            }
+          }
+        };
+
+        const onMouseUp = async () => {
+          if (!isResizing) return;
+          isResizing = false;
+          document.removeEventListener("mousemove", onMouseMove);
+          document.removeEventListener("mouseup", onMouseUp);
+
+          // 変更後のピクセル位置から「何日目」かを正しく計算
+          const finalLeftPercent = bar.offsetLeft / trackWidth;
+          const finalWidthPercent = bar.offsetWidth / trackWidth;
+
+          // 開始日と終了日の判定ロジックを修正
+          const startDay = Math.floor(finalLeftPercent * daysInMonth) + 1;
+          const endDay = Math.floor(
+            (finalLeftPercent + finalWidthPercent) * daysInMonth,
+          );
+
+          const safeStartDay = Math.max(1, Math.min(daysInMonth, startDay));
+          const safeEndDay = Math.max(
+            safeStartDay,
+            Math.min(daysInMonth, endDay),
+          );
+
+          const newStartDateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(safeStartDay).padStart(2, "0")}`;
+          const newEndDateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(safeEndDay).padStart(2, "0")}`;
+
+          // APIに保存
+          const success = await updateTaskDuration(
+            bar.dataset.taskId,
+            newStartDateStr,
+            newEndDateStr,
+          );
+          if (success) {
+            if (typeof fetchTasks === "function") {
+              fetchTasks();
+            } else {
+              location.reload();
+            }
+          }
+        };
+
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+      });
+    });
+
+    // 既存：バー本体の通常ドラッグ＆ドロップ
+    bar.setAttribute("draggable", "true");
+    bar.addEventListener("dragstart", (e) => {
+      if (isResizing) {
+        e.preventDefault();
+        return;
+      } // リサイズ中は通常ドラッグを無効化
+      e.stopPropagation();
+      e.dataTransfer.setData("text/plain", bar.dataset.taskId);
+      bar.classList.add("dragging");
+    });
+    bar.addEventListener("dragend", () => {
+      bar.classList.remove("dragging");
     });
   });
 
+  // --- (これ以降は既存の処理から変更ありません) ---
   const prevBtn = document.getElementById("btn-timeline-prev");
   const nextBtn = document.getElementById("btn-timeline-next");
   const monthLabel = document.getElementById("timeline-month-label");
@@ -833,14 +1132,12 @@ function bindTimelineEvents() {
       renderTimeline(lastTaskViewData);
     });
   }
-
   if (nextBtn) {
     nextBtn.addEventListener("click", () => {
       timelineDate.setMonth(timelineDate.getMonth() + 1);
       renderTimeline(lastTaskViewData);
     });
   }
-
   if (monthLabel && monthPicker) {
     const openMonthPicker = () => {
       if (typeof monthPicker.showPicker === "function") {
@@ -851,45 +1148,50 @@ function bindTimelineEvents() {
       }
     };
     monthLabel.addEventListener("click", openMonthPicker);
-    monthLabel.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        openMonthPicker();
-      }
-    });
     monthPicker.addEventListener("change", (e) => {
       const value = e.target.value;
       if (!value) return;
-      const [year, month] = value.split("-").map(Number);
-      timelineDate = new Date(year, month - 1, 1);
+      const [y, m] = value.split("-").map(Number);
+      timelineDate = new Date(y, m - 1, 1);
       renderTimeline(lastTaskViewData);
     });
   }
 
-  // タイムライントラックの空きスペースクリックで、クリックした日を開始予定日にした子タスク追加
   document.querySelectorAll(".timeline-track").forEach((track) => {
+    track.addEventListener("dragover", (e) => {
+      e.preventDefault();
+    });
+    track.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const taskId = e.dataTransfer.getData("text/plain");
+      if (!taskId) return;
+      const rect = track.getBoundingClientRect();
+      const percent = (e.clientX - rect.left) / rect.width;
+      const clickedDay = Math.floor(percent * daysInMonth) + 1;
+      const safeDay = Math.max(1, Math.min(daysInMonth, clickedDay));
+      const newDateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(safeDay).padStart(2, "0")}`;
+      const success = await updateTaskPlannedDate(taskId, newDateStr);
+      if (success) {
+        if (typeof fetchTasks === "function") {
+          fetchTasks();
+        } else {
+          location.reload();
+        }
+      }
+    });
+
     track.addEventListener("click", (e) => {
-      // 既存のタスクバーや、最上部の日付ヘッダー軸のクリックは除外
       if (
         e.target.closest(".timeline-bar") ||
         track.parentElement.querySelector(".timeline-row-header--axis")
       )
         return;
-
-      // クリック位置の横幅割合から「日」を逆算
       const rect = track.getBoundingClientRect();
-      const clickX = e.clientX - rect.left;
-      const percent = clickX / rect.width;
-
-      const year = timelineDate.getFullYear();
-      const month = timelineDate.getMonth();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-
+      const percent = (e.clientX - rect.left) / rect.width;
       const clickedDay = Math.floor(percent * daysInMonth) + 1;
       const safeDay = Math.max(1, Math.min(daysInMonth, clickedDay));
       const cellDateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(safeDay).padStart(2, "0")}`;
-
-      // クリックした行の親グループのタイトルを取得してグループを特定
       const rowHeader = track.parentElement.querySelector(
         ".timeline-row-header",
       );
@@ -897,19 +1199,48 @@ function bindTimelineEvents() {
       const group = lastTaskViewData?.groups.find(
         (g) => g.title === groupTitle,
       );
-
       if (group) {
-        // グループが特定できればダイレクトにモーダルを開く
         openTaskModal(group.id, "未着手", cellDateStr);
       } else if (lastTaskViewData) {
-        // 特定できなければピッカーを挟む
         openAddTaskGroupPicker(lastTaskViewData.groups, cellDateStr);
       }
     });
   });
 }
 
+async function updateTaskPlannedDate(taskId, newDate) {
+  try {
+    // 💡 お使いの環境に合わせて、PUTまたはPATCH、エンドポイントURL（/api/tasksなど）を修正してください
+    const response = await fetch(`/api/tasks/${taskId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        start_planned_date: newDate,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("APIの更新に失敗しました");
+    }
+    return true;
+  } catch (error) {
+    console.error("エラー:", error);
+    alert("日付の移動に失敗しました。");
+    return false;
+  }
+}
+
 function renderTimeline(data) {
+  // ===== ここに仕込む =====
+  console.log("--- renderTimeline data ---");
+  if (data.groups && data.groups.length > 0)
+    console.log("Groupの構造:", data.groups[0]);
+  if (data.tasks && data.tasks.length > 0)
+    console.log("Taskの構造:", data.tasks[0]);
+  // =======================
+
   const { groups, tasks } = data;
 
   const year = timelineDate.getFullYear();
@@ -957,12 +1288,46 @@ function renderTimeline(data) {
   const hideCompleted =
     document.getElementById("timeline-hide-completed")?.checked ?? false;
 
-  groups.forEach((group) => {
-    let childTasks = tasks.filter((t) => t.group_id === group.id);
+  const sortedGroups = sortGroupsByEarliestPlannedDate(groups, tasks);
+
+  // ===== 🔍 ここから追加してください =====
+  console.log("--- 【デバッグ】タイムラインのソート結果 ---");
+  console.log(
+    "元の groups 順:",
+    groups.map((g) => `[ID:${g.id}] ${g.title}`),
+  );
+  console.log(
+    "ソート後 sortedGroups 順:",
+    sortedGroups.map((g) => `[ID:${g.id}] ${g.title}`),
+  );
+  console.log(
+    "各タスクの予定日:",
+    tasks.map(
+      (t) =>
+        `[タスクID:${t.id}/グループID:${t.group_id}] ${t.title}: ${t.start_planned_date}`,
+    ),
+  );
+  // ===== 🔍 ここまで追加してください =====
+
+  sortedGroups.forEach((group) => {
+    let childTasks = tasks.filter(
+      (t) => String(t.group_id) === String(group.id),
+    );
     if (hideCompleted) {
       childTasks = childTasks.filter((t) => t.status !== "完了");
     }
     if (hideCompleted && childTasks.length === 0) return;
+
+    // 🔴【ここを追加】子タスクを start_planned_date の昇順（古い順）に並び替える
+    childTasks.sort((a, b) => {
+      const aTime = a.start_planned_date
+        ? new Date(a.start_planned_date).getTime()
+        : 0;
+      const bTime = b.start_planned_date
+        ? new Date(b.start_planned_date).getTime()
+        : 0;
+      return aTime - bTime; // 古い日付が上（インデックスが先）になるようにソート
+    });
 
     const barsHtml = childTasks
       .map((task) => {
@@ -973,10 +1338,15 @@ function renderTimeline(data) {
           monthEnd,
         );
         if (!result) return "";
+
+        // 🔴 ここで並び替えた後の index（0, 1, 2...）を使うため、自動的に階段状になります
         const index = childTasks.indexOf(task);
         const top = 8 + index * 28;
-        return `<div class="timeline-bar" data-task-id="${task.id}" tabindex="0" style="left: ${result.leftPercent}%; width: ${result.widthPercent}%; top: ${top}px;">
-            <span class="timeline-bar-title">${task.title}</span>
+        // 🔴 バーの内部に左右のリサイズハンドル（ツマミ）を配置するHTMLに変更
+        return `<div class="timeline-bar" data-task-id="${task.id}" tabindex="0" style="left: ${result.leftPercent}%; width: ${result.widthPercent}%; top: ${top}px; position: absolute;">
+            <div class="timeline-resize-handle handle-left" style="position: absolute; left: 0; top: 0; width: 6px; height: 100%; cursor: ew-resize; z-index: 10;"></div>
+            <span class="timeline-bar-title" style="pointer-events: none; padding: 0 8px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${task.title}</span>
+            <div class="timeline-resize-handle handle-right" style="position: absolute; right: 0; top: 0; width: 6px; height: 100%; cursor: ew-resize; z-index: 10;"></div>
           </div>`;
       })
       .join("");
@@ -1359,3 +1729,28 @@ document
 document.getElementById("group-modal").addEventListener("click", (e) => {
   if (e.target.id === "group-modal") closeGroupModalWithConfirm();
 });
+
+async function updateTaskDuration(taskId, startDate, endDate) {
+  try {
+    // 💡 お使いのバックエンドAPIの仕様に合わせて、URLや送信データのキー名を調整してください
+    const response = await fetch(`/api/tasks/${taskId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        start_planned_date: startDate,
+        end_planned_date: endDate,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("期間の保存に失敗しました");
+    }
+    return true;
+  } catch (error) {
+    console.error("エラー:", error);
+    alert("期間の変更に失敗しました。");
+    return false;
+  }
+}

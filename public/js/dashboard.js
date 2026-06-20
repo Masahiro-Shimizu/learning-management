@@ -313,8 +313,9 @@ function renderCharts() {
       : currentPeriod === "month"
         ? "先月比"
         : "前年比";
-  document.getElementById("period-study-sub").textContent =
-    `${periodLabel} ${diffSign}${diffHours}時間`;
+  // 【v2.9.0】数値部分のみ .sub-highlight でハイライトするため innerHTML に変更
+  document.getElementById("period-study-sub").innerHTML =
+    `${periodLabel} <span class="sub-highlight">${diffSign}${diffHours}時間</span>`;
 
   // ② 進捗率（全タスクベースの完了率%）
   const totalAllTasks = tasks.length;
@@ -324,8 +325,9 @@ function renderCharts() {
       ? Math.round((completedAllTasks / totalAllTasks) * 100)
       : 0;
   document.getElementById("progress-rate").textContent = progressRate;
-  document.getElementById("progress-sub").textContent =
-    `完了 ${completedAllTasks} / 全 ${totalAllTasks} 件`;
+  // 【v2.9.0】完了数のみ .sub-highlight でハイライトするため innerHTML に変更
+  document.getElementById("progress-sub").innerHTML =
+    `完了 <span class="sub-highlight">${completedAllTasks}</span> / 全 ${totalAllTasks} 件`;
 
   // ③ 完了タスク数
   const doneCount = filteredTasks.filter((t) => t.status === "完了").length;
@@ -338,8 +340,9 @@ function renderCharts() {
     (b) => b.total_chapters && Number(b.completed_count) >= b.total_chapters,
   ).length;
   document.getElementById("books-read-count").textContent = readBooks;
-  document.getElementById("books-read-sub").textContent =
-    `読了 / 全 ${books.length} 冊`;
+  // 【v2.9.0】読了数のみ .sub-highlight でハイライトするため innerHTML に変更
+  document.getElementById("books-read-sub").innerHTML =
+    `読了 <span class="sub-highlight">${readBooks}</span> / 全 ${books.length} 冊`;
 
   // ===== グラフ =====
 

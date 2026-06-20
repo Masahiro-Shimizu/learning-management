@@ -44,8 +44,32 @@
   color: var(--color-text-secondary);
 }
 
+/* ===== サマリーカードのアイコン（v2.9.0：丸角ボックススタイル） ===== */
 .summary-card-icon {
-  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.summary-card-icon--indigo {
+  background-color: rgb(99 102 241 / 0.18);
+}
+
+.summary-card-icon--amber {
+  background-color: rgb(245 158 11 / 0.18);
+}
+
+.summary-card-icon--green {
+  background-color: rgb(16 185 129 / 0.18);
+}
+
+.summary-card-icon--violet {
+  background-color: rgb(139 92 246 / 0.18);
 }
 
 .summary-card-value {
@@ -66,6 +90,12 @@
 .summary-card-sub {
   font-size: 0.8rem;
   color: var(--color-text-tertiary);
+}
+
+/* サブテキスト内の数値ハイライト（v2.9.0追加） */
+.summary-card-sub .sub-highlight {
+  color: var(--color-status-done);
+  font-weight: 700;
 }
 
 /* グラフエリア */

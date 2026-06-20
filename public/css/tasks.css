@@ -528,21 +528,21 @@
   text-align: center;
 }
 
-/* カレンダーグリッド：display:block + inline-block 方式で7列均等分割 */
+/* カレンダーグリッド：曜日ヘッダー7列 + 週ごとの行(calendar-week-row)を縦に積む構造
+   ※ JS側(renderCalendar)が .calendar-week-row に grid-column: span 7 を指定して
+      1行＝1週間を表現しているため、親の .calendar-grid 自体も grid コンテナにする必要がある */
 .calendar-grid {
   border: 1px solid rgb(255 255 255 / 0.06);
   border-radius: 10px;
   overflow: hidden;
   width: 100%;
-  display: block !important;
-  font-size: 0; /* 子要素の隙間（改行）をなくす */
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr);
 }
 
 /* 曜日ヘッダー */
 .calendar-weekday {
-  display: inline-block !important;
-  width: 14.285% !important; /* 100% ÷ 7 */
-  padding: 8px 4px !important;
+  padding: 8px 4px;
   text-align: center;
   font-size: 0.75rem;
   color: var(--color-text-tertiary);
@@ -550,22 +550,30 @@
   border-bottom: 1px solid rgb(255 255 255 / 0.06);
   border-left: 1px solid rgb(255 255 255 / 0.06);
   box-sizing: border-box;
-  vertical-align: top;
 }
 
-/* 日付セル：クリックでその日に子タスクを追加できるため cursor を明示 */
+/* 週の行：内部に7列グリッド(calendar-week-grid)と、
+   タスクバーを重ねて配置するための絶対配置レイヤー(calendar-bar-layer)を持つ */
+.calendar-week-row {
+  grid-column: 1 / -1;
+  position: relative;
+}
+
+.calendar-week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  width: 100%;
+}
+
+/* 日付セル：クリックでその日に子タスクを追加できるため cursor を明示
+   幅は親の calendar-week-grid が 7 等分するため、ここでは幅を固定しない */
 .calendar-cell {
-  display: inline-flex !important;
-  flex-direction: column;
-  width: 14.285% !important; /* 100% ÷ 7 */
-  height: 110px !important;
-  min-height: 110px !important;
-  padding: var(--space-8) !important;
+  min-height: 110px;
+  padding: var(--space-8);
   background-color: transparent;
   border-left: 1px solid rgb(255 255 255 / 0.06);
   border-bottom: 1px solid rgb(255 255 255 / 0.06);
   box-sizing: border-box;
-  vertical-align: top;
   cursor: pointer;
   transition: background-color 0.15s;
 }
@@ -576,8 +584,8 @@
 
 /* 左端（日曜日）の列の左ボーダーを消して二重線を防ぐ */
 .calendar-weekday:nth-child(7n + 1),
-.calendar-cell:nth-child(7n + 1) {
-  border-left: none !important;
+.calendar-week-grid .calendar-cell:nth-child(7n + 1) {
+  border-left: none;
 }
 
 .calendar-cell.calendar-cell--empty {
@@ -592,28 +600,19 @@
   font-weight: 500;
 }
 
-/* カレンダーチップ */
-.calendar-chip {
-  position: relative !important;
-  left: auto !important;
-  top: auto !important;
-  width: 100% !important;
-  height: auto !important;
-  display: flex !important;
-  justify-content: space-between;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 6px;
-  margin-bottom: 4px;
+/* 週またぎタスクバー：位置(left/top)とサイズ(width)は
+   renderCalendar が calendar-bar-layer 基準で計算しインラインstyleで指定するため、
+   ここでは見た目（色・形・文字）だけを担当する */
+.calendar-task-bar {
   border-radius: 6px;
   font-size: 0.7rem;
-  cursor: pointer;
-  overflow: hidden;
-  white-space: nowrap;
   background-color: rgb(139 92 246 / 0.18);
   color: #c4b5fd;
-  box-sizing: border-box;
-  flex-shrink: 0;
+  transition: background-color 0.15s;
+}
+
+.calendar-task-bar:hover {
+  background-color: rgb(139 92 246 / 0.28);
 }
 
 .calendar-chip-title {

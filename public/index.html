@@ -90,6 +90,7 @@
                 </button>
                 <button class="btn btn-period" data-period="month">月</button>
                 <button class="btn btn-period" data-period="year">年</button>
+                <button class="btn btn-period" data-period="all">全</button>
               </div>
               <div class="period-nav">
                 <button
@@ -111,7 +112,7 @@
             </div>
           </div>
 
-          <!-- サマリーカード（v2.2.0 仕様） -->
+          <!-- サマリーカード（v2.9.0：モックアップ準拠の見た目に更新） -->
           <div class="dashboard-summary">
             <!-- ① 期間の学習時間（週/月/年トグル連動） -->
             <div class="summary-card">
@@ -119,7 +120,9 @@
                 <p class="summary-card-label" id="period-study-label">
                   今週の学習時間
                 </p>
-                <span class="summary-card-icon">⏱️</span>
+                <span class="summary-card-icon summary-card-icon--indigo"
+                  >⏱️</span
+                >
               </div>
               <p class="summary-card-value">
                 <span id="period-study-time">--</span
@@ -132,7 +135,9 @@
             <div class="summary-card">
               <div class="summary-card-header">
                 <p class="summary-card-label">進捗率</p>
-                <span class="summary-card-icon">📈</span>
+                <span class="summary-card-icon summary-card-icon--amber"
+                  >📈</span
+                >
               </div>
               <p class="summary-card-value">
                 <span id="progress-rate">--</span
@@ -145,7 +150,9 @@
             <div class="summary-card">
               <div class="summary-card-header">
                 <p class="summary-card-label">完了タスク</p>
-                <span class="summary-card-icon">✅</span>
+                <span class="summary-card-icon summary-card-icon--green"
+                  >✅</span
+                >
               </div>
               <p class="summary-card-value">
                 <span id="done-count">--</span
@@ -158,7 +165,9 @@
             <div class="summary-card">
               <div class="summary-card-header">
                 <p class="summary-card-label">読了書籍</p>
-                <span class="summary-card-icon">📚</span>
+                <span class="summary-card-icon summary-card-icon--violet"
+                  >📚</span
+                >
               </div>
               <p class="summary-card-value">
                 <span id="books-read-count">--</span
@@ -489,24 +498,63 @@
         <section id="page-settings">
           <h2>設定</h2>
 
-          <div class="settings-block">
-            <h3>タスク種別</h3>
-            <p class="settings-sub">タスクの「種別」項目を管理します。</p>
-            <div class="settings-add-row">
-              <input
-                type="text"
-                id="task-type-new-name"
-                placeholder="新しい種別名"
-              />
-              <button
-                type="button"
-                id="btn-task-type-add"
-                class="btn btn-primary"
-              >
-                追加
-              </button>
+          <!-- 🔴 横並びにするためのコンテナを追加 -->
+          <div
+            class="settings-container"
+            style="
+              display: flex;
+              gap: var(--space-24);
+              flex-wrap: wrap;
+              margin-top: var(--space-24);
+            "
+          >
+            <!-- タスク種別（既存ブロック。margin-topを打ち消すstyleを追加して高さを揃えます） -->
+            <div
+              class="settings-block"
+              style="margin-top: 0; flex: 1; min-width: 320px"
+            >
+              <h3>タスク種別</h3>
+              <p class="settings-sub">タスクの「種別」項目を管理します。</p>
+              <div class="settings-add-row">
+                <input
+                  type="text"
+                  id="task-type-new-name"
+                  placeholder="新しい種別名"
+                />
+                <button
+                  type="button"
+                  id="btn-task-type-add"
+                  class="btn btn-primary"
+                >
+                  追加
+                </button>
+              </div>
+              <ul id="task-type-list" class="settings-list"></ul>
             </div>
-            <ul id="task-type-list" class="settings-list"></ul>
+
+            <!-- 🔴 カテゴリ種別（新規追加ブロック） -->
+            <div
+              class="settings-block"
+              style="margin-top: 0; flex: 1; min-width: 320px"
+            >
+              <h3>カテゴリ種別</h3>
+              <p class="settings-sub">タスクの「カテゴリ」項目を管理します。</p>
+              <div class="settings-add-row">
+                <input
+                  type="text"
+                  id="task-category-new-name"
+                  placeholder="新しいカテゴリ名"
+                />
+                <button
+                  type="button"
+                  id="btn-task-category-add"
+                  class="btn btn-primary"
+                >
+                  追加
+                </button>
+              </div>
+              <ul id="task-category-list" class="settings-list"></ul>
+            </div>
           </div>
         </section>
       </main>
@@ -715,6 +763,56 @@
               キャンセル
             </button>
             <button type="button" id="btn-book-save" class="btn btn-primary">
+              保存
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== マンダラ：子タスク選択モーダル ===== -->
+    <div id="mandala-task-picker-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>タスクを紐づける</h3>
+          <button
+            type="button"
+            id="btn-mandala-task-picker-close"
+            class="btn-modal-close"
+            aria-label="閉じる"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="mandala-task-picker-search-row">
+          <input
+            type="text"
+            id="mandala-task-picker-search"
+            placeholder="タスクを検索…"
+          />
+        </div>
+
+        <div
+          id="mandala-task-picker-list"
+          class="mandala-task-picker-list"
+        ></div>
+
+        <div class="modal-actions">
+          <div></div>
+          <div class="task-actions-right">
+            <button
+              type="button"
+              id="btn-mandala-task-picker-cancel"
+              class="btn btn-secondary"
+            >
+              キャンセル
+            </button>
+            <button
+              type="button"
+              id="btn-mandala-task-picker-save"
+              class="btn btn-primary"
+            >
               保存
             </button>
           </div>
