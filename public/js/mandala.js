@@ -18,9 +18,20 @@ const TASK_STATUS_DOT_CLASS_MANDALA = {
 
 // ===== マンダラ座標ヘルパー =====
 
+// ===== 1. セルの種類判定を正しく修正 =====
 function getCellType(r, c) {
   if (r === 4 && c === 4) return "center";
-  if (r % 3 === 1 && c % 3 === 1) return "sub-center";
+
+  // 中央ブロック（縦3〜5、横3〜5）の周囲8マスをサブテーマとして判定
+  if (r >= 3 && r <= 5 && c >= 3 && c <= 5) {
+    return "sub-center";
+  }
+
+  // 外側ブロックの各中心マスもサブテーマとして判定
+  if (r % 3 === 1 && c % 3 === 1) {
+    return "sub-center";
+  }
+
   return "action";
 }
 
@@ -29,12 +40,27 @@ function cellId(r, c) {
 }
 
 function getSubThemeNumber(r, c) {
-  // AIの表記バグを防ぐため、文字列のリストとして安全に座標を定義します
-  const subCenters = ["1:1", "1:4", "1:7", "4:1", "4:7", "7:1", "7:4", "7:7"];
+  // 中央ブロックと外側ブロックのどちらの座標からでも、正しい番号（1〜8）を返せるように定義
+  const mandalaPairs = [
+    { center: "3:3", outer: "1:1" }, // サブテーマ1
+    { center: "3:4", outer: "1:4" }, // サブテーマ2
+    { center: "3:5", outer: "1:7" }, // サブテーマ3
+    { center: "4:3", outer: "4:1" }, // サブテーマ4
+    { center: "4:5", outer: "4:7" }, // サブテーマ5
+    { center: "5:3", outer: "7:1" }, // サブテーマ6
+    { center: "5:4", outer: "7:4" }, // サブテーマ7
+    { center: "5:5", outer: "7:7" }, // サブテーマ8
+  ];
 
-  const currentKey = r + ":" + c;
-  const idx = subCenters.indexOf(currentKey);
-  return idx + 1;
+  const currentKey = `${r}:${c}`;
+
+  // ペアから該当するオブジェクトのインデックスを探す
+  const idx = mandalaPairs.findIndex(
+    (p) => p.center === currentKey || p.outer === currentKey,
+  );
+
+  // 見つかった場合は 1〜8、見つからない場合は安全のために空文字や1を返す
+  return idx !== -1 ? idx + 1 : 1;
 }
 
 // ===== マンダラ一覧 =====
@@ -525,12 +551,55 @@ function updateProgressBarFromDOM(done, total) {
 
 // ===== セル入力ハンドラ =====
 
+// 修正後：この内容に丸ごと書き換えてください
+// ===== 2. 双方向同期ロジックの決定版 =====
 function onCellInput(e) {
-  const r = e.target.dataset.row;
-  const c = e.target.dataset.col;
-  if (!pendingCells[`${r},${c}`]) pendingCells[`${r},${c}`] = {};
-  pendingCells[`${r},${c}`].content = e.target.value;
+  const r = parseInt(e.target.dataset.row);
+  const c = parseInt(e.target.dataset.col);
+  const value = e.target.value;
 
+  // 自分の入力を保存待ちにセット
+  if (!pendingCells[`${r},${c}`]) pendingCells[`${r},${c}`] = {};
+  pendingCells[`${r},${c}`].content = value;
+
+  // 中央の周囲8マス と 外側の中心8マス の正確なペア定義
+  const mandalaPairs = [
+    { center: "3:3", outer: "1:1" }, // サブテーマ1 (左上)
+    { center: "3:4", outer: "1:4" }, // サブテーマ2 (上)
+    { center: "3:5", outer: "1:7" }, // サブテーマ3 (右上)
+    { center: "4:3", outer: "4:1" }, // サブテーマ4 (左)
+    { center: "4:5", outer: "4:7" }, // サブテーマ5 (右)
+    { center: "5:3", outer: "7:1" }, // サブテーマ6 (左下)
+    { center: "5:4", outer: "7:4" }, // サブテーマ7 (下)
+    { center: "5:5", outer: "7:7" }, // サブテーマ8 (右下)
+  ];
+
+  const currentKey = `${r}:${c}`;
+
+  // 入力された座標がペアに含まれているかチェック
+  const foundPair = mandalaPairs.find(
+    (p) => p.center === currentKey || p.outer === currentKey,
+  );
+
+  if (foundPair) {
+    // 相手側の座標を特定 (自分がcenterならouter、自分がouterならcenter)
+    const targetKey =
+      foundPair.center === currentKey ? foundPair.outer : foundPair.center;
+    const [targetR, targetC] = targetKey.split(":").map(Number);
+
+    // 相手側のテキストエリアをリアルタイム同期
+    const targetEl = document.getElementById(cellId(targetR, targetC));
+    if (targetEl && targetEl.value !== value) {
+      targetEl.value = value;
+
+      // 相手側の変更も自動保存の対象にする
+      if (!pendingCells[`${targetR},${targetC}`])
+        pendingCells[`${targetR},${targetC}`] = {};
+      pendingCells[`${targetR},${targetC}`].content = value;
+    }
+  }
+
+  // 自動保存タイマーを起動 (1秒後にバックエンドへ送信)
   setSaveStatus("saving");
   clearTimeout(saveTimer);
   saveTimer = setTimeout(autoSave, 1000);
