@@ -870,6 +870,91 @@
   font-size: 0.65rem;
 }
 
+/* ===== 進捗率バー（親グループ：子タスク完了率） ===== */
+
+.group-card-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.group-card-progress-bar {
+  flex: 1;
+  height: 5px;
+  border-radius: 6px;
+  background-color: rgb(255 255 255 / 0.08);
+  overflow: hidden;
+}
+
+.group-card-progress-bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(
+    135deg,
+    var(--color-accent-primary) 0%,
+    #f5a623 130%
+  );
+  border-radius: 6px;
+}
+
+.group-card-progress-label {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+/* テーブルビューの進捗率カラム用（横幅固定の簡易バー） */
+.table-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 90px;
+}
+
+.table-progress-bar {
+  flex: 1;
+  height: 5px;
+  border-radius: 6px;
+  background-color: rgb(255 255 255 / 0.08);
+  overflow: hidden;
+}
+
+.table-progress-bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(
+    135deg,
+    var(--color-accent-primary) 0%,
+    #f5a623 130%
+  );
+  border-radius: 6px;
+}
+
+.table-progress-label {
+  font-size: 0.72rem;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+/* ===== ステップ達成率バー（カンバンの子タスクカード） ===== */
+
+.task-card-step-progress {
+  margin-top: 8px;
+  height: 4px;
+  border-radius: 4px;
+  background-color: rgb(255 255 255 / 0.08);
+  overflow: hidden;
+}
+
+.task-card-step-progress i {
+  display: block;
+  height: 100%;
+  background-color: var(--color-status-done);
+  border-radius: 4px;
+}
+
 @media (max-width: 1024px) {
   .kanban {
     grid-template-columns: 1fr;

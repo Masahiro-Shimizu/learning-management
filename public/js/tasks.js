@@ -107,6 +107,13 @@ function createStepBadgeHtml(steps) {
   return `<span class="task-card-meta-item task-step-badge">${completed}/${steps.length}</span>`;
 }
 
+function createStepProgressBarHtml(steps) {
+  if (!steps || steps.length === 0) return "";
+  const completed = steps.filter((s) => s.is_completed).length;
+  const percent = Math.round((completed / steps.length) * 100);
+  return `<div class="task-card-step-progress"><i style="width:${percent}%"></i></div>`;
+}
+
 function createTaskCardHtml(task, steps = []) {
   const typeInfo = getTypeInfo(task.type_name);
   const categoryBadgeHtml = createCategoryBadgeHtml(task.category_name);
@@ -122,6 +129,7 @@ function createTaskCardHtml(task, steps = []) {
       ? `<span class="task-card-meta-item">${CLOCK_ICON}${hours}h</span>`
       : "";
   const stepBadgeHtml = createStepBadgeHtml(steps);
+  const stepProgressHtml = createStepProgressBarHtml(steps);
 
   return `
     <article class="task-card task-card--${typeInfo.class}" data-task-id="${task.id}" tabindex="0">
@@ -135,6 +143,7 @@ function createTaskCardHtml(task, steps = []) {
         ${timeHtml}
         ${stepBadgeHtml}
       </div>
+      ${stepProgressHtml}
     </article>
   `;
 }
@@ -152,6 +161,38 @@ function calcStatus(groupId, tasks) {
   if (children.every(completedThisYear)) return "完了";
   if (children.every((t) => t.status === "未着手")) return "未着手";
   return "進行中";
+}
+
+// 子タスク完了数 / 全体数の進捗率（%）。子タスク0件は null を返す
+function calcGroupProgress(groupId, tasks) {
+  const children = tasks.filter((t) => t.group_id === groupId);
+  if (children.length === 0) return null;
+  const completed = children.filter((t) => t.status === "完了").length;
+  return Math.round((completed / children.length) * 100);
+}
+
+function createGroupProgressHtml(percent) {
+  if (percent === null) {
+    return `<div class="group-card-progress"><span class="group-card-progress-label">－</span></div>`;
+  }
+  return `
+    <div class="group-card-progress">
+      <div class="group-card-progress-bar"><i style="width:${percent}%"></i></div>
+      <span class="group-card-progress-label">${percent}%</span>
+    </div>
+  `;
+}
+
+function createTableProgressHtml(percent) {
+  if (percent === null) {
+    return `<span class="task-table-dim">－</span>`;
+  }
+  return `
+    <span class="table-progress">
+      <span class="table-progress-bar"><i style="width:${percent}%"></i></span>
+      <span class="table-progress-label">${percent}%</span>
+    </span>
+  `;
 }
 
 // ===== グループの並び替え（ビューごとに異なる基準を使用） =====
@@ -203,7 +244,12 @@ function groupStepsByTaskId(allSteps) {
   return map;
 }
 
-function createGroupCardHtml(group, childTasks, stepsByTaskId) {
+function createGroupCardHtml(
+  group,
+  childTasks,
+  stepsByTaskId,
+  progressPercent,
+) {
   const childrenHTML = childTasks
     .map((t) => createTaskCardHtml(t, stepsByTaskId[t.id] || []))
     .join("");
@@ -214,6 +260,7 @@ function createGroupCardHtml(group, childTasks, stepsByTaskId) {
         <p class="group-card-title">${group.title}</p>
         <button type="button" class="btn-edit-group" data-group-id="${group.id}" aria-label="親タスクを編集">編集</button>
       </div>
+      ${createGroupProgressHtml(progressPercent)}
       <div class="group-card-children hidden">
         <button type="button" class="btn-add-task" data-group-id="${group.id}">+ 子タスク追加</button>
         ${childrenHTML}
@@ -381,7 +428,9 @@ async function openTaskEditModal(taskId) {
 function bindKanbanEvents() {
   document.querySelectorAll(".group-card-header").forEach((header) => {
     header.addEventListener("click", () => {
-      header.nextElementSibling.classList.toggle("hidden");
+      const card = header.closest(".group-card");
+      const children = card.querySelector(".group-card-children");
+      children.classList.toggle("hidden");
     });
   });
 
@@ -457,12 +506,13 @@ function renderKanban(data) {
     const status = calcStatus(group.id, tasks);
     statusCounts[status]++;
     const childTasks = tasks.filter((t) => t.group_id === group.id);
+    const progressPercent = calcGroupProgress(group.id, tasks);
     const container = document.querySelector(
       `.kanban-cards[data-status="${status}"]`,
     );
     container.insertAdjacentHTML(
       "beforeend",
-      createGroupCardHtml(group, childTasks, stepsByTaskId),
+      createGroupCardHtml(group, childTasks, stepsByTaskId, progressPercent),
     );
   });
 
@@ -489,13 +539,17 @@ const TASK_STATUS_DOT_CLASS = {
   完了: "done",
 };
 
-function createGroupRowHtml(group, childCount) {
+function createGroupRowHtml(group, childCount, progressPercent) {
   return `
       <tr class="group-row" data-group-id="${group.id}">
-        <td colspan="6">
+        <td colspan="3">
           <span class="group-row-toggle">▾</span>
           ${group.title}（${childCount}件）
         </td>
+        <td>${createTableProgressHtml(progressPercent)}</td>
+        <td class="task-table-dim"></td>
+        <td class="task-table-dim"></td>
+        <td class="task-table-dim"></td>
         <td>
           <div style="display:flex;gap:4px;justify-content:flex-end;align-items:center;">
             <button type="button" class="btn-add-task-table" data-group-id="${group.id}" aria-label="子タスクを追加" title="子タスクを追加">+</button>
@@ -535,6 +589,7 @@ function createTaskRowHtml(task, steps) {
             ${task.status}
           </span>
         </td>
+        <td class="task-table-dim">－</td>
         <td class="task-table-dim">${plannedDate}</td>
         <td class="task-table-dim">${completedDate}</td>
         <td class="task-table-dim">${minutes}</td>
@@ -628,13 +683,6 @@ function bindTableEvents() {
 }
 
 function renderTable(data) {
-  // ===== ここに仕込む =====
-  console.log("--- renderTable data ---");
-  if (data.groups && data.groups.length > 0)
-    console.log("Groupの構造:", data.groups[0]);
-  if (data.tasks && data.tasks.length > 0)
-    console.log("Taskの構造:", data.tasks[0]);
-  // =======================
   const { groups, tasks, stepsByTaskId } = data;
   const tbody = document.getElementById("task-table-body");
   tbody.innerHTML = "";
@@ -643,9 +691,10 @@ function renderTable(data) {
 
   sortedGroups.forEach((group) => {
     const childTasks = tasks.filter((t) => t.group_id === group.id);
+    const progressPercent = calcGroupProgress(group.id, tasks);
     tbody.insertAdjacentHTML(
       "beforeend",
-      createGroupRowHtml(group, childTasks.length),
+      createGroupRowHtml(group, childTasks.length, progressPercent),
     );
     childTasks.forEach((task) => {
       tbody.insertAdjacentHTML(
@@ -659,7 +708,7 @@ function renderTable(data) {
   tbody.insertAdjacentHTML(
     "beforeend",
     `<tr class="inline-add-row" style="background-color: transparent;">
-        <td colspan="7" style="padding: 10px; border-top: 1px solid #333;">
+        <td colspan="8" style="padding: 10px; border-top: 1px solid #333;">
           <div class="inline-add-container" style="display: flex; align-items: center; gap: 12px; box-sizing: border-box; width: 100%;">
             <input type="text" id="inline-parent-title" placeholder="+ 新しい親タスクを追加..." style="flex: 1; min-width: 0; padding: 8px 12px; background: #1e1e24; border: 1px dashed #555; color: #fff; border-radius: 4px; font-size: 14px;" />
             <button type="button" id="btn-inline-parent-save" class="btn btn-primary" style="cursor: pointer; white-space: nowrap; flex-shrink: 0;">保存</button>
