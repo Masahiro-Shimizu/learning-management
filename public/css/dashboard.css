@@ -45,33 +45,41 @@
 }
 
 /* ===== サマリーカードのアイコン（v2.9.0：丸角ボックススタイル） ===== */
-.summary-card-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
+/* ===== サマリーカードのアイコン（v2.9.0：モックアップ準拠のSVGアイコンに変更） ===== */
+.icon {
+  width: 36px;
+  height: 36px;
   border-radius: 10px;
-  font-size: 1.1rem;
+  display: grid;
+  place-items: center;
   flex-shrink: 0;
 }
 
-.summary-card-icon--indigo {
-  background-color: rgb(99 102 241 / 0.18);
+.icon svg {
+  width: 19px;
+  height: 19px;
 }
 
-.summary-card-icon--amber {
-  background-color: rgb(245 158 11 / 0.18);
+.ic-indigo {
+  background: rgb(99 102 241 / 0.16);
+  color: #a5b4fc;
 }
 
-.summary-card-icon--green {
-  background-color: rgb(16 185 129 / 0.18);
+.ic-amber {
+  background: rgb(245 166 35 / 0.16);
+  color: #fcd34d;
 }
 
-.summary-card-icon--violet {
-  background-color: rgb(139 92 246 / 0.18);
+.ic-green {
+  background: rgb(52 211 153 / 0.15);
+  color: #6ee7b7;
 }
 
+/* サブテキスト内の数値ハイライト（v2.9.0追加） */
+.summary-card-sub .sub-highlight {
+  color: var(--color-status-done);
+  font-weight: 700;
+}
 .summary-card-value {
   font-size: 2.8rem;
   font-weight: 700;
@@ -90,12 +98,6 @@
 .summary-card-sub {
   font-size: 0.8rem;
   color: var(--color-text-tertiary);
-}
-
-/* サブテキスト内の数値ハイライト（v2.9.0追加） */
-.summary-card-sub .sub-highlight {
-  color: var(--color-status-done);
-  font-weight: 700;
 }
 
 /* グラフエリア */
@@ -146,6 +148,12 @@
 /* 円グラフ */
 .chart-status-wrapper {
   height: 320px;
+  position: relative;
+}
+
+/* 進捗率推移グラフ専用のラッパー（追加） */
+.chart-progress-wrapper {
+  height: 300px;
   position: relative;
 }
 

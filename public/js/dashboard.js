@@ -726,4 +726,5 @@ function renderCharts() {
   // 描画直後のつぶれ防止
   if (chartDaily) chartDaily.resize();
   if (chartCategoryTime) chartCategoryTime.resize();
+  if (chartProgress) chartProgress.resize();
 }
