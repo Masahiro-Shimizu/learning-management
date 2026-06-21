@@ -162,10 +162,10 @@
               <p class="summary-card-sub" id="progress-sub">集計中...</p>
             </div>
 
-            <!-- ③ 期間内 完了件数 / 全件数 -->
+            <!-- ③ 期間内 進行件数 / 全件数 -->
             <div class="summary-card">
               <div class="summary-card-header">
-                <p class="summary-card-label">完了タスク</p>
+                <p class="summary-card-label">進行中タスク</p>
                 <span class="icon ic-green">
                   <svg
                     viewBox="0 0 24 24"
@@ -750,9 +750,18 @@
         </div>
 
         <div class="task-actions">
-          <button type="button" id="btn-task-delete" class="btn btn-danger">
-            削除
-          </button>
+          <div class="task-actions-left">
+            <button type="button" id="btn-task-delete" class="btn btn-danger">
+              削除
+            </button>
+            <button
+              type="button"
+              id="btn-task-duplicate"
+              class="btn btn-secondary hidden"
+            >
+              複製
+            </button>
+          </div>
           <div class="task-actions-right">
             <button type="button" id="btn-task-close" class="btn btn-secondary">
               キャンセル

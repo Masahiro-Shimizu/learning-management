@@ -329,11 +329,21 @@ function renderCharts() {
   document.getElementById("progress-sub").innerHTML =
     `完了 <span class="sub-highlight">${completedAllTasks}</span> / 全 ${totalAllTasks} 件`;
 
-  // ③ 完了タスク数
-  const doneCount = filteredTasks.filter((t) => t.status === "完了").length;
+  // ③ 進行中タスク数（v2.11.0：旧「完了タスク」カードを変更）
+  // 期間内タスクのうち status === '進行中' の件数を表示する。
+  // サブテキストは進捗率カードと同じ「完了 N / 全 N 件」パターンとし、
+  // 完了数は期間内タスクを基準に算出する（filteredTasks ベース）。
+  const inProgressCount = filteredTasks.filter(
+    (t) => t.status === "進行中",
+  ).length;
+  const doneCountInPeriod = filteredTasks.filter(
+    (t) => t.status === "完了",
+  ).length;
   const totalCount = filteredTasks.length;
-  document.getElementById("done-count").textContent = doneCount;
-  document.getElementById("done-sub").textContent = `全 ${totalCount} 件中`;
+  document.getElementById("done-count").textContent = inProgressCount;
+  // 【v2.11.0】完了数のみ .sub-highlight でハイライトするため innerHTML に変更
+  document.getElementById("done-sub").innerHTML =
+    `完了 <span class="sub-highlight">${doneCountInPeriod}</span> / 全 ${totalCount} 件`;
 
   // ④ 読了書籍数（completed_count >= total_chapters かつ total_chapters > 0）
   const readBooks = books.filter(
@@ -358,7 +368,6 @@ function renderCharts() {
   if (chartCategoryTime) chartCategoryTime.destroy();
   if (chartCategoryProgress) chartCategoryProgress.destroy();
 
-  // 日別学習時間（棒グラフ）— 時間単位
   // 日別学習時間（棒グラフ）— 時間単位
   const dailyHours = dailyData.map(minutesToHours);
   const dailyPlannedHours = dailyPlannedData.map(minutesToHours); // 【追加】予定時間を時間単位に変換

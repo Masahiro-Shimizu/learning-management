@@ -107,13 +107,6 @@ function createStepBadgeHtml(steps) {
   return `<span class="task-card-meta-item task-step-badge">${completed}/${steps.length}</span>`;
 }
 
-function createStepProgressBarHtml(steps) {
-  if (!steps || steps.length === 0) return "";
-  const completed = steps.filter((s) => s.is_completed).length;
-  const percent = Math.round((completed / steps.length) * 100);
-  return `<div class="task-card-step-progress"><i style="width:${percent}%"></i></div>`;
-}
-
 function createTaskCardHtml(task, steps = []) {
   const typeInfo = getTypeInfo(task.type_name);
   const categoryBadgeHtml = createCategoryBadgeHtml(task.category_name);
@@ -129,7 +122,6 @@ function createTaskCardHtml(task, steps = []) {
       ? `<span class="task-card-meta-item">${CLOCK_ICON}${hours}h</span>`
       : "";
   const stepBadgeHtml = createStepBadgeHtml(steps);
-  const stepProgressHtml = createStepProgressBarHtml(steps);
 
   return `
     <article class="task-card task-card--${typeInfo.class}" data-task-id="${task.id}" tabindex="0">
@@ -143,7 +135,6 @@ function createTaskCardHtml(task, steps = []) {
         ${timeHtml}
         ${stepBadgeHtml}
       </div>
-      ${stepProgressHtml}
     </article>
   `;
 }
@@ -161,38 +152,6 @@ function calcStatus(groupId, tasks) {
   if (children.every(completedThisYear)) return "完了";
   if (children.every((t) => t.status === "未着手")) return "未着手";
   return "進行中";
-}
-
-// 子タスク完了数 / 全体数の進捗率（%）。子タスク0件は null を返す
-function calcGroupProgress(groupId, tasks) {
-  const children = tasks.filter((t) => t.group_id === groupId);
-  if (children.length === 0) return null;
-  const completed = children.filter((t) => t.status === "完了").length;
-  return Math.round((completed / children.length) * 100);
-}
-
-function createGroupProgressHtml(percent) {
-  if (percent === null) {
-    return `<div class="group-card-progress"><span class="group-card-progress-label">－</span></div>`;
-  }
-  return `
-    <div class="group-card-progress">
-      <div class="group-card-progress-bar"><i style="width:${percent}%"></i></div>
-      <span class="group-card-progress-label">${percent}%</span>
-    </div>
-  `;
-}
-
-function createTableProgressHtml(percent) {
-  if (percent === null) {
-    return `<span class="task-table-dim">－</span>`;
-  }
-  return `
-    <span class="table-progress">
-      <span class="table-progress-bar"><i style="width:${percent}%"></i></span>
-      <span class="table-progress-label">${percent}%</span>
-    </span>
-  `;
 }
 
 // ===== グループの並び替え（ビューごとに異なる基準を使用） =====
@@ -244,32 +203,49 @@ function groupStepsByTaskId(allSteps) {
   return map;
 }
 
-// 親カード／グループ行のボーダー色（ステータスドットと同じ配色）に使うクラス対応表
-const GROUP_STATUS_CLASS = {
-  未着手: "todo",
-  進行中: "inprogress",
-  完了: "done",
-};
-
-function createGroupCardHtml(
-  group,
-  childTasks,
-  stepsByTaskId,
-  progressPercent,
-  status,
-) {
-  const statusClass = GROUP_STATUS_CLASS[status] || "todo";
+// 引数に status を追加
+function createGroupCardHtml(group, childTasks, stepsByTaskId, status) {
   const childrenHTML = childTasks
     .map((t) => createTaskCardHtml(t, stepsByTaskId[t.id] || []))
     .join("");
 
+  // 進捗率の計算ロジック
+  const totalChildren = childTasks.length;
+  const completedChildren = childTasks.filter(
+    (t) => t.status === "完了",
+  ).length;
+  const progressPercent =
+    totalChildren > 0
+      ? Math.round((completedChildren / totalChildren) * 100)
+      : 0;
+
+  const progressHTML = `
+    <div class="group-card-progress">
+      <div class="group-card-progress-bar">
+        <i style="width: ${progressPercent}%;"></i>
+      </div>
+      <span class="group-card-progress-label">${progressPercent}%</span>
+    </div>
+  `;
+
+  // 日本語のステータスをCSSのクラス名用（英語）にマッピング
+  const statusClassMap = {
+    未着手: "todo",
+    進行中: "inprogress",
+    完了: "done",
+  };
+  const modifierClass = statusClassMap[status] || "todo";
+
+  // class 属性に group-card--${modifierClass} を追加
   return `
-    <div class="group-card group-card--${statusClass}" data-group-id="${group.id}">
+    <div class="group-card group-card--${modifierClass}" data-group-id="${group.id}">
       <div class="group-card-header">
-        <p class="group-card-title">${group.title}</p>
+        <div style="flex: 1; min-width: 0;">
+          <p class="group-card-title">${group.title}</p>
+          ${progressHTML}
+        </div>
         <button type="button" class="btn-edit-group" data-group-id="${group.id}" aria-label="親タスクを編集">編集</button>
       </div>
-      ${createGroupProgressHtml(progressPercent)}
       <div class="group-card-children hidden">
         <button type="button" class="btn-add-task" data-group-id="${group.id}">+ 子タスク追加</button>
         ${childrenHTML}
@@ -430,6 +406,10 @@ async function openTaskEditModal(taskId) {
   showStepSection(true);
   await renderStepList(taskId);
 
+  // 【v2.11.0】既存タスクの編集時のみ「複製」ボタンを表示する
+  const duplicateBtn = document.getElementById("btn-task-duplicate");
+  if (duplicateBtn) duplicateBtn.classList.remove("hidden");
+
   document.getElementById("task-modal").classList.remove("hidden");
   markTaskModalClean();
 }
@@ -437,9 +417,7 @@ async function openTaskEditModal(taskId) {
 function bindKanbanEvents() {
   document.querySelectorAll(".group-card-header").forEach((header) => {
     header.addEventListener("click", () => {
-      const card = header.closest(".group-card");
-      const children = card.querySelector(".group-card-children");
-      children.classList.toggle("hidden");
+      header.nextElementSibling.classList.toggle("hidden");
     });
   });
 
@@ -515,19 +493,14 @@ function renderKanban(data) {
     const status = calcStatus(group.id, tasks);
     statusCounts[status]++;
     const childTasks = tasks.filter((t) => t.group_id === group.id);
-    const progressPercent = calcGroupProgress(group.id, tasks);
     const container = document.querySelector(
       `.kanban-cards[data-status="${status}"]`,
     );
+
+    // 修正：第4引数に status を追加して渡す
     container.insertAdjacentHTML(
       "beforeend",
-      createGroupCardHtml(
-        group,
-        childTasks,
-        stepsByTaskId,
-        progressPercent,
-        status,
-      ),
+      createGroupCardHtml(group, childTasks, stepsByTaskId, status),
     );
   });
 
@@ -554,18 +527,23 @@ const TASK_STATUS_DOT_CLASS = {
   完了: "done",
 };
 
-function createGroupRowHtml(group, childCount, progressPercent, status) {
-  const statusClass = GROUP_STATUS_CLASS[status] || "todo";
+// 修正：引数に status を追加
+function createGroupRowHtml(group, childCount, status) {
+  // 日本語のステータスをCSSのクラス名用（英語）にマッピング
+  const statusClassMap = {
+    未着手: "todo",
+    進行中: "inprogress",
+    完了: "done",
+  };
+  const modifierClass = statusClassMap[status] || "todo";
+
+  // 修正：class 属性に group-row--${modifierClass} を追加
   return `
-      <tr class="group-row group-row--${statusClass}" data-group-id="${group.id}">
-        <td colspan="3">
+      <tr class="group-row group-row--${modifierClass}" data-group-id="${group.id}">
+        <td colspan="6">
           <span class="group-row-toggle">▾</span>
           ${group.title}（${childCount}件）
         </td>
-        <td>${createTableProgressHtml(progressPercent)}</td>
-        <td class="task-table-dim"></td>
-        <td class="task-table-dim"></td>
-        <td class="task-table-dim"></td>
         <td>
           <div style="display:flex;gap:4px;justify-content:flex-end;align-items:center;">
             <button type="button" class="btn-add-task-table" data-group-id="${group.id}" aria-label="子タスクを追加" title="子タスクを追加">+</button>
@@ -605,7 +583,6 @@ function createTaskRowHtml(task, steps) {
             ${task.status}
           </span>
         </td>
-        <td class="task-table-dim">－</td>
         <td class="task-table-dim">${plannedDate}</td>
         <td class="task-table-dim">${completedDate}</td>
         <td class="task-table-dim">${minutes}</td>
@@ -706,13 +683,19 @@ function renderTable(data) {
   const sortedGroups = sortGroupsByCreatedAtDesc(groups);
 
   sortedGroups.forEach((group) => {
+    // 1. その親タスクに紐づく子タスクを抽出
     const childTasks = tasks.filter((t) => t.group_id === group.id);
-    const progressPercent = calcGroupProgress(group.id, tasks);
+
+    // 2. グループ全体のステータスを計算
     const status = calcStatus(group.id, tasks);
+
+    // 3. 計算した status を渡して、親タスクの行を描画
     tbody.insertAdjacentHTML(
       "beforeend",
-      createGroupRowHtml(group, childTasks.length, progressPercent, status),
+      createGroupRowHtml(group, childTasks.length, status),
     );
+
+    // 4. 子タスクの行をループで描画
     childTasks.forEach((task) => {
       tbody.insertAdjacentHTML(
         "beforeend",
@@ -725,7 +708,7 @@ function renderTable(data) {
   tbody.insertAdjacentHTML(
     "beforeend",
     `<tr class="inline-add-row" style="background-color: transparent;">
-        <td colspan="8" style="padding: 10px; border-top: 1px solid #333;">
+        <td colspan="7" style="padding: 10px; border-top: 1px solid #333;">
           <div class="inline-add-container" style="display: flex; align-items: center; gap: 12px; box-sizing: border-box; width: 100%;">
             <input type="text" id="inline-parent-title" placeholder="+ 新しい親タスクを追加..." style="flex: 1; min-width: 0; padding: 8px 12px; background: #1e1e24; border: 1px dashed #555; color: #fff; border-radius: 4px; font-size: 14px;" />
             <button type="button" id="btn-inline-parent-save" class="btn btn-primary" style="cursor: pointer; white-space: nowrap; flex-shrink: 0;">保存</button>
@@ -796,16 +779,14 @@ function createCalendarChipHtml(task, steps) {
 }
 
 function bindCalendarEvents() {
-  // 🔴 帯状のタスクバー（旧：calendar-chip）に対するクリック・キーボードイベント
+  // 帯状のタスクバー（旧：calendar-chip）に対するクリック・キーボードイベント
   document.querySelectorAll(".calendar-task-bar").forEach((bar) => {
-    // 既存：クリックで編集モーダルを開く
     bar.addEventListener("click", (e) => {
       e.stopPropagation();
       if (typeof openTaskEditModal === "function") {
         openTaskEditModal(bar.dataset.taskId);
       }
     });
-    // 既存：キーボード（Enter/スペース）で編集モーダルを開く
     bar.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
@@ -817,10 +798,9 @@ function bindCalendarEvents() {
     });
   });
 
-  // 既存：日付セルの空きスペースクリックで、その日を開始予定日にした子タスク追加
+  // 日付セルの空きスペースクリックで、その日を開始予定日にした子タスク追加
   document.querySelectorAll(".calendar-cell").forEach((cell) => {
     cell.addEventListener("click", (e) => {
-      // 🔴 判定対象を「.calendar-task-bar」に変更（「もっと見る」は帯状化につき不要なため除外）
       if (e.target.closest(".calendar-task-bar")) return;
 
       const date = cell.dataset.date;
@@ -912,7 +892,6 @@ function renderCalendar(data) {
   weekRows.forEach((row, weekIdx) => {
     const layer = row.querySelector(".calendar-bar-layer");
 
-    // この1週間の開始日と終了日をタイムスタンプで正確に取得
     const weekStart = new Date(calendarDays[weekIdx * 7]).setHours(0, 0, 0, 0);
     const weekEnd = new Date(calendarDays[weekIdx * 7 + 6]).setHours(
       23,
@@ -921,10 +900,8 @@ function renderCalendar(data) {
       999,
     );
 
-    // この週に被っているタスクを絞り込む
     const weekTasks = tasks.filter((task) => {
       if (!task.start_planned_date) return false;
-      // タイムゾーンのズレを防ぐため、一度日付のみの文字列にしてからパース
       const taskStartStr = formatDateForInput(task.start_planned_date);
       const taskEndStr = task.end_planned_date
         ? formatDateForInput(task.end_planned_date)
@@ -935,7 +912,6 @@ function renderCalendar(data) {
       return start <= weekEnd && end >= weekStart;
     });
 
-    // 日付の古い順（昇順）にソートして階段状を保証
     weekTasks.sort((a, b) => {
       const aTime = a.start_planned_date
         ? new Date(a.start_planned_date.substring(0, 10)).getTime()
@@ -946,7 +922,6 @@ function renderCalendar(data) {
       return aTime - bTime;
     });
 
-    // 計算して配置
     weekTasks.forEach((task, taskIdx) => {
       const taskStartStr = formatDateForInput(task.start_planned_date);
       const taskEndStr = task.end_planned_date
@@ -956,7 +931,6 @@ function renderCalendar(data) {
       const taskStart = new Date(taskStartStr).setHours(0, 0, 0, 0);
       const taskEnd = new Date(taskEndStr).setHours(0, 0, 0, 0);
 
-      // 🔴 【修正】1日のズレをなくすため、Math.round で安全に日数を計算
       const startDiff = Math.max(
         0,
         Math.round((taskStart - weekStart) / (1000 * 60 * 60 * 24)),
@@ -1071,15 +1045,13 @@ function bindTimelineEvents() {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
   document.querySelectorAll(".timeline-bar").forEach((bar) => {
-    // 既存：クリックでモーダルを開く
     bar.addEventListener("click", (e) => {
       e.stopPropagation();
       openTaskEditModal(bar.dataset.taskId);
     });
 
-    // 🔴 左右のツマミ（リサイズハンドル）のドラッグ処理
     let isResizing = false;
-    let resizeDirection = ""; // "left" または "right"
+    let resizeDirection = "";
     let startX = 0;
     let startLeft = 0;
     let startWidth = 0;
@@ -1088,7 +1060,7 @@ function bindTimelineEvents() {
     bar.querySelectorAll(".timeline-resize-handle").forEach((handle) => {
       handle.addEventListener("mousedown", (e) => {
         e.preventDefault();
-        e.stopPropagation(); // バー本体のクリックイベントを防止
+        e.stopPropagation();
 
         isResizing = true;
         resizeDirection = handle.classList.contains("handle-left")
@@ -1099,7 +1071,6 @@ function bindTimelineEvents() {
         const track = bar.closest(".timeline-track");
         trackWidth = track.getBoundingClientRect().width;
 
-        // 現在のバーの位置と幅をピクセル値で取得
         startLeft = bar.offsetLeft;
         startWidth = bar.offsetWidth;
 
@@ -1108,16 +1079,13 @@ function bindTimelineEvents() {
           const deltaX = moveEvent.clientX - startX;
 
           if (resizeDirection === "left") {
-            // 左端を動かす：幅を縮めて、位置を右にずらす
             let newLeft = startLeft + deltaX;
             let newWidth = startWidth - deltaX;
             if (newWidth > 15) {
-              // 最小幅制限
               bar.style.left = `${(newLeft / trackWidth) * 100}%`;
               bar.style.width = `${(newWidth / trackWidth) * 100}%`;
             }
           } else {
-            // 右端を動かす：位置は固定で幅だけ変える
             let newWidth = startWidth + deltaX;
             if (newWidth > 15) {
               bar.style.width = `${(newWidth / trackWidth) * 100}%`;
@@ -1131,11 +1099,9 @@ function bindTimelineEvents() {
           document.removeEventListener("mousemove", onMouseMove);
           document.removeEventListener("mouseup", onMouseUp);
 
-          // 変更後のピクセル位置から「何日目」かを正しく計算
           const finalLeftPercent = bar.offsetLeft / trackWidth;
           const finalWidthPercent = bar.offsetWidth / trackWidth;
 
-          // 開始日と終了日の判定ロジックを修正
           const startDay = Math.floor(finalLeftPercent * daysInMonth) + 1;
           const endDay = Math.floor(
             (finalLeftPercent + finalWidthPercent) * daysInMonth,
@@ -1150,7 +1116,6 @@ function bindTimelineEvents() {
           const newStartDateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(safeStartDay).padStart(2, "0")}`;
           const newEndDateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(safeEndDay).padStart(2, "0")}`;
 
-          // APIに保存
           const success = await updateTaskDuration(
             bar.dataset.taskId,
             newStartDateStr,
@@ -1170,13 +1135,12 @@ function bindTimelineEvents() {
       });
     });
 
-    // 既存：バー本体の通常ドラッグ＆ドロップ
     bar.setAttribute("draggable", "true");
     bar.addEventListener("dragstart", (e) => {
       if (isResizing) {
         e.preventDefault();
         return;
-      } // リサイズ中は通常ドラッグを無効化
+      }
       e.stopPropagation();
       e.dataTransfer.setData("text/plain", bar.dataset.taskId);
       bar.classList.add("dragging");
@@ -1186,7 +1150,6 @@ function bindTimelineEvents() {
     });
   });
 
-  // --- (これ以降は既存の処理から変更ありません) ---
   const prevBtn = document.getElementById("btn-timeline-prev");
   const nextBtn = document.getElementById("btn-timeline-next");
   const monthLabel = document.getElementById("timeline-month-label");
@@ -1276,7 +1239,6 @@ function bindTimelineEvents() {
 
 async function updateTaskPlannedDate(taskId, newDate) {
   try {
-    // 💡 お使いの環境に合わせて、PUTまたはPATCH、エンドポイントURL（/api/tasksなど）を修正してください
     const response = await fetch(`/api/tasks/${taskId}`, {
       method: "PUT",
       headers: {
@@ -1342,7 +1304,6 @@ function renderTimeline(data) {
     ? ((today.getDate() - 1) / daysInMonth) * 100
     : null;
 
-  // 完了タスク非表示フィルタ
   const hideCompleted =
     document.getElementById("timeline-hide-completed")?.checked ?? false;
 
@@ -1357,7 +1318,6 @@ function renderTimeline(data) {
     }
     if (hideCompleted && childTasks.length === 0) return;
 
-    // 🔴【ここを追加】子タスクを start_planned_date の昇順（古い順）に並び替える
     childTasks.sort((a, b) => {
       const aTime = a.start_planned_date
         ? new Date(a.start_planned_date).getTime()
@@ -1365,7 +1325,7 @@ function renderTimeline(data) {
       const bTime = b.start_planned_date
         ? new Date(b.start_planned_date).getTime()
         : 0;
-      return aTime - bTime; // 古い日付が上（インデックスが先）になるようにソート
+      return aTime - bTime;
     });
 
     const barsHtml = childTasks
@@ -1378,10 +1338,8 @@ function renderTimeline(data) {
         );
         if (!result) return "";
 
-        // 🔴 ここで並び替えた後の index（0, 1, 2...）を使うため、自動的に階段状になります
         const index = childTasks.indexOf(task);
         const top = 8 + index * 28;
-        // 🔴 バーの内部に左右のリサイズハンドル（ツマミ）を配置するHTMLに変更
         return `<div class="timeline-bar" data-task-id="${task.id}" tabindex="0" style="left: ${result.leftPercent}%; width: ${result.widthPercent}%; top: ${top}px; position: absolute;">
             <div class="timeline-resize-handle handle-left" style="position: absolute; left: 0; top: 0; width: 6px; height: 100%; cursor: ew-resize; z-index: 10;"></div>
             <span class="timeline-bar-title" style="pointer-events: none; padding: 0 8px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${task.title}</span>
@@ -1424,7 +1382,6 @@ let currentView = localStorage.getItem("taskView") ?? "kanban";
 let lastTaskViewData = null;
 
 // ===== グループ選択モーダル（カレンダー・タイムラインからの子タスク追加用）=====
-// prompt() による番号入力ではなく、一覧から選んでもらう方式に変更
 
 function closeGroupPickerModal() {
   document.getElementById("group-picker-modal").classList.add("hidden");
@@ -1504,29 +1461,45 @@ document.querySelectorAll(".view-tab").forEach((tab) => {
   tab.addEventListener("click", () => switchView(tab.dataset.view));
 });
 
-// plannedDate 引数を渡すと開始予定日・終了予定日に自動セットする
-function openTaskModal(groupId, status = "未着手", plannedDate = null) {
+// 【v2.11.0】plannedDate に加え、複製元の値を引き継ぐための prefill 引数を追加。
+// prefill が渡された場合、種別・カテゴリ・粒度・書籍・予定日・予定学習時間・メモ等を
+// フォームに反映する（タイトル・実績系・ステップは複製対象外）。
+function openTaskModal(
+  groupId,
+  status = "未着手",
+  plannedDate = null,
+  prefill = null,
+) {
   document.getElementById("task-modal").dataset.groupId = groupId;
   document.getElementById("task-modal").dataset.taskId = "";
   document.getElementById("task-title").value = "";
-  document.getElementById("task-type").value = taskTypeOptions[0]?.id ?? "";
+  document.getElementById("task-type").value =
+    prefill?.type_id ?? taskTypeOptions[0]?.id ?? "";
   document.getElementById("task-category").value =
-    taskCategoryOptions[0]?.id ?? "";
-  document.getElementById("task-granularity").value = "";
-  document.getElementById("task-book-id").value = "";
+    prefill?.category_id ?? taskCategoryOptions[0]?.id ?? "";
+  document.getElementById("task-granularity").value =
+    prefill?.granularity ?? "";
+  document.getElementById("task-book-id").value = prefill?.book_id ?? "";
   document.getElementById("task-status").value = status;
 
-  document.getElementById("task-start-planned-date").value = plannedDate || "";
-  document.getElementById("task-end-planned-date").value = plannedDate || "";
+  document.getElementById("task-start-planned-date").value =
+    prefill?.start_planned_date ?? plannedDate ?? "";
+  document.getElementById("task-end-planned-date").value =
+    prefill?.end_planned_date ?? plannedDate ?? "";
 
   document.getElementById("task-start-date").value = "";
   document.getElementById("task-end-date").value = "";
   document.getElementById("task-study-time").value = "";
-  document.getElementById("task-planned-study-time").value = "";
-  document.getElementById("task-memo").value = "";
+  document.getElementById("task-planned-study-time").value =
+    prefill?.planned_study_time ?? "";
+  document.getElementById("task-memo").value = prefill?.memo ?? "";
 
   showStepSection(false);
   document.getElementById("step-list").innerHTML = "";
+
+  // 【v2.11.0】新規登録（複製含む）時は「複製」ボタンを非表示にする
+  const duplicateBtn = document.getElementById("btn-task-duplicate");
+  if (duplicateBtn) duplicateBtn.classList.add("hidden");
 
   document.getElementById("task-modal").classList.remove("hidden");
   markTaskModalClean();
@@ -1616,6 +1589,33 @@ document
     document.getElementById("task-modal").classList.add("hidden");
     renderTaskViews();
   });
+
+// 【v2.11.0】子タスクの「複製」ボタン
+// 現在モーダルに表示中のフォーム値（タイトル・実績系・ステップを除く）を
+// prefill として openTaskModal() に渡し、未保存の新規登録モーダルとして開き直す。
+// DBへの即時保存は行わない（保存ボタンを押すまで複製は確定しない）。
+document.getElementById("btn-task-duplicate").addEventListener("click", () => {
+  const groupId = document.getElementById("task-modal").dataset.groupId;
+
+  const prefill = {
+    type_id: document.getElementById("task-type").value,
+    category_id: document.getElementById("task-category").value,
+    granularity: document.getElementById("task-granularity").value || "",
+    book_id: document.getElementById("task-book-id").value || "",
+    start_planned_date:
+      document.getElementById("task-start-planned-date").value || "",
+    end_planned_date:
+      document.getElementById("task-end-planned-date").value || "",
+    planned_study_time:
+      document.getElementById("task-planned-study-time").value || "",
+    memo: document.getElementById("task-memo").value || "",
+  };
+
+  const status = document.getElementById("task-status").value || "未着手";
+
+  // 複製後は未着手な新規タスクとして開く（ステータスは引き継がない）
+  openTaskModal(groupId, "未着手", null, prefill);
+});
 
 document
   .getElementById("btn-group-delete")
@@ -1771,7 +1771,6 @@ document.getElementById("group-modal").addEventListener("click", (e) => {
 
 async function updateTaskDuration(taskId, startDate, endDate) {
   try {
-    // 💡 お使いのバックエンドAPIの仕様に合わせて、URLや送信データのキー名を調整してください
     const response = await fetch(`/api/tasks/${taskId}`, {
       method: "PUT",
       headers: {
