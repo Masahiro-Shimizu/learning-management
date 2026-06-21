@@ -244,18 +244,27 @@ function groupStepsByTaskId(allSteps) {
   return map;
 }
 
+// 親カード／グループ行のボーダー色（ステータスドットと同じ配色）に使うクラス対応表
+const GROUP_STATUS_CLASS = {
+  未着手: "todo",
+  進行中: "inprogress",
+  完了: "done",
+};
+
 function createGroupCardHtml(
   group,
   childTasks,
   stepsByTaskId,
   progressPercent,
+  status,
 ) {
+  const statusClass = GROUP_STATUS_CLASS[status] || "todo";
   const childrenHTML = childTasks
     .map((t) => createTaskCardHtml(t, stepsByTaskId[t.id] || []))
     .join("");
 
   return `
-    <div class="group-card" data-group-id="${group.id}">
+    <div class="group-card group-card--${statusClass}" data-group-id="${group.id}">
       <div class="group-card-header">
         <p class="group-card-title">${group.title}</p>
         <button type="button" class="btn-edit-group" data-group-id="${group.id}" aria-label="親タスクを編集">編集</button>
@@ -512,7 +521,13 @@ function renderKanban(data) {
     );
     container.insertAdjacentHTML(
       "beforeend",
-      createGroupCardHtml(group, childTasks, stepsByTaskId, progressPercent),
+      createGroupCardHtml(
+        group,
+        childTasks,
+        stepsByTaskId,
+        progressPercent,
+        status,
+      ),
     );
   });
 
@@ -539,9 +554,10 @@ const TASK_STATUS_DOT_CLASS = {
   完了: "done",
 };
 
-function createGroupRowHtml(group, childCount, progressPercent) {
+function createGroupRowHtml(group, childCount, progressPercent, status) {
+  const statusClass = GROUP_STATUS_CLASS[status] || "todo";
   return `
-      <tr class="group-row" data-group-id="${group.id}">
+      <tr class="group-row group-row--${statusClass}" data-group-id="${group.id}">
         <td colspan="3">
           <span class="group-row-toggle">▾</span>
           ${group.title}（${childCount}件）
@@ -692,9 +708,10 @@ function renderTable(data) {
   sortedGroups.forEach((group) => {
     const childTasks = tasks.filter((t) => t.group_id === group.id);
     const progressPercent = calcGroupProgress(group.id, tasks);
+    const status = calcStatus(group.id, tasks);
     tbody.insertAdjacentHTML(
       "beforeend",
-      createGroupRowHtml(group, childTasks.length, progressPercent),
+      createGroupRowHtml(group, childTasks.length, progressPercent, status),
     );
     childTasks.forEach((task) => {
       tbody.insertAdjacentHTML(
@@ -1282,14 +1299,6 @@ async function updateTaskPlannedDate(taskId, newDate) {
 }
 
 function renderTimeline(data) {
-  // ===== ここに仕込む =====
-  console.log("--- renderTimeline data ---");
-  if (data.groups && data.groups.length > 0)
-    console.log("Groupの構造:", data.groups[0]);
-  if (data.tasks && data.tasks.length > 0)
-    console.log("Taskの構造:", data.tasks[0]);
-  // =======================
-
   const { groups, tasks } = data;
 
   const year = timelineDate.getFullYear();
@@ -1338,25 +1347,6 @@ function renderTimeline(data) {
     document.getElementById("timeline-hide-completed")?.checked ?? false;
 
   const sortedGroups = sortGroupsByEarliestPlannedDate(groups, tasks);
-
-  // ===== 🔍 ここから追加してください =====
-  console.log("--- 【デバッグ】タイムラインのソート結果 ---");
-  console.log(
-    "元の groups 順:",
-    groups.map((g) => `[ID:${g.id}] ${g.title}`),
-  );
-  console.log(
-    "ソート後 sortedGroups 順:",
-    sortedGroups.map((g) => `[ID:${g.id}] ${g.title}`),
-  );
-  console.log(
-    "各タスクの予定日:",
-    tasks.map(
-      (t) =>
-        `[タスクID:${t.id}/グループID:${t.group_id}] ${t.title}: ${t.start_planned_date}`,
-    ),
-  );
-  // ===== 🔍 ここまで追加してください =====
 
   sortedGroups.forEach((group) => {
     let childTasks = tasks.filter(

@@ -254,7 +254,20 @@
   background-color: var(--color-bg-sidebar);
   border-radius: 10px;
   border: 1px solid rgb(255 255 255 / 0.06);
+  border-left-width: 3px;
   overflow: hidden;
+}
+
+.group-card--todo {
+  border-left-color: var(--color-status-todo);
+}
+
+.group-card--inprogress {
+  border-left-color: var(--color-status-inprogress);
+}
+
+.group-card--done {
+  border-left-color: var(--color-status-done);
 }
 
 .group-card-header {
@@ -450,6 +463,24 @@
 .task-table tr.group-row td {
   font-weight: 600;
   color: var(--color-text-primary);
+}
+
+.task-table tr.group-row td:first-child {
+  border-left-width: 3px;
+  border-left-style: solid;
+  border-left-color: transparent;
+}
+
+.task-table tr.group-row--todo td:first-child {
+  border-left-color: var(--color-status-todo);
+}
+
+.task-table tr.group-row--inprogress td:first-child {
+  border-left-color: var(--color-status-inprogress);
+}
+
+.task-table tr.group-row--done td:first-child {
+  border-left-color: var(--color-status-done);
 }
 
 .task-table tr.group-row.collapsed + .task-row {
