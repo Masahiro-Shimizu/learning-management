@@ -113,21 +113,39 @@ function updatePeriodLabel() {
     text = `${viewDate.getFullYear()}年${viewDate.getMonth() + 1}月`;
   } else if (currentPeriod === "year") {
     text = `${viewDate.getFullYear()}年`;
+  } else if (currentPeriod === "all") {
+    // ★追加
+    text = "全期間";
   }
 
   label.textContent = text;
 
   const nextBtn = document.getElementById("period-next-btn");
-  nextBtn.disabled = isCurrentPeriod();
+  // ★変更：「全」のときも次へボタンを無効化
+  nextBtn.disabled = currentPeriod === "all" || isCurrentPeriod();
 }
 
 // サマリーカードのラベルを期間に合わせて更新
 function updateSummaryCardLabel() {
   const el = document.getElementById("period-study-label");
   if (!el) return;
-  if (currentPeriod === "week") el.textContent = "今週の学習時間";
-  else if (currentPeriod === "month") el.textContent = "今月の学習時間";
-  else el.textContent = "今年の学習時間";
+
+  // グラフタイトルの要素を取得
+  const chartTitleEl = document.getElementById("chart-daily-title");
+
+  if (currentPeriod === "week") {
+    el.textContent = "今週の学習時間";
+    if (chartTitleEl) chartTitleEl.textContent = "日別学習時間";
+  } else if (currentPeriod === "month") {
+    el.textContent = "今月の学習時間";
+    if (chartTitleEl) chartTitleEl.textContent = "日別学習時間";
+  } else if (currentPeriod === "year") {
+    el.textContent = "今年の学習時間";
+    if (chartTitleEl) chartTitleEl.textContent = "月別学習時間";
+  } else if (currentPeriod === "all") {
+    el.textContent = "通算の学習時間";
+    if (chartTitleEl) chartTitleEl.textContent = "年別学習時間"; // ★全期間のときは年別にする
+  }
 }
 
 function renderCharts() {
@@ -257,6 +275,47 @@ function renderCharts() {
       const d = new Date(t.end_date);
       return d.getFullYear() === year;
     });
+  } else if (currentPeriod === "all") {
+    // ★追加
+    // タスクから存在する年をユニークに抽出
+    const years = Array.from(
+      new Set(
+        tasks
+          .map((t) => {
+            const d = t.end_date
+              ? new Date(t.end_date)
+              : t.end_planned_date
+                ? new Date(t.end_planned_date)
+                : null;
+            return d ? d.getFullYear() : null;
+          })
+          .filter((y) => y !== null),
+      ),
+    );
+    if (years.length === 0) years.push(new Date().getFullYear());
+    years.sort((a, b) => a - b);
+
+    labels = years.map((y) => `${y}年`);
+    filteredTasks = tasks; // 全タスクを対象にする
+
+    // 年別の実績時間集計
+    dailyData = years.map((year) =>
+      tasks
+        .filter(
+          (t) => t.end_date && new Date(t.end_date).getFullYear() === year,
+        )
+        .reduce((sum, t) => sum + (t.study_time || 0), 0),
+    );
+    // 年別の予定時間集計
+    dailyPlannedData = years.map((year) =>
+      tasks
+        .filter(
+          (t) =>
+            t.end_planned_date &&
+            new Date(t.end_planned_date).getFullYear() === year,
+        )
+        .reduce((sum, t) => sum + (t.planned_study_time || 0), 0),
+    );
   }
 
   // ===== サマリーカード更新 =====
@@ -314,8 +373,14 @@ function renderCharts() {
         ? "先月比"
         : "前年比";
   // 【v2.9.0】数値部分のみ .sub-highlight でハイライトするため innerHTML に変更
-  document.getElementById("period-study-sub").innerHTML =
-    `${periodLabel} <span class="sub-highlight">${diffSign}${diffHours}時間</span>`;
+  if (currentPeriod === "all") {
+    // ★追加
+    document.getElementById("period-study-sub").innerHTML =
+      `<span class="sub-highlight">全データの通算</span>`;
+  } else {
+    document.getElementById("period-study-sub").innerHTML =
+      `${periodLabel} <span class="sub-highlight">${diffSign}${diffHours}時間</span>`;
+  }
 
   // ② 進捗率（全タスクベースの完了率%）
   const totalAllTasks = tasks.length;
@@ -661,8 +726,41 @@ function renderCharts() {
     progressLabelDates = Array.from({ length: 12 }, (_, i) => {
       return new Date(year, i + 1, 0, 23, 59, 59, 999);
     });
-  }
+  } else if (currentPeriod === "all") {
+    // 1. タスクデータから一番古い年・月と現在の年・月を取得して、全期間の「月リスト」を作る
+    const years = Array.from(
+      new Set(
+        tasks
+          .map((t) => {
+            const d = t.end_date
+              ? new Date(t.end_date)
+              : t.end_planned_date
+                ? new Date(t.end_planned_date)
+                : null;
+            return d ? d.getFullYear() : null;
+          })
+          .filter((y) => y !== null),
+      ),
+    );
 
+    const minYear =
+      years.length > 0 ? Math.min(...years) : new Date().getFullYear();
+    const maxYear = new Date().getFullYear();
+    const maxMonth = new Date().getMonth(); // 0~11
+
+    labels = [];
+    progressLabelDates = [];
+
+    // 一番古い年の1月から、現在の月までループを回して目盛りを作る
+    for (let y = minYear; y <= maxYear; y++) {
+      const endM = y === maxYear ? maxMonth : 11;
+      for (let m = 0; m <= endM; m++) {
+        labels.push(`${y}年${m + 1}月`);
+        // その月の最終日・最終時刻を基準日としてセット
+        progressLabelDates.push(new Date(y, m + 1, 0, 23, 59, 59, 999));
+      }
+    }
+  }
   const plannedProgressData = progressLabelDates.map((labelDate) => {
     if (totalAllTasks === 0) return 0;
     const count = allTasks.filter((t) => {
