@@ -535,7 +535,7 @@ function createGroupRowHtml(group, childCount, status) {
 
   return `
       <tr class="group-row group-row--${modifierClass}" data-group-id="${group.id}">
-        <td colspan="6">
+        <td colspan="7">
           <span class="group-row-toggle">▾</span>
           ${group.title}（${childCount}件）
         </td>
@@ -558,11 +558,28 @@ function createTaskRowHtml(task, steps) {
   const minutes =
     task.study_time != null ? `${minutesToHours(task.study_time)}h` : "－";
 
+  // --- 【追加】ステップから進捗率を計算するロジック ---
+  const totalSteps = steps ? steps.length : 0;
+  const completedSteps = steps ? steps.filter((s) => s.is_completed).length : 0;
+  const progressPercent =
+    totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
+
+  // 【追加】進捗バーのHTML
+  const progressHtml = `
+    <div class="table-progress">
+      <div class="table-progress-bar">
+        <i style="width: ${progressPercent}%;"></i>
+      </div>
+      <span class="table-progress-label">${progressPercent}%</span>
+    </div>
+  `;
+
   const stepBadge =
     steps && steps.length > 0
       ? `<span class="task-step-badge">${steps.filter((s) => s.is_completed).length}/${steps.length}</span>`
       : `<span class="task-table-dim">－</span>`;
 
+  // <td>を1つ増やして合計8個にしています
   return `
       <tr class="task-row" data-task-id="${task.id}" tabindex="0">
         <td>${task.title}</td>
@@ -578,6 +595,7 @@ function createTaskRowHtml(task, steps) {
             ${task.status}
           </span>
         </td>
+        <td>${progressHtml}</td>
         <td class="task-table-dim">${plannedDate}</td>
         <td class="task-table-dim">${completedDate}</td>
         <td class="task-table-dim">${minutes}</td>
@@ -692,7 +710,7 @@ function renderTable(data) {
   tbody.insertAdjacentHTML(
     "beforeend",
     `<tr class="inline-add-row" style="background-color: transparent;">
-        <td colspan="7" style="padding: 10px; border-top: 1px solid #333;">
+        <td colspan="8" style="padding: 10px; border-top: 1px solid #333;">
           <div class="inline-add-container" style="display: flex; align-items: center; gap: 12px; box-sizing: border-box; width: 100%;">
             <input type="text" id="inline-parent-title" placeholder="+ 新しい親タスクを追加..." style="flex: 1; min-width: 0; padding: 8px 12px; background: #1e1e24; border: 1px dashed #555; color: #fff; border-radius: 4px; font-size: 14px;" />
             <button type="button" id="btn-inline-parent-save" class="btn btn-primary" style="cursor: pointer; white-space: nowrap; flex-shrink: 0;">保存</button>
