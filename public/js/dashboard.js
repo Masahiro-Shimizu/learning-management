@@ -13,7 +13,16 @@ let chartProgress = null;
 let chartCategoryTime = null;
 let chartCategoryProgress = null;
 
-let currentPeriod = "week";
+// 修正後
+const PERIOD_STORAGE_KEY = "dashboardPeriod";
+const VALID_PERIODS = ["week", "month", "year", "all"];
+
+function loadSavedPeriod() {
+  const saved = localStorage.getItem(PERIOD_STORAGE_KEY);
+  return VALID_PERIODS.includes(saved) ? saved : "week";
+}
+
+let currentPeriod = loadSavedPeriod();
 let viewDate = new Date();
 
 let allTasks = [];
@@ -42,6 +51,11 @@ async function initDashboard() {
   allTasks = tasks;
   allBooks = books;
 
+  // localStorageから復元した期間に合わせてボタンのactive状態を同期
+  document.querySelectorAll(".btn-period").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.period === currentPeriod);
+  });
+
   // 期間切り替えボタン
   document.querySelectorAll(".btn-period").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -50,6 +64,7 @@ async function initDashboard() {
         .forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       currentPeriod = btn.dataset.period;
+      localStorage.setItem(PERIOD_STORAGE_KEY, currentPeriod);
       viewDate = new Date();
       renderCharts();
     });

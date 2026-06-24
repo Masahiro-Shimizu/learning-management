@@ -58,6 +58,10 @@
   flex-shrink: 0;
 }
 
+.task-card-meta-item--actual {
+  color: #16a34a;
+}
+
 .kanban-status-dot--todo {
   background-color: var(--color-status-todo);
 }
@@ -559,9 +563,6 @@
   text-align: center;
 }
 
-/* カレンダーグリッド：曜日ヘッダー7列 + 週ごとの行(calendar-week-row)を縦に積む構造
-   ※ JS側(renderCalendar)が .calendar-week-row に grid-column: span 7 を指定して
-      1行＝1週間を表現しているため、親の .calendar-grid 自体も grid コンテナにする必要がある */
 .calendar-grid {
   border: 1px solid rgb(255 255 255 / 0.06);
   border-radius: 10px;
@@ -583,8 +584,6 @@
   box-sizing: border-box;
 }
 
-/* 週の行：内部に7列グリッド(calendar-week-grid)と、
-   タスクバーを重ねて配置するための絶対配置レイヤー(calendar-bar-layer)を持つ */
 .calendar-week-row {
   grid-column: 1 / -1;
   position: relative;
@@ -596,8 +595,6 @@
   width: 100%;
 }
 
-/* 日付セル：クリックでその日に子タスクを追加できるため cursor を明示
-   幅は親の calendar-week-grid が 7 等分するため、ここでは幅を固定しない */
 .calendar-cell {
   min-height: 110px;
   padding: var(--space-8);
@@ -613,7 +610,6 @@
   background-color: rgb(255 255 255 / 0.03);
 }
 
-/* 左端（日曜日）の列の左ボーダーを消して二重線を防ぐ */
 .calendar-weekday:nth-child(7n + 1),
 .calendar-week-grid .calendar-cell:nth-child(7n + 1) {
   border-left: none;
@@ -631,19 +627,38 @@
   font-weight: 500;
 }
 
-/* 週またぎタスクバー：位置(left/top)とサイズ(width)は
-   renderCalendar が calendar-bar-layer 基準で計算しインラインstyleで指定するため、
-   ここでは見た目（色・形・文字）だけを担当する */
+/* ===== カレンダーのタスクバー（共通） ===== */
 .calendar-task-bar {
-  border-radius: 6px;
+  border-radius: 4px;
   font-size: 0.7rem;
-  background-color: rgb(139 92 246 / 0.18);
-  color: #c4b5fd;
-  transition: background-color 0.15s;
+  transition: filter 0.15s;
+  cursor: pointer;
 }
 
 .calendar-task-bar:hover {
-  background-color: rgb(139 92 246 / 0.28);
+  filter: brightness(1.15);
+}
+
+/* 予定バー（デフォルト：半透明ホワイト系） */
+.calendar-task-bar--planned {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.calendar-task-bar--planned:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 実績バー（アンバー系） */
+.calendar-task-bar--actual {
+  background-color: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  color: #fcd34d;
+}
+
+.calendar-task-bar--actual:hover {
+  background-color: rgba(245, 158, 11, 0.32);
 }
 
 .calendar-chip-title {
@@ -675,7 +690,6 @@
   width: 100% !important;
 }
 
-/* 「完了タスクを非表示」ラベルのスタイル */
 .timeline-hide-label {
   display: flex;
   align-items: center;
@@ -770,7 +784,6 @@
   border: 0;
 }
 
-/* トラックの空きスペースをクリックすると子タスク追加できるため cursor を明示 */
 .timeline-track {
   position: relative;
   min-height: 40px;
@@ -803,26 +816,45 @@
   z-index: 2;
 }
 
+/* ===== タイムラインバー（共通） ===== */
 .timeline-bar {
   position: absolute;
-  height: 20px;
   border-radius: 6px;
-  background-color: rgb(139 92 246 / 0.25);
-  color: #c4b5fd;
-  font-size: 0.7rem;
   display: flex;
   align-items: center;
-  padding: 0 6px;
   overflow: hidden;
   white-space: nowrap;
   cursor: pointer;
   z-index: 1;
+  transition: filter 0.15s;
+}
+
+.timeline-bar:hover {
+  filter: brightness(1.2);
+  z-index: 3;
 }
 
 .timeline-bar-title {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* 予定バー（紫系） */
+.timeline-bar--planned {
+  background-color: rgb(139 92 246 / 0.25);
+  color: #c4b5fd;
+  font-size: 0.7rem;
+  height: 20px;
+}
+
+/* 実績バー（アンバー系） */
+.timeline-bar--actual {
+  background-color: rgba(245, 158, 11, 0.25);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  color: #fcd34d;
+  font-size: 0.65rem;
+  height: 18px;
 }
 
 /* ===== カテゴリバッジ（言語/技術カテゴリ） ===== */
