@@ -282,27 +282,148 @@ async function openGroupEditModal(groupId) {
 function createStepItemHtml(step) {
   const completed = step.is_completed ? "completed" : "";
   const checked = step.is_completed ? "checked" : "";
+
+  // サブテキスト（日付・時間が設定されている場合のみ表示）
+  const metaParts = [];
+  if (step.start_planned_date || step.end_planned_date) {
+    const s = step.start_planned_date
+      ? formatDateShort(step.start_planned_date)
+      : "";
+    const e = step.end_planned_date
+      ? formatDateShort(step.end_planned_date)
+      : "";
+    metaParts.push(s && e ? `📅 ${s}〜${e}` : `📅 ${s || e}`);
+  }
+
+  // 【変更】実績開始日・実績終了日のバッジ表示
+  if (step.start_date || step.end_date) {
+    const as = step.start_date ? formatDateShort(step.start_date) : "";
+    const ae = step.end_date ? formatDateShort(step.end_date) : "";
+    metaParts.push(as && ae ? `✅ 実績 ${as}〜${ae}` : `✅ 実績 ${as || ae}`);
+  }
+
+  if (step.planned_study_time) {
+    metaParts.push(`⏱ 予定 ${minutesToHours(step.planned_study_time)}h`);
+  }
+  if (step.study_time) {
+    metaParts.push(`⏱ 実績 ${minutesToHours(step.study_time)}h`);
+  }
+  const metaHtml =
+    metaParts.length > 0
+      ? `<div class="step-item-meta">${metaParts.map((p) => `<span>${p}</span>`).join("")}</div>`
+      : "";
+
+  const spd = step.start_planned_date
+    ? formatDateForInput(step.start_planned_date)
+    : "";
+  const epd = step.end_planned_date
+    ? formatDateForInput(step.end_planned_date)
+    : "";
+
+  // 【変更】実績日を「開始」と「終了」に分ける
+  const asd = step.start_date ? formatDateForInput(step.start_date) : "";
+  const aed = step.end_date ? formatDateForInput(step.end_date) : "";
+
+  const pst = step.planned_study_time
+    ? minutesToHours(step.planned_study_time)
+    : "";
+  const st = step.study_time ? minutesToHours(step.study_time) : "";
+
   return `
     <li class="step-item ${completed}" data-step-id="${step.id}">
-      <input type="checkbox" ${checked} aria-label="ステップ完了" />
-      <span class="step-item-title">${step.title}</span>
-      <button type="button" class="btn-step-delete" aria-label="ステップ削除">×</button>
+      <div class="step-item-row" style="display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" ${checked} aria-label="ステップ完了" />
+        <div style="flex:1;min-width:0;">
+          <span class="step-item-title">${step.title}</span>
+          ${metaHtml}
+        </div>
+        <button type="button" class="btn-step-expand" aria-label="詳細を展開" title="日付・時間を編集">▼</button>
+        <button type="button" class="btn-step-delete" aria-label="ステップ削除">×</button>
+      </div>
+      <div class="step-detail">
+        <div class="step-detail-grid">
+          <div class="step-detail-field">
+            <label>開始予定日</label>
+            <input type="date" class="step-field-spd" value="${spd}" />
+          </div>
+          <div class="step-detail-field">
+            <label>終了予定日</label>
+            <input type="date" class="step-field-epd" value="${epd}" />
+          </div>
+          <!-- 【変更】実績日を2つの入力欄に分割 -->
+          <div class="step-detail-field">
+            <label>実績開始日</label>
+            <input type="date" class="step-field-asd" value="${asd}" />
+          </div>
+          <div class="step-detail-field">
+            <label>実績終了日</label>
+            <input type="date" class="step-field-aed" value="${aed}" />
+          </div>
+          <div class="step-detail-field">
+            <label>予定学習時間（h）</label>
+            <input type="number" step="0.1" min="0" class="step-field-pst" value="${pst}" />
+          </div>
+          <div class="step-detail-field">
+            <label>実績学習時間（h）</label>
+            <input type="number" step="0.1" min="0" class="step-field-st" value="${st}" />
+          </div>
+        </div>
+        <button type="button" class="btn btn-primary step-detail-save">保存</button>
+      </div>
     </li>
   `;
 }
 
 async function renderStepList(taskId) {
   const stepList = document.getElementById("step-list");
+  if (!stepList) return;
   stepList.innerHTML = "";
-  const steps = await api(`/api/tasks/${taskId}/steps`);
+  const steps = await api(`/api/steps/tasks/${taskId}`);
   steps.forEach((step) => {
     stepList.insertAdjacentHTML("beforeend", createStepItemHtml(step));
   });
 }
 
+// ステップ一覧からmodalの時間入力欄を上書きし、APIも更新する
+async function syncStepTotalsToTask(taskId) {
+  const steps = await api(`/api/steps/tasks/${taskId}`);
+
+  const totalPlanned = steps.reduce(
+    (sum, s) => sum + (Number(s.planned_study_time) || 0),
+    0,
+  );
+  const totalActual = steps.reduce(
+    (sum, s) => sum + (Number(s.study_time) || 0),
+    0,
+  );
+
+  // モーダルの入力欄を更新（分→時間に変換して表示）
+  const plannedEl = document.getElementById("task-planned-study-time");
+  const actualEl = document.getElementById("task-study-time");
+
+  if (plannedEl) {
+    plannedEl.value =
+      totalPlanned > 0
+        ? (Math.round((totalPlanned / 60) * 10) / 10).toFixed(1)
+        : "";
+  }
+  if (actualEl) {
+    actualEl.value =
+      totalActual > 0
+        ? (Math.round((totalActual / 60) * 10) / 10).toFixed(1)
+        : "";
+  }
+
+  // DB更新
+  await api(`/api/tasks/${taskId}`, "PUT", {
+    planned_study_time: totalPlanned || null,
+    study_time: totalActual || null,
+  });
+}
+
 function showStepSection(show) {
   const section = document.querySelector(".step-section");
-  section.classList.toggle("hidden", !show);
+  section?.classList.toggle("hidden", !show);
 }
 
 function updateCardStepBadge(taskId) {
@@ -322,7 +443,7 @@ function updateCardStepBadge(taskId) {
       badge.textContent = text;
     } else {
       const meta = card.querySelector(".task-card-meta");
-      meta.insertAdjacentHTML(
+      meta?.insertAdjacentHTML(
         "beforeend",
         `<span class="task-card-meta-item task-step-badge">${text}</span>`,
       );
@@ -334,14 +455,16 @@ function updateCardStepBadge(taskId) {
   );
   if (row) {
     const cell = row.querySelector("td:last-child");
-    cell.innerHTML =
-      total === 0
-        ? `<span class="task-table-dim">－</span>`
-        : `<span class="task-step-badge">${text}</span>`;
+    if (cell) {
+      cell.innerHTML =
+        total === 0
+          ? `<span class="task-table-dim">－</span>`
+          : `<span class="task-step-badge">${text}</span>`;
+    }
   }
 }
 
-document.getElementById("step-list").addEventListener("change", async (e) => {
+document.getElementById("step-list")?.addEventListener("change", async (e) => {
   if (e.target.type !== "checkbox") return;
   const li = e.target.closest(".step-item");
   const stepId = li.dataset.stepId;
@@ -352,28 +475,105 @@ document.getElementById("step-list").addEventListener("change", async (e) => {
   updateCardStepBadge(taskId);
 });
 
-document.getElementById("step-list").addEventListener("click", async (e) => {
-  if (!e.target.classList.contains("btn-step-delete")) return;
-  const li = e.target.closest(".step-item");
-  const stepId = li.dataset.stepId;
-  await api(`/api/steps/${stepId}`, "DELETE");
-  li.remove();
-  const taskId = document.getElementById("task-modal").dataset.taskId;
-  updateCardStepBadge(taskId);
+document.getElementById("step-list")?.addEventListener("click", async (e) => {
+  // 削除
+  if (e.target.classList.contains("btn-step-delete")) {
+    const li = e.target.closest(".step-item");
+    const stepId = li.dataset.stepId;
+    await api(`/api/steps/${stepId}`, "DELETE");
+    li.remove();
+    const taskId = document.getElementById("task-modal").dataset.taskId;
+    updateCardStepBadge(taskId);
+    await syncStepTotalsToTask(taskId);
+    return;
+  }
+
+  // 展開トグル
+  if (e.target.classList.contains("btn-step-expand")) {
+    const btn = e.target;
+    const li = btn.closest(".step-item");
+    const detail = li.querySelector(".step-detail");
+    const isOpen = detail.classList.toggle("open");
+    btn.classList.toggle("open", isOpen);
+    return;
+  }
+
+  // 詳細エリア内の保存ボタン
+  if (e.target.classList.contains("step-detail-save")) {
+    const li = e.target.closest(".step-item");
+    const stepId = li.dataset.stepId;
+
+    const spd = li.querySelector(".step-field-spd").value || null;
+    const epd = li.querySelector(".step-field-epd").value || null;
+
+    // 【変更】2つの実績開始・終了日の値を取得
+    const asd = li.querySelector(".step-field-asd").value || null;
+    const aed = li.querySelector(".step-field-aed").value || null;
+
+    const pstVal = li.querySelector(".step-field-pst").value;
+    const stVal = li.querySelector(".step-field-st").value;
+
+    // 【改善】空文字保存時の NaN バグを防止
+    const pst =
+      pstVal && !isNaN(parseFloat(pstVal))
+        ? Math.round(parseFloat(pstVal) * 60)
+        : null;
+    const st =
+      stVal && !isNaN(parseFloat(stVal))
+        ? Math.round(parseFloat(stVal) * 60)
+        : null;
+
+    // 【改善】PUTの戻り値（更新後のデータ）を直接 updatedStep に格納する
+    const updatedStep = await api(`/api/steps/${stepId}`, "PUT", {
+      start_planned_date: spd,
+      end_planned_date: epd,
+      start_date: asd,
+      end_date: aed,
+      planned_study_time: pst,
+      study_time: st,
+    });
+
+    // 【修正】ステップ行を再描画（抜け落ちていた newLi の定義を追加）
+    const taskId = document.getElementById("task-modal").dataset.taskId;
+    const tmp = document.createElement("ul");
+    tmp.innerHTML = createStepItemHtml(updatedStep);
+
+    const newLi = tmp.firstElementChild;
+    li.replaceWith(newLi);
+
+    // 【改善】保存後は詳細エリアが自動で閉じる状態（追加のopenクラス付与を廃止）
+
+    // 自動集計：ステップ合計を子タスクに反映
+    await syncStepTotalsToTask(taskId);
+    return;
+  }
 });
 
-document.getElementById("btn-step-add").addEventListener("click", async () => {
+// 新しいステップの追加処理（途切れていた箇所を補完）
+document.getElementById("btn-step-add")?.addEventListener("click", async () => {
   const input = document.getElementById("step-new-title");
+  if (!input) return;
   const title = input.value.trim();
   if (!title) return;
   const taskId = document.getElementById("task-modal").dataset.taskId;
-  const newStep = await api(`/api/tasks/${taskId}/steps`, "POST", { title });
+  const newStep = await api(`/api/steps/tasks/${taskId}`, "POST", { title });
   document
     .getElementById("step-list")
-    .insertAdjacentHTML("beforeend", createStepItemHtml(newStep));
+    ?.insertAdjacentHTML("beforeend", createStepItemHtml(newStep));
   input.value = "";
   updateCardStepBadge(taskId);
 });
+
+// ----- ⑤ 「ステップから集計」ボタン（手動） -----
+// ※ index.html のステップセクションに以下ボタンを追加した上でバインド
+//   <button type="button" id="btn-step-aggregate" class="btn btn-secondary">ステップから集計</button>
+document
+  .getElementById("btn-step-aggregate")
+  ?.addEventListener("click", async () => {
+    const taskId = document.getElementById("task-modal").dataset.taskId;
+    if (!taskId) return;
+    await syncStepTotalsToTask(taskId);
+  });
 
 // ===== タスクモーダル =====
 
@@ -1052,14 +1252,19 @@ function formatDateStr(date) {
   return `${y}-${m}-${d}`;
 }
 
-document.getElementById("btn-calendar-prev").addEventListener("click", () => {
+document.getElementById("btn-calendar-prev")?.addEventListener("click", () => {
   calendarDate.setMonth(calendarDate.getMonth() - 1);
   renderCalendar(lastTaskViewData);
 });
 
-document.getElementById("btn-calendar-next").addEventListener("click", () => {
+document.getElementById("btn-calendar-next")?.addEventListener("click", () => {
   calendarDate.setMonth(calendarDate.getMonth() + 1);
   renderCalendar(lastTaskViewData);
+});
+
+// ビュータブ
+document.querySelectorAll(".view-tab").forEach((tab) => {
+  tab.addEventListener("click", () => switchView(tab.dataset.view));
 });
 
 // ===== タイムラインビュー =====
@@ -1587,68 +1792,70 @@ document.querySelectorAll(".kanban-add-btn").forEach((btn) => {
 
 document
   .getElementById("btn-group-close")
-  .addEventListener("click", closeGroupModalWithConfirm);
+  ?.addEventListener("click", closeGroupModalWithConfirm);
 document
   .getElementById("btn-task-close")
-  .addEventListener("click", closeTaskModalWithConfirm);
+  ?.addEventListener("click", closeTaskModalWithConfirm);
 
-document.getElementById("btn-group-add-task").addEventListener("click", () => {
+document.getElementById("btn-group-add-task")?.addEventListener("click", () => {
   const groupId = document.getElementById("group-modal").dataset.groupId;
   document.getElementById("group-modal").classList.add("hidden");
   openTaskModal(groupId);
 });
 
-document.getElementById("btn-task-save").addEventListener("click", async () => {
-  const title = document.getElementById("task-title").value;
-  if (!title) {
-    alert("タイトルを入力してください");
-    return;
-  }
+document
+  .getElementById("btn-task-save")
+  ?.addEventListener("click", async () => {
+    const title = document.getElementById("task-title").value;
+    if (!title) {
+      alert("タイトルを入力してください");
+      return;
+    }
 
-  const groupId = document.getElementById("task-modal").dataset.groupId;
-  const taskId = document.getElementById("task-modal").dataset.taskId;
-  const studyTimeInput = document.getElementById("task-study-time").value;
-  const plannedStudyTimeInput = document.getElementById(
-    "task-planned-study-time",
-  ).value;
+    const groupId = document.getElementById("task-modal").dataset.groupId;
+    const taskId = document.getElementById("task-modal").dataset.taskId;
+    const studyTimeInput = document.getElementById("task-study-time").value;
+    const plannedStudyTimeInput = document.getElementById(
+      "task-planned-study-time",
+    ).value;
 
-  const body = {
-    group_id: groupId,
-    title,
-    type_id: document.getElementById("task-type").value,
-    category_id: document.getElementById("task-category").value,
-    granularity: document.getElementById("task-granularity").value || null,
-    book_id: document.getElementById("task-book-id").value || null,
-    status: document.getElementById("task-status").value,
-    start_planned_date:
-      document.getElementById("task-start-planned-date").value || null,
-    end_planned_date:
-      document.getElementById("task-end-planned-date").value || null,
-    start_date: document.getElementById("task-start-date").value || null,
-    end_date: document.getElementById("task-end-date").value || null,
-    study_time: studyTimeInput
-      ? Math.round(parseFloat(studyTimeInput) * 60)
-      : null,
-    planned_study_time: plannedStudyTimeInput
-      ? Math.round(parseFloat(plannedStudyTimeInput) * 60)
-      : null,
-    memo: document.getElementById("task-memo").value || null,
-  };
+    const body = {
+      group_id: groupId,
+      title,
+      type_id: document.getElementById("task-type").value,
+      category_id: document.getElementById("task-category").value,
+      granularity: document.getElementById("task-granularity").value || null,
+      book_id: document.getElementById("task-book-id").value || null,
+      status: document.getElementById("task-status").value,
+      start_planned_date:
+        document.getElementById("task-start-planned-date").value || null,
+      end_planned_date:
+        document.getElementById("task-end-planned-date").value || null,
+      start_date: document.getElementById("task-start-date").value || null,
+      end_date: document.getElementById("task-end-date").value || null,
+      study_time: studyTimeInput
+        ? Math.round(parseFloat(studyTimeInput) * 60)
+        : null,
+      planned_study_time: plannedStudyTimeInput
+        ? Math.round(parseFloat(plannedStudyTimeInput) * 60)
+        : null,
+      memo: document.getElementById("task-memo").value || null,
+    };
 
-  if (taskId) {
-    await api(`/api/tasks/${taskId}`, "PUT", body);
-  } else {
-    await api("/api/tasks", "POST", body);
-  }
+    if (taskId) {
+      await api(`/api/tasks/${taskId}`, "PUT", body);
+    } else {
+      await api("/api/tasks", "POST", body);
+    }
 
-  markTaskModalClean();
-  document.getElementById("task-modal").classList.add("hidden");
-  renderTaskViews();
-});
+    markTaskModalClean();
+    document.getElementById("task-modal").classList.add("hidden");
+    renderTaskViews();
+  });
 
 document
   .getElementById("btn-task-delete")
-  .addEventListener("click", async () => {
+  ?.addEventListener("click", async () => {
     const taskId = document.getElementById("task-modal").dataset.taskId;
     if (!taskId) return;
     if (!confirm("削除しますか？")) return;
@@ -1660,7 +1867,7 @@ document
   });
 
 // 【v2.11.0】複製ボタン
-document.getElementById("btn-task-duplicate").addEventListener("click", () => {
+document.getElementById("btn-task-duplicate")?.addEventListener("click", () => {
   const groupId = document.getElementById("task-modal").dataset.groupId;
   const prefill = {
     type_id: document.getElementById("task-type").value,
@@ -1680,7 +1887,7 @@ document.getElementById("btn-task-duplicate").addEventListener("click", () => {
 
 document
   .getElementById("btn-group-delete")
-  .addEventListener("click", async () => {
+  ?.addEventListener("click", async () => {
     const groupId = document.getElementById("group-modal").dataset.groupId;
     if (!groupId) return;
     if (!confirm("削除しますか？")) return;
@@ -1693,7 +1900,7 @@ document
 
 document
   .getElementById("btn-group-save")
-  .addEventListener("click", async () => {
+  ?.addEventListener("click", async () => {
     const title = document.getElementById("group-title").value;
     if (!title) {
       alert("タイトルを入力してください");
@@ -1777,12 +1984,29 @@ function closeTaskModalWithConfirm() {
   document.getElementById("task-modal").classList.add("hidden");
 }
 
+// モーダル背景や×ボタン
 document
   .getElementById("btn-task-close-x")
-  .addEventListener("click", closeTaskModalWithConfirm);
-document.getElementById("task-modal").addEventListener("click", (e) => {
+  ?.addEventListener("click", closeTaskModalWithConfirm);
+document.getElementById("task-modal")?.addEventListener("click", (e) => {
   if (e.target.id === "task-modal") closeTaskModalWithConfirm();
 });
+
+document
+  .getElementById("btn-group-close-x")
+  ?.addEventListener("click", closeGroupModalWithConfirm);
+document.getElementById("group-modal")?.addEventListener("click", (e) => {
+  if (e.target.id === "group-modal") closeGroupModalWithConfirm();
+});
+
+document
+  .getElementById("btn-group-picker-close")
+  ?.addEventListener("click", closeGroupPickerModal);
+document
+  .getElementById("group-picker-modal")
+  ?.addEventListener("click", (e) => {
+    if (e.target.id === "group-picker-modal") closeGroupPickerModal();
+  });
 
 // ===== 親タスクモーダル：未保存確認つき開閉処理 =====
 

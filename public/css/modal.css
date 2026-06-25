@@ -479,3 +479,98 @@
   color: var(--color-text-primary);
   background-color: rgb(255 255 255 / 0.08);
 }
+
+/* ===== ステップ詳細編集エリア（インライン展開）v2.15.0 ===== */
+
+.step-detail {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px 10px;
+  margin-top: 4px;
+  background-color: rgb(0 0 0 / 0.15);
+  border-radius: 6px;
+  border: 1px solid rgb(255 255 255 / 0.06);
+}
+
+.step-detail.open {
+  display: flex;
+}
+
+.step-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+}
+
+.step-detail-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.step-detail-field label {
+  font-size: 0.72rem;
+  color: var(--color-text-tertiary);
+}
+
+.step-detail-field input {
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  background-color: var(--color-bg-card);
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 4px;
+  color: var(--color-text-primary);
+  font-family: "DM Sans", sans-serif;
+  width: 100%;
+}
+
+.step-detail-save {
+  align-self: flex-end;
+  padding: 4px 12px;
+  font-size: 0.78rem;
+}
+
+/* ステップ行にチェブロンを追加 */
+.btn-step-expand {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    background-color 0.15s,
+    transform 0.2s;
+}
+
+.btn-step-expand:hover {
+  color: var(--color-text-primary);
+  background-color: rgb(255 255 255 / 0.06);
+}
+
+.btn-step-expand.open {
+  transform: rotate(180deg);
+  color: var(--color-accent-primary);
+}
+
+/* ステップに日付・時間が設定されている場合のサブテキスト */
+.step-item-meta {
+  font-size: 0.68rem;
+  color: var(--color-text-tertiary);
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.step-item-meta span {
+  white-space: nowrap;
+}

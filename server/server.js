@@ -19,8 +19,7 @@ app.use(express.static(path.join(__dirname, "..", "public")));
 app.use("/api/tasks", taskRoutes);
 app.use("/api/books", bookRoutes);
 app.use("/api/groups", groupRoutes);
-app.use("/api/tasks", require("./routes/steps")); // ステップ一覧・作成用
-app.use("/api/steps", require("./routes/steps")); // ステップ単体の更新・削除用
+app.use("/api/steps", require("./routes/steps"));
 app.use("/api/task-types", taskTypeRoutes);
 app.use("/api/task-categories", taskCategoriesRouter);
 app.use("/api/mandalas", mandalaRoutes);

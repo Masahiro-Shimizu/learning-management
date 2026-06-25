@@ -4,8 +4,8 @@ const express = require("express");
 const router = express.Router();
 const db = require("../db");
 
-// GET /api/steps/tasks/:id - 子タスクに紐づくステップ一覧取得
-router.get("/tasks/:id", async (req, res, next) => {
+// GET /api/tasks/:id/steps - 子タスクに紐づくステップ一覧取得
+router.get("/:id/steps", async (req, res, next) => {
   try {
     const [rows] = await db.query(
       `SELECT * FROM task_steps WHERE task_id = ? ORDER BY sort_order ASC, id ASC`,
@@ -17,8 +17,8 @@ router.get("/tasks/:id", async (req, res, next) => {
   }
 });
 
-// POST /api/steps/tasks/:id - ステップ新規作成
-router.post("/tasks/:id", async (req, res, next) => {
+// POST /api/tasks/:id/steps - ステップ新規作成
+router.post("/:id/steps", async (req, res, next) => {
   try {
     const { title, sort_order = 0 } = req.body;
 
@@ -31,7 +31,7 @@ router.post("/tasks/:id", async (req, res, next) => {
     const [rows] = await db.query("SELECT * FROM task_steps WHERE id = ?", [
       result.insertId,
     ]);
-    res.status(201).json(rows);
+    res.status(201).json(rows[0]);
   } catch (err) {
     next(err);
   }
@@ -49,7 +49,7 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-// PUT /api/steps/:id - ステップ更新
+// PUT /api/steps/:id - ステップ更新（タイトル・完了フラグ・並び順・日付・時間）
 router.put("/:id", async (req, res, next) => {
   try {
     const allowedFields = [
@@ -58,12 +58,10 @@ router.put("/:id", async (req, res, next) => {
       "sort_order",
       "start_planned_date",
       "end_planned_date",
-      "start_date",
-      "end_date",
+      "actual_date",
       "planned_study_time",
       "study_time",
     ];
-
     const fields = [];
     const values = [];
     for (const field of allowedFields) {
