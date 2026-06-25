@@ -651,8 +651,18 @@
 
     <!-- ===== 子タスクモーダル ===== -->
     <div id="task-modal" class="modal hidden">
-      <div class="modal-content">
-        <div class="modal-header">
+      <!-- スタイルを直接指定して内側だけをスクロールできるように調整 -->
+      <div
+        class="modal-content"
+        style="
+          max-height: 90vh;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        "
+      >
+        <!-- モーダルヘッダー -->
+        <div class="modal-header" style="flex-shrink: 0">
           <h3>タスクを登録</h3>
           <button
             type="button"
@@ -664,103 +674,138 @@
           </button>
         </div>
 
-        <div class="form-grid">
-          <div class="field field-full">
-            <label for="task-title">タイトル</label>
-            <input type="text" id="task-title" />
+        <!-- スクロール可能なコンテナエリア（フォームとステップを包む） -->
+        <div
+          class="modal-scroll-area"
+          style="flex: 1; overflow-y: auto; padding-right: 4px"
+        >
+          <div class="form-grid">
+            <div class="field field-full">
+              <label for="task-title">タイトル</label>
+              <input type="text" id="task-title" />
+            </div>
+
+            <div class="field">
+              <label for="task-type">種別</label>
+              <select id="task-type"></select>
+            </div>
+            <div class="field">
+              <label for="task-status">ステータス</label>
+              <select id="task-status">
+                <option value="未着手">未着手</option>
+                <option value="進行中">進行中</option>
+                <option value="完了">完了</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="task-category">カテゴリ</label>
+              <select id="task-category"></select>
+            </div>
+            <div class="field">
+              <label for="task-granularity">粒度</label>
+              <select id="task-granularity">
+                <option value="">未設定</option>
+                <option value="章単位">章単位</option>
+                <option value="トピック単位">トピック単位</option>
+              </select>
+            </div>
+
+            <div class="field field-full">
+              <label for="task-book-id">紐づく書籍</label>
+              <select id="task-book-id">
+                <option value="">（なし）</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="task-start-planned-date">開始予定日</label>
+              <input type="date" id="task-start-planned-date" />
+            </div>
+            <div class="field">
+              <label for="task-end-planned-date">終了予定日</label>
+              <input type="date" id="task-end-planned-date" />
+            </div>
+
+            <div class="field">
+              <label for="task-start-date">開始日（実績）</label>
+              <input type="date" id="task-start-date" />
+            </div>
+            <div class="field">
+              <label for="task-end-date">終了日（実績）</label>
+              <input type="date" id="task-end-date" />
+            </div>
+
+            <div class="field">
+              <label for="task-planned-study-time">予定学習時間（h）</label>
+              <input type="number" id="task-planned-study-time" />
+            </div>
+            <div class="field">
+              <label for="task-study-time">学習時間（h）</label>
+              <input type="number" id="task-study-time" />
+            </div>
+
+            <div class="field field-full">
+              <label for="task-memo">メモ</label>
+              <textarea id="task-memo"></textarea>
+            </div>
           </div>
 
-          <div class="field">
-            <label for="task-type">種別</label>
-            <select id="task-type"></select>
-          </div>
-          <div class="field">
-            <label for="task-status">ステータス</label>
-            <select id="task-status">
-              <option value="未着手">未着手</option>
-              <option value="進行中">進行中</option>
-              <option value="完了">完了</option>
-            </select>
-          </div>
+          <div class="step-section">
+            <label>ステップ</label>
+            <ul id="step-list"></ul>
 
-          <div class="field">
-            <label for="task-category">カテゴリ</label>
-            <select id="task-category"></select>
-          </div>
-          <div class="field">
-            <label for="task-granularity">粒度</label>
-            <select id="task-granularity">
-              <option value="">未設定</option>
-              <option value="章単位">章単位</option>
-              <option value="トピック単位">トピック単位</option>
-            </select>
-          </div>
-
-          <div class="field field-full">
-            <label for="task-book-id">紐づく書籍</label>
-            <select id="task-book-id">
-              <option value="">（なし）</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="task-start-planned-date">開始予定日</label>
-            <input type="date" id="task-start-planned-date" />
-          </div>
-          <div class="field">
-            <label for="task-end-planned-date">終了予定日</label>
-            <input type="date" id="task-end-planned-date" />
-          </div>
-
-          <div class="field">
-            <label for="task-start-date">開始日（実績）</label>
-            <input type="date" id="task-start-date" />
-          </div>
-          <div class="field">
-            <label for="task-end-date">終了日（実績）</label>
-            <input type="date" id="task-end-date" />
-          </div>
-
-          <div class="field">
-            <label for="task-planned-study-time">予定学習時間（h）</label>
-            <input type="number" id="task-planned-study-time" />
-          </div>
-          <div class="field">
-            <label for="task-study-time">学習時間（h）</label>
-            <input type="number" id="task-study-time" />
-          </div>
-
-          <div class="field field-full">
-            <label for="task-memo">メモ</label>
-            <textarea id="task-memo"></textarea>
+            <div class="step-add-row">
+              <input
+                type="text"
+                id="step-new-title"
+                placeholder="新しいステップ"
+              />
+              <button type="button" id="btn-step-add" class="btn btn-secondary">
+                追加
+              </button>
+            </div>
+            <div
+              style="display: flex; justify-content: flex-end; margin-top: 6px"
+            >
+              <button
+                type="button"
+                id="btn-step-aggregate"
+                class="btn btn-secondary"
+              >
+                ステップから集計
+              </button>
+            </div>
           </div>
         </div>
 
-        <div class="step-section">
-          <label>ステップ</label>
-          <ul id="step-list"></ul>
-          <
-          <div class="step-add-row">
-            <input
-              type="text"
-              id="step-new-title"
-              placeholder="新しいステップ"
-            />
-            <button type="button" id="btn-step-add" class="btn btn-secondary">
-              追加
-            </button>
-          </div>
-          <div
-            style="display: flex; justify-content: flex-end; margin-top: 6px"
+        <!-- 復活させたフッターボタン（最下部に常に固定されます） -->
+        <div
+          class="modal-footer"
+          style="
+            flex-shrink: 0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgb(255 255 255 / 0.06);
+          "
+        >
+          <button
+            type="button"
+            id="btn-task-delete"
+            class="btn btn-danger"
+            style="margin-right: auto"
           >
-            <button
-              type="button"
-              id="btn-step-aggregate"
-              class="btn btn-secondary"
-            >
-              ステップから集計
-            </button>
-          </div>
+            削除
+          </button>
+          <button type="button" id="btn-task-close" class="btn btn-secondary">
+            キャンセル
+          </button>
+          <button type="button" id="btn-task-save" class="btn btn-primary">
+            保存
+          </button>
         </div>
       </div>
     </div>
