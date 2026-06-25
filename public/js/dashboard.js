@@ -242,8 +242,12 @@ function renderCharts() {
     });
 
     filteredTasks = tasks.filter((t) => {
-      if (!t.end_date) return false;
-      const d = new Date(t.end_date);
+      const targetDateStr =
+        t.status === "完了"
+          ? t.end_date
+          : t.end_planned_date || t.start_planned_date;
+      if (!targetDateStr) return false;
+      const d = new Date(targetDateStr);
       return d.getFullYear() === year && d.getMonth() === month;
     });
   } else if (currentPeriod === "year") {
@@ -286,8 +290,12 @@ function renderCharts() {
     );
 
     filteredTasks = tasks.filter((t) => {
-      if (!t.end_date) return false;
-      const d = new Date(t.end_date);
+      const targetDateStr =
+        t.status === "完了"
+          ? t.end_date
+          : t.end_planned_date || t.start_planned_date;
+      if (!targetDateStr) return false;
+      const d = new Date(targetDateStr);
       return d.getFullYear() === year;
     });
   } else if (currentPeriod === "all") {

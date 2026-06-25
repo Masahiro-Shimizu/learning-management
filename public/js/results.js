@@ -226,10 +226,10 @@ function buildResultContent(result, tasks, allTasks, prefix = "") {
   const totalMinutes = filtered.reduce((s, t) => s + (t.study_time || 0), 0);
   const studyHours = minutesToHours(totalMinutes);
   const doneCount = filtered.filter((t) => t.status === "完了").length;
-  const totalAll = allTasks.length;
-  const doneAll = allTasks.filter((t) => t.status === "完了").length;
+
+  const totalInPeriod = filtered.length;
   const progressRate =
-    totalAll > 0 ? Math.round((doneAll / totalAll) * 100) : 0;
+    totalInPeriod > 0 ? Math.round((doneCount / totalInPeriod) * 100) : 0;
 
   const typeIcon =
     result.type === "week" ? "📅" : result.type === "month" ? "🗓️" : "🏆";
@@ -239,41 +239,41 @@ function buildResultContent(result, tasks, allTasks, prefix = "") {
 
   return {
     html: `
-      <div class="result-header">
-        <span class="result-type-badge result-type-badge--${result.type}">
-          ${typeIcon} ${result.type === "week" ? "週次" : result.type === "month" ? "月次" : "年次"}
-        </span>
-        <p class="result-period">${result.label}</p>
-      </div>
-      <div class="result-stats">
-        <div class="result-stat-card">
-          <p class="result-stat-label">学習時間</p>
-          <p class="result-stat-value">${studyHours}<span class="result-stat-unit">h</span></p>
+        <div class="result-header">
+          <span class="result-type-badge result-type-badge--${result.type}">
+            ${typeIcon} ${result.type === "week" ? "週次" : result.type === "month" ? "月次" : "年次"}
+          </span>
+          <p class="result-period">${result.label}</p>
         </div>
-        <div class="result-stat-card">
-          <p class="result-stat-label">完了タスク</p>
-          <p class="result-stat-value">${doneCount}<span class="result-stat-unit">件</span></p>
-        </div>
-        <div class="result-stat-card">
-          <p class="result-stat-label">進捗率（全体）</p>
-          <p class="result-stat-value">${progressRate}<span class="result-stat-unit">%</span></p>
-        </div>
-      </div>
-      <div class="result-charts">
-        <div class="result-chart-block">
-          <p class="result-chart-label">カテゴリ別学習時間</p>
-          <div class="result-chart-wrap" style="height:180px;position:relative;">
-            <canvas id="${barId}"></canvas>
+        <div class="result-stats">
+          <div class="result-stat-card">
+            <p class="result-stat-label">学習時間</p>
+            <p class="result-stat-value">${studyHours}<span class="result-stat-unit">h</span></p>
+          </div>
+          <div class="result-stat-card">
+            <p class="result-stat-label">完了タスク</p>
+            <p class="result-stat-value">${doneCount}<span class="result-stat-unit">件</span></p>
+          </div>
+          <div class="result-stat-card">
+            <p class="result-stat-label">進捗率（全体）</p>
+            <p class="result-stat-value">${progressRate}<span class="result-stat-unit">%</span></p>
           </div>
         </div>
-        <div class="result-chart-block">
-          <p class="result-chart-label">ステータス別件数</p>
-          <div class="result-chart-wrap" style="height:180px;position:relative;">
-            <canvas id="${doughnutId}"></canvas>
+        <div class="result-charts">
+          <div class="result-chart-block">
+            <p class="result-chart-label">カテゴリ別学習時間</p>
+            <div class="result-chart-wrap" style="height:180px;position:relative;">
+              <canvas id="${barId}"></canvas>
+            </div>
+          </div>
+          <div class="result-chart-block">
+            <p class="result-chart-label">ステータス別件数</p>
+            <div class="result-chart-wrap" style="height:180px;position:relative;">
+              <canvas id="${doughnutId}"></canvas>
+            </div>
           </div>
         </div>
-      </div>
-    `,
+      `,
     barId,
     doughnutId,
     filtered,
@@ -343,6 +343,49 @@ async function initResults() {
 
   const tasks = await api("/api/tasks");
   renderResultsPage(tasks);
+
+  // フィルタータブのクリックイベントを有効化
+  initResultsPageFilter();
+}
+
+// タブを押したときにカードをサッと絞り込む関数
+function initResultsPageFilter() {
+  const tabs = document.querySelectorAll(".results-filter-tab");
+  if (tabs.length === 0) return;
+
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      // 全タブのactiveクラスを消し、クリックされたタブだけに付与
+      tabs.forEach((t) => t.classList.remove("active"));
+      tab.classList.add("active");
+
+      const filterText = tab.textContent.trim();
+      const cards = document.querySelectorAll(".result-page-card");
+
+      cards.forEach((card) => {
+        if (filterText === "すべて") {
+          card.style.display = "block";
+        } else if (
+          filterText === "週次" &&
+          card.classList.contains("result-type-week")
+        ) {
+          card.style.display = "block";
+        } else if (
+          filterText === "月次" &&
+          card.classList.contains("result-type-month")
+        ) {
+          card.style.display = "block";
+        } else if (
+          filterText === "年次" &&
+          card.classList.contains("result-type-year")
+        ) {
+          card.style.display = "block";
+        } else {
+          card.style.display = "none";
+        }
+      });
+    });
+  });
 }
 
 function renderResultsPage(tasks) {
@@ -367,7 +410,8 @@ function renderResultsPage(tasks) {
     );
 
     const card = document.createElement("div");
-    card.className = "result-page-card";
+    // 絞り込みで判別できるように、カード自体にクラス名を付与
+    card.className = `result-page-card result-type-${result.type}`;
     card.innerHTML = html;
     container.appendChild(card);
 
@@ -400,7 +444,10 @@ function renderResultsPage(tasks) {
               datasets: [
                 {
                   label: "学習時間（h）",
-                  data: hours.length > 0 ? hours : [0],
+                  data:
+                    hours.length > 0
+                      ? hours
+                      : [0] /* 👈 カンマ前のタイポを完全に修正しました */,
                   backgroundColor: names.map(
                     (_, i) => COLORS[i % COLORS.length],
                   ),

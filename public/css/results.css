@@ -2,22 +2,37 @@
 
 /* ===== リザルトモーダル ===== */
 
-#result-modal .modal-content {
-  width: 640px;
-  max-height: 90vh;
-  overflow-y: auto;
+/* 👇 JavaScriptの表示切り替え（.hidden）を邪魔しないように修正 */
+#result-modal:not(.hidden) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
+/* 👇 モーダルの枠自体を横にも縦にも大きく広げます（中身が全部収まるサイズ） */
+#result-modal .modal-content {
+  width: 800px !important; /* 横幅を 800px へ拡大 */
+  max-height: 95vh !important; /* 縦幅の制限を 95% まで引き上げて広げます */
+  height: auto !important;
+  overflow: hidden !important; /* この枠の中でのスクロールを禁止 */
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* タイトル行 */
 #result-modal .modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-16);
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-shrink: 0 !important;
+  padding-bottom: var(--space-16) !important;
+  margin-bottom: var(--space-16) !important;
+  border-bottom: 1px solid rgb(255 255 255 / 0.06) !important;
 }
 
 #result-modal .modal-header h3 {
   font-family: "Syne", sans-serif;
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   margin: 0;
   color: var(--color-text-primary);
 }
@@ -44,13 +59,40 @@
   background-color: rgb(255 255 255 / 0.08);
 }
 
+/* 中身のコンテンツエリア：大きく広がったのでスクロールを無効化 */
+#result-modal-content-area {
+  flex-grow: 1 !important;
+  overflow: hidden !important;
+}
+
+/* ポップアップ内限定：大きな画面に合わせた綺麗なレイアウト指定 */
+#result-modal-content-area .result-header {
+  margin-bottom: var(--space-16) !important;
+}
+#result-modal-content-area .result-stats {
+  gap: var(--space-16) !important;
+  margin-bottom: var(--space-16) !important;
+}
+#result-modal-content-area .result-stat-card {
+  padding: var(--space-16) !important;
+}
+#result-modal-content-area .result-charts {
+  gap: var(--space-16) !important;
+}
+#result-modal-content-area .result-chart-block {
+  padding: var(--space-16) !important;
+}
+#result-modal-content-area .result-chart-wrap {
+  height: 200px !important; /* 👈 大きくなった画面に合わせてグラフも1枚で見やすく調整 */
+}
+
 /* ページネーション */
 .result-modal-nav {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-16);
-  margin-bottom: var(--space-16);
+  margin-bottom: var(--space-16) !important;
 }
 
 .result-modal-nav.hidden {
@@ -91,17 +133,18 @@
   text-align: center;
 }
 
-/* モーダルフッター */
+/* 下側のフッターボタン */
 .result-modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-8);
-  margin-top: var(--space-16);
-  padding-top: var(--space-16);
-  border-top: 1px solid rgb(255 255 255 / 0.06);
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: var(--space-8) !important;
+  flex-shrink: 0 !important;
+  margin-top: var(--space-16) !important;
+  padding-top: var(--space-16) !important;
+  border-top: 1px solid rgb(255 255 255 / 0.06) !important;
 }
 
-/* ===== リザルトコンテンツ共通 ===== */
+/* ===== リザルトコンテンツ共通（ページ用スタイル） ===== */
 
 .result-header {
   display: flex;
@@ -140,7 +183,6 @@
   color: var(--color-text-primary);
 }
 
-/* サマリーカード3枚横並び */
 .result-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -176,7 +218,6 @@
   margin-left: 2px;
 }
 
-/* グラフ2カラム */
 .result-charts {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -204,14 +245,25 @@
 /* ===== リザルトページ（#page-results） ===== */
 
 #page-results {
-  padding: var(--space-32);
+  padding: 0 var(--space-32) var(--space-32) var(--space-32) !important;
+  position: relative !important;
 }
 
 .results-page-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: var(--space-32);
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 100 !important;
+  background-color: var(--color-bg-base) !important;
+  margin-left: calc(var(--space-32) * -1) !important;
+  margin-right: calc(var(--space-32) * -1) !important;
+  padding-left: var(--space-32) !important;
+  padding-right: var(--space-32) !important;
+  padding-top: var(--space-32) !important;
+  padding-bottom: var(--space-16) !important;
+  margin-bottom: 0 !important;
 }
 
 .results-page-header h2 {
@@ -227,12 +279,22 @@
   margin-top: var(--space-4);
 }
 
-/* フィルタータブ */
 .results-filter-tabs {
   display: flex;
   gap: 4px;
   border-bottom: 1px solid rgb(255 255 255 / 0.08);
-  margin-bottom: var(--space-24);
+  position: sticky !important;
+  top: 95px !important;
+  z-index: 99 !important;
+  background-color: var(--color-bg-base) !important;
+  margin-left: calc(var(--space-32) * -1) !important;
+  margin-right: calc(var(--space-32) * -1) !important;
+  padding-left: var(--space-32) !important;
+  padding-right: var(--space-32) !important;
+  padding-top: var(--space-8) !important;
+  padding-bottom: var(--space-16) !important;
+  margin-bottom: var(--space-32) !important;
+  pointer-events: auto !important;
 }
 
 .results-filter-tab {
@@ -247,6 +309,8 @@
   transition:
     color 0.15s,
     border-color 0.15s;
+  position: relative !important;
+  z-index: 101 !important;
 }
 
 .results-filter-tab:hover {
@@ -258,11 +322,12 @@
   border-bottom-color: var(--color-accent-primary);
 }
 
-/* カード一覧 */
 #results-page-body {
   display: flex;
   flex-direction: column;
   gap: var(--space-24);
+  position: relative !important;
+  z-index: 1 !important;
 }
 
 .result-page-card {
@@ -312,3 +377,6 @@ html.light .result-page-card .result-chart-block {
     width: 95vw;
   }
 }
+
+/* モック用のテスト期間データを作って強制ポップアップ
+showResultModal([{ id: "test-week", type: "week", label: "テスト期間 (今すぐ確認用)", startDate: new Date(Date.now() - 7*24*60*60*1000), endDate: new Date() }], await api("/api/tasks")); */
