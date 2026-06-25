@@ -1,0 +1,314 @@
+/* ===== リザルト機能 ===== */
+
+/* ===== リザルトモーダル ===== */
+
+#result-modal .modal-content {
+  width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+#result-modal .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-16);
+}
+
+#result-modal .modal-header h3 {
+  font-family: "Syne", sans-serif;
+  font-size: 1.1rem;
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+#result-modal .btn-modal-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    background-color 0.2s;
+}
+
+#result-modal .btn-modal-close:hover {
+  color: var(--color-text-primary);
+  background-color: rgb(255 255 255 / 0.08);
+}
+
+/* ページネーション */
+.result-modal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-16);
+  margin-bottom: var(--space-16);
+}
+
+.result-modal-nav.hidden {
+  display: none;
+}
+
+.btn-result-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background-color: var(--color-bg-card);
+  color: var(--color-text-secondary);
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+
+.btn-result-nav:hover:not(:disabled) {
+  background-color: var(--color-accent-primary);
+  color: var(--color-text-primary);
+}
+
+.btn-result-nav:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.result-modal-page-label {
+  font-size: 0.85rem;
+  color: var(--color-text-tertiary);
+  min-width: 50px;
+  text-align: center;
+}
+
+/* モーダルフッター */
+.result-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-8);
+  margin-top: var(--space-16);
+  padding-top: var(--space-16);
+  border-top: 1px solid rgb(255 255 255 / 0.06);
+}
+
+/* ===== リザルトコンテンツ共通 ===== */
+
+.result-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  margin-bottom: var(--space-16);
+}
+
+.result-type-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.result-type-badge--week {
+  background-color: rgb(99 102 241 / 0.2);
+  color: #a5b4fc;
+}
+
+.result-type-badge--month {
+  background-color: rgb(245 158 11 / 0.2);
+  color: #fcd34d;
+}
+
+.result-type-badge--year {
+  background-color: rgb(52 211 153 / 0.2);
+  color: #6ee7b7;
+}
+
+.result-period {
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-family: "Syne", sans-serif;
+  color: var(--color-text-primary);
+}
+
+/* サマリーカード3枚横並び */
+.result-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-12);
+  margin-bottom: var(--space-16);
+}
+
+.result-stat-card {
+  background-color: var(--color-bg-base);
+  border-radius: 10px;
+  padding: var(--space-16);
+  border: 1px solid rgb(255 255 255 / 0.08);
+  text-align: center;
+}
+
+.result-stat-label {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  margin-bottom: 6px;
+}
+
+.result-stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1;
+}
+
+.result-stat-unit {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-left: 2px;
+}
+
+/* グラフ2カラム */
+.result-charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-16);
+}
+
+.result-chart-block {
+  background-color: var(--color-bg-base);
+  border-radius: 10px;
+  padding: var(--space-16);
+  border: 1px solid rgb(255 255 255 / 0.08);
+}
+
+.result-chart-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-8);
+}
+
+.result-chart-wrap {
+  position: relative;
+}
+
+/* ===== リザルトページ（#page-results） ===== */
+
+#page-results {
+  padding: var(--space-32);
+}
+
+.results-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-32);
+}
+
+.results-page-header h2 {
+  font-family: "Syne", sans-serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.results-page-sub {
+  font-size: 0.85rem;
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-4);
+}
+
+/* フィルタータブ */
+.results-filter-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid rgb(255 255 255 / 0.08);
+  margin-bottom: var(--space-24);
+}
+
+.results-filter-tab {
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.results-filter-tab:hover {
+  color: var(--color-text-secondary);
+}
+
+.results-filter-tab.active {
+  color: var(--color-text-primary);
+  border-bottom-color: var(--color-accent-primary);
+}
+
+/* カード一覧 */
+#results-page-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+}
+
+.result-page-card {
+  background-color: var(--color-bg-card);
+  border-radius: 12px;
+  padding: var(--space-24);
+  border: 1px solid rgb(255 255 255 / 0.1);
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
+}
+
+.result-page-card .result-stat-card {
+  background-color: var(--color-bg-sidebar);
+}
+
+.result-page-card .result-chart-block {
+  background-color: var(--color-bg-sidebar);
+}
+
+/* ===== ライトモード ===== */
+
+html.light .result-stat-card,
+html.light .result-chart-block {
+  background-color: var(--color-bg-sidebar);
+  border-color: rgb(0 0 0 / 0.08);
+}
+
+html.light .result-page-card .result-stat-card,
+html.light .result-page-card .result-chart-block {
+  background-color: var(--color-bg-base);
+}
+
+/* レスポンシブ */
+@media (max-width: 768px) {
+  #page-results {
+    padding: var(--space-16);
+  }
+
+  .result-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .result-charts {
+    grid-template-columns: 1fr;
+  }
+
+  #result-modal .modal-content {
+    width: 95vw;
+  }
+}

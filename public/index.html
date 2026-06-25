@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="css/books.css" />
     <link rel="stylesheet" href="css/mandala.css" />
     <link rel="stylesheet" href="css/modal.css" />
+    <link rel="stylesheet" href="css/results.css" />
     <link rel="stylesheet" href="css/settings.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -26,6 +27,7 @@
     <script src="js/dashboard.js" defer></script>
     <script src="js/settings.js" defer></script>
     <script src="js/mandala.js" defer></script>
+    <script src="js/results.js" defer></script>
     <script src="js/app.js" defer></script>
   </head>
   <body>
@@ -61,6 +63,12 @@
             <a href="#page-mandala">
               <i data-lucide="grid-3x3" class="nav-icon"></i>
               <span>マンダラチャート</span>
+            </a>
+          </li>
+          <li>
+            <a href="#page-results">
+              <i data-lucide="trophy" class="nav-icon"></i>
+              <span>リザルト</span>
             </a>
           </li>
         </ul>
@@ -529,6 +537,43 @@
           </div>
         </section>
 
+        <!-- ===== リザルト ===== -->
+        <section id="page-results">
+          <div class="results-page-header">
+            <div>
+              <h2>リザルト</h2>
+              <p class="results-page-sub">
+                週・月・年ごとの学習サマリーを振り返ります。
+              </p>
+            </div>
+          </div>
+
+          <div class="results-filter-tabs">
+            <button
+              type="button"
+              class="results-filter-tab active"
+              data-filter="all"
+            >
+              すべて
+            </button>
+            <button type="button" class="results-filter-tab" data-filter="week">
+              週次
+            </button>
+            <button
+              type="button"
+              class="results-filter-tab"
+              data-filter="month"
+            >
+              月次
+            </button>
+            <button type="button" class="results-filter-tab" data-filter="year">
+              年次
+            </button>
+          </div>
+
+          <div id="results-page-body"></div>
+        </section>
+
         <!-- ===== 設定 ===== -->
         <section id="page-settings">
           <h2>設定</h2>
@@ -917,6 +962,67 @@
           class="settings-list"
           style="max-height: 360px; overflow-y: auto"
         ></ul>
+      </div>
+    </div>
+
+    <!-- ===== リザルトポップアップモーダル ===== -->
+    <div id="result-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>🎉 学習リザルト</h3>
+          <button
+            type="button"
+            id="btn-result-modal-close-x"
+            class="btn-modal-close"
+            aria-label="閉じる"
+          >
+            ✕
+          </button>
+        </div>
+
+        <!-- ページネーション（複数リザルトがある場合） -->
+        <div id="result-modal-nav" class="result-modal-nav hidden">
+          <button
+            type="button"
+            id="result-modal-prev"
+            class="btn-result-nav"
+            aria-label="前へ"
+          >
+            &lt;
+          </button>
+          <span id="result-modal-page" class="result-modal-page-label"
+            >1 / 1</span
+          >
+          <button
+            type="button"
+            id="result-modal-next"
+            class="btn-result-nav"
+            aria-label="次へ"
+          >
+            &gt;
+          </button>
+        </div>
+
+        <!-- リザルトコンテンツ（JSで動的に挿入） -->
+        <div id="result-modal-content-area"></div>
+
+        <!-- フッター -->
+        <div class="result-modal-footer">
+          <button
+            type="button"
+            id="btn-result-modal-close"
+            class="btn btn-secondary"
+          >
+            閉じる
+          </button>
+          <button
+            type="button"
+            id="btn-result-modal-go-page"
+            class="btn btn-primary"
+          >
+            リザルトページで見る
+          </button>
+        </div>
       </div>
     </div>
 

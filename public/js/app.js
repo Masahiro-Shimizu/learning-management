@@ -6,6 +6,7 @@ let booksInitialized = false;
 let dashboardInitialized = false;
 let settingsInitialized = false;
 let mandalaInitialized = false;
+let resultsInitialized = false;
 
 function showPage() {
   const pageId = location.hash.substring(1) || "page-dashboard";
@@ -41,6 +42,11 @@ function showPage() {
     initMandala();
     mandalaInitialized = true;
   }
+
+  if (pageId === "page-results" && !resultsInitialized) {
+    initResults();
+    resultsInitialized = true;
+  }
 }
 
 // function showPage() を実行
@@ -62,3 +68,7 @@ document.getElementById("btn-theme-toggle").addEventListener("click", () => {
     : "☀️ ライト";
   localStorage.setItem("theme", isLight ? "light" : "dark");
 });
+
+// app.js の末尾に追加
+initResultModal();
+setTimeout(checkAndShowResultPopup, 800);
