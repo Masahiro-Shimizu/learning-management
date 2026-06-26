@@ -379,4 +379,151 @@ html.light .result-page-card .result-chart-block {
 }
 
 /* モック用のテスト期間データを作って強制ポップアップ
+  showResultModal([{ id: "test-week", type: "week", label: "テスト期間 (今すぐ確認用)", startDate: new Date(Date.now() - 7*24*60*60*1000), endDate: new Date() }], await api("/api/tasks")); */
+
+/* ===== 比較バッジ（前期間との差分） ===== */
+
+.result-compare-label {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-8);
+  letter-spacing: 0.04em;
+}
+
+.result-diff {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: none;
+}
+
+.result-diff--visible {
+  animation: diffFadeIn 0.35s ease forwards;
+}
+
+@keyframes diffFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* UP：アンバー系（赤橙） */
+.result-diff--up {
+  background-color: rgb(245 158 11 / 0.15);
+  color: hsl(38 90% 55%);
+}
+
+/* DOWN：青 */
+.result-diff--down {
+  background-color: rgb(77 127 212 / 0.15);
+  color: hsl(220 65% 65%);
+}
+
+/* STAY：緑 */
+.result-diff--stay {
+  background-color: rgb(52 211 153 / 0.15);
+  color: hsl(152 60% 50%);
+}
+
+.result-diff-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.result-diff-icon svg {
+  width: 12px;
+  height: 12px;
+  stroke-width: 2.5;
+}
+
+/* UP アイコンバウンス */
+.result-diff--up .result-diff-icon svg {
+  animation: bounceUp 0.6s ease 0.3s both;
+}
+
+/* DOWN アイコンバウンス */
+.result-diff--down .result-diff-icon svg {
+  animation: bounceDown 0.6s ease 0.3s both;
+}
+
+@keyframes bounceUp {
+  0% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-4px);
+  }
+  60% {
+    transform: translateY(1px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounceDown {
+  0% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(4px);
+  }
+  60% {
+    transform: translateY(-1px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.result-diff-text {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== 数値カードのフェードインアニメーション ===== */
+
+.result-stat-value--anim {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.result-stat-value--visible {
+  animation: statFadeIn 0.4s ease forwards;
+}
+
+@keyframes statFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.result-stats .result-stat-card:nth-child(1) .result-stat-value--anim {
+  animation-delay: 0.05s;
+}
+.result-stats .result-stat-card:nth-child(2) .result-stat-value--anim {
+  animation-delay: 0.12s;
+}
+.result-stats .result-stat-card:nth-child(3) .result-stat-value--anim {
+  animation-delay: 0.19s;
+}
+
+/* モック用のテスト期間データを作って強制ポップアップ
 showResultModal([{ id: "test-week", type: "week", label: "テスト期間 (今すぐ確認用)", startDate: new Date(Date.now() - 7*24*60*60*1000), endDate: new Date() }], await api("/api/tasks")); */

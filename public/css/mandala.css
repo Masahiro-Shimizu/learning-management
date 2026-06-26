@@ -11,7 +11,7 @@
 
   position: sticky !important;
   top: 0 !important;
-  z-index: 9999 !important;
+  z-index: 100 !important;
   background-color: var(--color-bg-base) !important;
 
   margin-left: calc(var(--space-24) * -1) !important;

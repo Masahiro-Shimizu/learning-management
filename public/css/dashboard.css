@@ -11,7 +11,7 @@
 
   position: sticky !important;
   top: 0 !important;
-  z-index: 9999 !important;
+  z-index: 100 !important;
   background-color: var(--color-bg-base) !important;
 
   margin-left: calc(var(--space-24) * -1) !important;
@@ -30,7 +30,7 @@
 .period-nav {
   background-color: var(--color-bg-base) !important;
   position: relative;
-  z-index: 10000;
+  z-index: 101;
 }
 
 .dashboard-sub {
