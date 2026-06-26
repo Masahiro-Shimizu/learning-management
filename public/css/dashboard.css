@@ -1,9 +1,21 @@
-/* 1. ダッシュボード全体の上側の余白をゼロにします */
-#page-dashboard {
-  padding: 0 var(--space-24) var(--space-24) var(--space-24) !important;
+/* ==========================================
+   【最終デザイン調整版】最下段のグラフサイズ統一CSS
+========================================== */
+
+/* 1. 画面全体のスクロールを禁止し、1画面に収める */
+body {
+  overflow: hidden !important;
 }
 
-/* 2. ダッシュボードのヘッダー要素を固定します */
+/* 2. zoomを使って、デザインの配置を崩さずに全体を一回りコンパクトにします */
+#page-dashboard {
+  zoom: 0.78 !important;
+  padding: 0 var(--space-24) var(--space-24) var(--space-24) !important;
+  height: 100vh !important;
+  box-sizing: border-box !important;
+}
+
+/* 3. ダッシュボードのヘッダー要素 */
 .dashboard-header {
   display: flex !important;
   justify-content: space-between !important;
@@ -21,10 +33,10 @@
 
   padding-top: var(--space-24) !important;
   padding-bottom: var(--space-16) !important;
-  margin-bottom: var(--space-24) !important;
+  margin-bottom: var(--space-16) !important;
 }
 
-/* 3. 右側のボタン周りの透け防止 */
+/* 右側のボタン周りの透け防止 */
 .period-controls,
 .period-toggle,
 .period-nav {
@@ -39,28 +51,29 @@
   margin-top: var(--space-4);
 }
 
-/* サマリーカード */
+/* 4. サマリーカード */
 .dashboard-summary {
-  display: flex;
-  gap: var(--space-16);
-  margin-bottom: var(--space-24);
+  display: flex !important;
+  gap: var(--space-16) !important;
+  margin-bottom: var(--space-16) !important;
 }
 
 .summary-card {
-  background-color: var(--color-bg-card);
-  border-radius: 12px;
-  padding: var(--space-24);
-  flex: 1;
-  min-height: 140px;
-  border: 1px solid rgb(255 255 255 / 0.1);
-  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
+  background-color: var(--color-bg-card) !important;
+  border-radius: 12px !important;
+  padding: var(--space-24) !important;
+  flex: 1 !important;
+  min-height: 120px !important;
+  border: 1px solid rgb(255 255 255 / 0.1) !important;
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6) !important;
+  display: block !important;
 }
 
 .summary-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-12);
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: var(--space-12) !important;
 }
 
 .summary-card-label {
@@ -68,7 +81,7 @@
   color: var(--color-text-secondary);
 }
 
-/* ===== サマリーカードのアイコン（v2.9.0：モックアップ準拠のSVGアイコンに変更） ===== */
+/* サマリーカードのアイコン */
 .icon {
   width: 36px;
   height: 36px;
@@ -87,22 +100,21 @@
   background: rgb(99 102 241 / 0.16);
   color: #a5b4fc;
 }
-
 .ic-amber {
   background: rgb(245 166 35 / 0.16);
   color: #fcd34d;
 }
-
 .ic-green {
   background: rgb(52 211 153 / 0.15);
   color: #6ee7b7;
 }
 
-/* サブテキスト内の数値ハイライト（v2.9.0追加） */
+/* サブテキスト内の数値ハイライト */
 .summary-card-sub .sub-highlight {
   color: var(--color-status-done);
   font-weight: 700;
 }
+
 .summary-card-value {
   font-size: 2.8rem;
   font-weight: 700;
@@ -123,11 +135,11 @@
   color: var(--color-text-tertiary);
 }
 
-/* グラフエリア */
+/* 5. グラフエリア（最下段の3つの高さを180pxに統一して美しく整えます） */
 .dashboard-charts {
   display: flex;
   flex-direction: column;
-  gap: var(--space-24);
+  gap: var(--space-16) !important;
 }
 
 .charts-row {
@@ -162,34 +174,34 @@
   color: var(--color-text-tertiary);
 }
 
-/* 棒グラフ */
+/* 各種グラフの高さ指定 */
 .chart-daily-wrapper {
-  height: 260px;
+  height: 200px !important;
   position: relative;
 }
-
-/* 円グラフ */
-.chart-status-wrapper {
-  height: 320px;
+.chart-category-time-wrapper {
+  height: 200px !important;
   position: relative;
 }
-
-/* 進捗率推移グラフ専用のラッパー（追加） */
 .chart-progress-wrapper {
-  height: 300px;
+  height: 200px !important;
   position: relative;
 }
 
-/* 122行目周辺：書籍別進捗 */
+/* 【修正】最下段の3つのグラフ高さを「180px」で完全に同期させます */
+.chart-status-wrapper {
+  height: 180px !important;
+  position: relative;
+}
 .chart-books-wrapper {
-  min-height: 80px;
+  height: 180px !important;
+  min-height: auto !important;
   position: relative;
   width: 100%;
 }
-
-/* 128行目周辺：カテゴリ別進捗 */
 .chart-category-progress-wrapper {
-  min-height: 80px;
+  height: 180px !important;
+  min-height: auto !important;
   position: relative;
   width: 100%;
 }
@@ -200,11 +212,7 @@
   font-weight: 600;
   color: var(--color-text-secondary);
   margin: 0;
-  padding-top: var(--space-8);
-}
-
-.dashboard-section-title:first-child {
-  padding-top: 0;
+  padding-top: var(--space-4) !important;
 }
 
 /* 3カラムの進捗セクション用 */
@@ -218,23 +226,12 @@
   min-width: 0;
 }
 
-/* カテゴリ別学習時間 */
-.chart-category-time-wrapper {
-  height: 240px;
-  position: relative;
-}
-
-/* カテゴリ別進捗 */
-.chart-category-progress-wrapper {
-  min-height: 200px;
-  position: relative;
-}
-
-/* 期間切り替え */
+/* 6. 期間切り替えボタン */
 .period-controls {
   display: flex;
-  align-items: center;
-  gap: var(--space-16);
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-8);
 }
 
 .period-toggle {
@@ -251,14 +248,6 @@
 .btn-period.active {
   background-color: var(--color-accent-primary);
   color: var(--color-text-primary);
-}
-
-/* 期間ナビゲーション（前後移動） */
-.period-controls {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--space-8);
 }
 
 .period-nav {
@@ -309,11 +298,9 @@
   .charts-row {
     flex-direction: column;
   }
-
   .dashboard-summary {
     flex-direction: column;
   }
-
   .period-controls {
     width: 100%;
     align-items: center;
