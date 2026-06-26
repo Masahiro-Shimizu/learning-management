@@ -247,6 +247,8 @@
 #page-results {
   padding: 0 var(--space-32) var(--space-32) var(--space-32) !important;
   position: relative !important;
+  height: auto !important;
+  min-height: 100% !important;
 }
 
 .results-page-header {
@@ -284,7 +286,7 @@
   gap: 4px;
   border-bottom: 1px solid rgb(255 255 255 / 0.08);
   position: sticky !important;
-  top: 95px !important;
+  top: 80px !important;
   z-index: 99 !important;
   background-color: var(--color-bg-base) !important;
   margin-left: calc(var(--space-32) * -1) !important;

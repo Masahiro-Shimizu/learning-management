@@ -215,6 +215,7 @@ main {
   flex: 1;
   margin-left: 240px; /* 200px → 240px に戻す */
   min-height: 100vh;
+  overflow-y: auto;
 }
 
 /* ボタン */
