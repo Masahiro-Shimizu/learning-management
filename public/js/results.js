@@ -288,6 +288,7 @@ function buildResultContent(result, tasks, allTasks, prefix = "") {
   const prevPeriod = getPrevPeriod(result);
   let prevStudyHours = null;
   let prevDoneCount = null;
+  let prevProgressRate = null;
 
   if (prevPeriod) {
     const prevFiltered = filterTasksByPeriod(
@@ -300,6 +301,9 @@ function buildResultContent(result, tasks, allTasks, prefix = "") {
         prevFiltered.reduce((s, t) => s + (t.study_time || 0), 0),
       );
       prevDoneCount = prevFiltered.filter((t) => t.status === "完了").length;
+      prevProgressRate = Math.round(
+        (prevDoneCount / prevFiltered.length) * 100,
+      );
     }
   }
 
@@ -333,6 +337,7 @@ function buildResultContent(result, tasks, allTasks, prefix = "") {
         <div class="result-stat-card">
           <p class="result-stat-label">進捗率（期間内）</p>
           <p class="result-stat-value result-stat-value--anim">${progressRate}<span class="result-stat-unit">%</span></p>
+          ${hasPrevData ? buildDiffBadgeHtml(progressRate, prevProgressRate, "%") : ""}
         </div>
       </div>
       <div class="result-charts">
