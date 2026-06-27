@@ -1,5 +1,5 @@
 /* ==========================================
-   【完全修正・完成版】タイトル位置最適化CSS（全行上書き用）
+   【最終クリーン版】不要なヘッダー固定コードを削除したCSS
 ========================================= */
 
 /* 1. 画面全体のスクロールを禁止し、1画面に収める */
@@ -15,17 +15,13 @@ body {
   box-sizing: border-box !important;
 }
 
-/* 3. ダッシュボードのヘッダー要素（元の美しい広い余白を完全維持） */
+/* 3. 【修正】不要な sticky 関連の記述を完全に削除してスッキリさせました */
 .dashboard-header {
   display: flex !important;
   justify-content: space-between !important;
   align-items: flex-start !important;
 
-  position: sticky !important;
-  top: 0 !important;
-  z-index: 100 !important;
-  background-color: var(--color-bg-base) !important;
-
+  /* 背景色や z-index も不要になったため削除し、マージンとパディングだけを維持 */
   margin-left: calc(var(--space-24) * -1) !important;
   margin-right: calc(var(--space-24) * -1) !important;
   padding-left: var(--space-24) !important;
@@ -36,13 +32,11 @@ body {
   margin-bottom: var(--space-16) !important;
 }
 
-/* 右側のボタン周りの透け防止 */
+/* 右側のボタン周りの装飾コードも不要になったためすっきりクリーンに */
 .period-controls,
 .period-toggle,
 .period-nav {
-  background-color: var(--color-bg-base) !important;
   position: relative;
-  z-index: 101;
 }
 
 .dashboard-sub {
@@ -78,14 +72,12 @@ body {
   margin-bottom: var(--space-12) !important;
 }
 
-/* ーーー【修正】タイトルの左余白を削除し、カードの左端（アイコンの下）に綺麗に揃えました ーーー */
 .summary-card-label {
   font-size: 1rem !important;
   font-weight: 600 !important;
   color: var(--color-text-primary) !important;
-  padding-left: 0 !important; /* 14pxの余白を完全消去 */
+  padding-left: 0 !important;
 }
-/* ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー */
 
 /* サマリーカードのアイコン */
 .icon {
@@ -115,7 +107,7 @@ body {
   color: #6ee7b7;
 }
 
-/* 【維持】大きな数値ブロックだけ、アイコンの真下から一歩右へずらした設定をキープ */
+/* 大きな数値ブロック */
 .summary-card-value {
   font-size: 2.8rem !important;
   font-weight: 700;
