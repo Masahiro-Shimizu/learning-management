@@ -1,21 +1,21 @@
 /* ==========================================
-   【最終デザイン調整版】最下段のグラフサイズ統一CSS
-========================================== */
+   【完全修正・完成版】タイトル位置最適化CSS（全行上書き用）
+========================================= */
 
 /* 1. 画面全体のスクロールを禁止し、1画面に収める */
 body {
   overflow: hidden !important;
 }
 
-/* 2. zoomを使って、デザインの配置を崩さずに全体を一回りコンパクトにします */
+/* 2. zoomを0.81にし、画面下の余白をぴったり埋めます */
 #page-dashboard {
-  zoom: 0.78 !important;
+  zoom: 0.81 !important;
   padding: 0 var(--space-24) var(--space-24) var(--space-24) !important;
   height: 100vh !important;
   box-sizing: border-box !important;
 }
 
-/* 3. ダッシュボードのヘッダー要素 */
+/* 3. ダッシュボードのヘッダー要素（元の美しい広い余白を完全維持） */
 .dashboard-header {
   display: flex !important;
   justify-content: space-between !important;
@@ -51,7 +51,7 @@ body {
   margin-top: var(--space-4);
 }
 
-/* 4. サマリーカード */
+/* 4. サマリーカード全体のレイアウト */
 .dashboard-summary {
   display: flex !important;
   gap: var(--space-16) !important;
@@ -61,11 +61,13 @@ body {
 .summary-card {
   background-color: var(--color-bg-card) !important;
   border-radius: 12px !important;
-  padding: var(--space-24) !important;
+  padding: var(--space-16) var(--space-24) !important;
   flex: 1 !important;
-  min-height: 120px !important;
+  min-height: auto !important;
   border: 1px solid rgb(255 255 255 / 0.1) !important;
   box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6) !important;
+
+  position: relative !important;
   display: block !important;
 }
 
@@ -76,24 +78,28 @@ body {
   margin-bottom: var(--space-12) !important;
 }
 
+/* ーーー【修正】タイトルの左余白を削除し、カードの左端（アイコンの下）に綺麗に揃えました ーーー */
 .summary-card-label {
-  font-size: 0.85rem;
-  color: var(--color-text-secondary);
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+  padding-left: 0 !important; /* 14pxの余白を完全消去 */
 }
+/* ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー */
 
 /* サマリーカードのアイコン */
 .icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 10px !important;
   display: grid;
   place-items: center;
   flex-shrink: 0;
 }
 
 .icon svg {
-  width: 19px;
-  height: 19px;
+  width: 19px !important;
+  height: 19px !important;
 }
 
 .ic-indigo {
@@ -109,33 +115,44 @@ body {
   color: #6ee7b7;
 }
 
-/* サブテキスト内の数値ハイライト */
-.summary-card-sub .sub-highlight {
-  color: var(--color-status-done);
-  font-weight: 700;
-}
-
+/* 【維持】大きな数値ブロックだけ、アイコンの真下から一歩右へずらした設定をキープ */
 .summary-card-value {
-  font-size: 2.8rem;
+  font-size: 2.8rem !important;
   font-weight: 700;
-  line-height: 1;
+  line-height: 1 !important;
   color: var(--color-text-primary);
-  margin-bottom: var(--space-8);
+  margin-bottom: 0 !important;
+  padding-left: 14px !important;
 }
 
 .summary-card-value .value-unit {
-  font-size: 1.1rem;
+  font-size: 1.1rem !important;
   font-weight: 500;
   color: var(--color-text-secondary);
   margin-left: 2px;
 }
 
+/* サブテキストの設定（右側の余白位置へ固定） */
 .summary-card-sub {
-  font-size: 0.8rem;
-  color: var(--color-text-tertiary);
+  position: absolute !important;
+  left: 180px !important;
+  bottom: 22px !important;
+  right: auto !important;
+
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+  color: var(--color-text-secondary) !important;
+  white-space: nowrap !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
-/* 5. グラフエリア（最下段の3つの高さを180pxに統一して美しく整えます） */
+.summary-card-sub .sub-highlight {
+  color: var(--color-status-done);
+  font-weight: 700;
+}
+
+/* 5. グラフエリア全体のレイアウト設定 */
 .dashboard-charts {
   display: flex;
   flex-direction: column;
@@ -150,7 +167,7 @@ body {
 .chart-card {
   background-color: var(--color-bg-card);
   border-radius: 12px;
-  padding: var(--space-24);
+  padding: var(--space-24) !important;
   border: 1px solid rgb(255 255 255 / 0.1);
   box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
   flex: 1;
@@ -184,15 +201,20 @@ body {
   position: relative;
 }
 .chart-progress-wrapper {
-  height: 200px !important;
+  height: 230px !important;
   position: relative;
 }
 
-/* 【修正】最下段の3つのグラフ高さを「180px」で完全に同期させます */
+/* ドーナツグラフの最適化枠 */
 .chart-status-wrapper {
   height: 180px !important;
   position: relative;
+  width: 100% !important;
+  margin-top: calc(var(--space-12) * -1) !important;
+  padding: 0 calc(var(--space-12) * -1) !important;
 }
+
+/* 最下段の他2つの横並びカード */
 .chart-books-wrapper {
   height: 180px !important;
   min-height: auto !important;
