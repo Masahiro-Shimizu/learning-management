@@ -546,29 +546,38 @@
                 週・月・年ごとの学習サマリーを振り返ります。
               </p>
             </div>
-          </div>
 
-          <div class="results-filter-tabs">
-            <button
-              type="button"
-              class="results-filter-tab active"
-              data-filter="all"
-            >
-              すべて
-            </button>
-            <button type="button" class="results-filter-tab" data-filter="week">
-              週次
-            </button>
-            <button
-              type="button"
-              class="results-filter-tab"
-              data-filter="month"
-            >
-              月次
-            </button>
-            <button type="button" class="results-filter-tab" data-filter="year">
-              年次
-            </button>
+            <!-- 【文字変更】ダッシュボードと100%同じ「週・月・年・全」の文言に統一します -->
+            <div class="results-filter-tabs">
+              <button
+                type="button"
+                class="results-filter-tab active"
+                data-filter="week"
+              >
+                週
+              </button>
+              <button
+                type="button"
+                class="results-filter-tab"
+                data-filter="month"
+              >
+                月
+              </button>
+              <button
+                type="button"
+                class="results-filter-tab"
+                data-filter="year"
+              >
+                年
+              </button>
+              <button
+                type="button"
+                class="results-filter-tab"
+                data-filter="all"
+              >
+                全
+              </button>
+            </div>
           </div>
 
           <div id="results-page-body"></div>
