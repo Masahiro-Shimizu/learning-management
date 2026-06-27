@@ -79,6 +79,7 @@ async function initDashboard() {
     .addEventListener("click", () => shiftPeriod(1));
 
   renderCharts();
+  applyDashboardScale();
 }
 
 function shiftPeriod(direction) {
@@ -857,4 +858,28 @@ function renderCharts() {
   if (chartDaily) chartDaily.resize();
   if (chartCategoryTime) chartCategoryTime.resize();
   if (chartProgress) chartProgress.resize();
+  applyDashboardScale();
 }
+
+function applyDashboardScale() {
+  const wrapper = document.getElementById("dashboard-scale-wrapper");
+  if (!wrapper) return;
+  const SCALE = 0.78;
+  // wrapper の自然高さ × scale = 実際の描画高さ
+  // その高さを親（#page-dashboard）に設定して余白をカット
+  const naturalHeight = wrapper.offsetHeight;
+  const scaledHeight = Math.round(naturalHeight * SCALE);
+  wrapper.style.marginBottom = `-${naturalHeight - scaledHeight}px`;
+
+  // page-dashboard の高さも制限して下余白をなくす
+  const page = document.getElementById("page-dashboard");
+  const header = page ? page.querySelector(".dashboard-header") : null;
+  if (page && header) {
+    const headerH = header.offsetHeight;
+    page.style.minHeight = "unset";
+    page.style.height = `${headerH + scaledHeight}px`;
+    page.style.overflow = "hidden";
+  }
+}
+
+window.addEventListener("resize", applyDashboardScale);

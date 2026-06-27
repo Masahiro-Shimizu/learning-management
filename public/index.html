@@ -120,171 +120,174 @@
             </div>
           </div>
 
-          <!-- サマリーカード（v2.9.0：モックアップ準拠のアイコン・見た目に更新） -->
-          <div class="dashboard-summary">
-            <!-- ① 期間の学習時間（週/月/年トグル連動） -->
-            <div class="summary-card">
-              <div class="summary-card-header">
-                <p class="summary-card-label" id="period-study-label">
-                  今週の学習時間
-                </p>
-                <span class="icon ic-indigo">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <circle cx="12" cy="12" r="9" />
-                    <path d="M12 7v5l3 2" />
-                  </svg>
-                </span>
-              </div>
-              <p class="summary-card-value">
-                <span id="period-study-time">--</span
-                ><span class="value-unit">時間</span>
-              </p>
-              <p class="summary-card-sub" id="period-study-sub">集計中...</p>
-            </div>
-
-            <!-- ② 進捗率（全タスクベース） -->
-            <div class="summary-card">
-              <div class="summary-card-header">
-                <p class="summary-card-label">進捗率</p>
-                <span class="icon ic-amber">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-                    <polyline points="16 7 22 7 22 13" />
-                  </svg>
-                </span>
-              </div>
-              <p class="summary-card-value">
-                <span id="progress-rate">--</span
-                ><span class="value-unit">%</span>
-              </p>
-              <p class="summary-card-sub" id="progress-sub">集計中...</p>
-            </div>
-
-            <!-- ③ 期間内 進行件数 / 全件数 -->
-            <div class="summary-card">
-              <div class="summary-card-header">
-                <p class="summary-card-label">進行中タスク</p>
-                <span class="icon ic-green">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                    <path d="m22 4-10 10-3-3" />
-                  </svg>
-                </span>
-              </div>
-              <p class="summary-card-value">
-                <span id="done-count">--</span
-                ><span class="value-unit">件</span>
-              </p>
-              <p class="summary-card-sub" id="done-sub">集計中...</p>
-            </div>
-
-            <!-- ④ 読了書籍数 -->
-            <div class="summary-card">
-              <div class="summary-card-header">
-                <p class="summary-card-label">読了書籍</p>
-                <span class="icon ic-indigo">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path d="M4 5a2 2 0 0 1 2-2h11v18H6a2 2 0 0 1-2-2z" />
-                    <path d="M9 3v18" />
-                  </svg>
-                </span>
-              </div>
-              <p class="summary-card-value">
-                <span id="books-read-count">--</span
-                ><span class="value-unit">冊</span>
-              </p>
-              <p class="summary-card-sub" id="books-read-sub">集計中...</p>
-            </div>
-          </div>
-
-          <div class="dashboard-charts">
-            <h3 class="dashboard-section-title">学習時間</h3>
-            <div class="charts-row">
-              <div class="chart-card">
-                <div class="chart-card-header">
-                  <p class="chart-card-title" id="chart-daily-title">
-                    日別学習時間
+          <div id="dashboard-scale-wrapper">
+            <!-- サマリーカード（v2.9.0：モックアップ準拠のアイコン・見た目に更新） -->
+            <div class="dashboard-summary">
+              <!-- ① 期間の学習時間（週/月/年トグル連動） -->
+              <div class="summary-card">
+                <div class="summary-card-header">
+                  <p class="summary-card-label" id="period-study-label">
+                    今週の学習時間
                   </p>
-                  <span class="chart-card-unit">単位：時間</span>
+                  <span class="icon ic-indigo">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <circle cx="12" cy="12" r="9" />
+                      <path d="M12 7v5l3 2" />
+                    </svg>
+                  </span>
                 </div>
-                <div class="chart-daily-wrapper">
-                  <canvas id="chart-daily"></canvas>
-                </div>
+                <p class="summary-card-value">
+                  <span id="period-study-time">--</span
+                  ><span class="value-unit">時間</span>
+                </p>
+                <p class="summary-card-sub" id="period-study-sub">集計中...</p>
               </div>
-              <div class="chart-card">
-                <div class="chart-card-header">
-                  <p class="chart-card-title">カテゴリ別学習時間</p>
-                  <span class="chart-card-unit">単位：時間</span>
+
+              <!-- ② 進捗率（全タスクベース） -->
+              <div class="summary-card">
+                <div class="summary-card-header">
+                  <p class="summary-card-label">進捗率</p>
+                  <span class="icon ic-amber">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                      <polyline points="16 7 22 7 22 13" />
+                    </svg>
+                  </span>
                 </div>
-                <div class="chart-category-time-wrapper">
-                  <canvas id="chart-category-time"></canvas>
+                <p class="summary-card-value">
+                  <span id="progress-rate">--</span
+                  ><span class="value-unit">%</span>
+                </p>
+                <p class="summary-card-sub" id="progress-sub">集計中...</p>
+              </div>
+
+              <!-- ③ 期間内 進行件数 / 全件数 -->
+              <div class="summary-card">
+                <div class="summary-card-header">
+                  <p class="summary-card-label">進行中タスク</p>
+                  <span class="icon ic-green">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                      <path d="m22 4-10 10-3-3" />
+                    </svg>
+                  </span>
                 </div>
+                <p class="summary-card-value">
+                  <span id="done-count">--</span
+                  ><span class="value-unit">件</span>
+                </p>
+                <p class="summary-card-sub" id="done-sub">集計中...</p>
+              </div>
+
+              <!-- ④ 読了書籍数 -->
+              <div class="summary-card">
+                <div class="summary-card-header">
+                  <p class="summary-card-label">読了書籍</p>
+                  <span class="icon ic-indigo">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path d="M4 5a2 2 0 0 1 2-2h11v18H6a2 2 0 0 1-2-2z" />
+                      <path d="M9 3v18" />
+                    </svg>
+                  </span>
+                </div>
+                <p class="summary-card-value">
+                  <span id="books-read-count">--</span
+                  ><span class="value-unit">冊</span>
+                </p>
+                <p class="summary-card-sub" id="books-read-sub">集計中...</p>
               </div>
             </div>
 
-            <h3 class="dashboard-section-title">進捗</h3>
-            <div class="charts-row">
-              <div class="chart-card" style="width: 100%">
-                <div class="chart-card-header">
-                  <p class="chart-card-title">進捗率推移</p>
+            <div class="dashboard-charts">
+              <h3 class="dashboard-section-title">学習時間</h3>
+              <div class="charts-row">
+                <div class="chart-card">
+                  <div class="chart-card-header">
+                    <p class="chart-card-title" id="chart-daily-title">
+                      日別学習時間
+                    </p>
+                    <span class="chart-card-unit">単位：時間</span>
+                  </div>
+                  <div class="chart-daily-wrapper">
+                    <canvas id="chart-daily"></canvas>
+                  </div>
                 </div>
-                <div class="chart-progress-wrapper">
-                  <canvas id="chart-progress"></canvas>
-                </div>
-              </div>
-            </div>
-            <div class="charts-row charts-row--triple">
-              <div class="chart-card">
-                <div class="chart-card-header">
-                  <p class="chart-card-title">ステータス別件数</p>
-                </div>
-                <div class="chart-status-wrapper">
-                  <canvas id="chart-status"></canvas>
-                </div>
-              </div>
-              <div class="chart-card">
-                <div class="chart-card-header">
-                  <p class="chart-card-title">書籍別進捗率</p>
-                  <span class="chart-card-unit">%</span>
-                </div>
-                <div class="chart-books-wrapper" id="books-wrapper-js">
-                  <canvas id="chart-books"></canvas>
+                <div class="chart-card">
+                  <div class="chart-card-header">
+                    <p class="chart-card-title">カテゴリ別学習時間</p>
+                    <span class="chart-card-unit">単位：時間</span>
+                  </div>
+                  <div class="chart-category-time-wrapper">
+                    <canvas id="chart-category-time"></canvas>
+                  </div>
                 </div>
               </div>
-              <div class="chart-card">
-                <div class="chart-card-header">
-                  <p class="chart-card-title">カテゴリ別進捗率</p>
-                  <span class="chart-card-unit">%</span>
+
+              <h3 class="dashboard-section-title">進捗</h3>
+              <div class="charts-row">
+                <div class="chart-card" style="width: 100%">
+                  <div class="chart-card-header">
+                    <p class="chart-card-title">進捗率推移</p>
+                  </div>
+                  <div class="chart-progress-wrapper">
+                    <canvas id="chart-progress"></canvas>
+                  </div>
                 </div>
-                <div
-                  class="chart-category-progress-wrapper"
-                  id="category-wrapper-js"
-                >
-                  <canvas id="chart-category-progress"></canvas>
+              </div>
+              <div class="charts-row charts-row--triple">
+                <div class="chart-card">
+                  <div class="chart-card-header">
+                    <p class="chart-card-title">ステータス別件数</p>
+                  </div>
+                  <div class="chart-status-wrapper">
+                    <canvas id="chart-status"></canvas>
+                  </div>
+                </div>
+                <div class="chart-card">
+                  <div class="chart-card-header">
+                    <p class="chart-card-title">書籍別進捗率</p>
+                    <span class="chart-card-unit">%</span>
+                  </div>
+                  <div class="chart-books-wrapper" id="books-wrapper-js">
+                    <canvas id="chart-books"></canvas>
+                  </div>
+                </div>
+                <div class="chart-card">
+                  <div class="chart-card-header">
+                    <p class="chart-card-title">カテゴリ別進捗率</p>
+                    <span class="chart-card-unit">%</span>
+                  </div>
+                  <div
+                    class="chart-category-progress-wrapper"
+                    id="category-wrapper-js"
+                  >
+                    <canvas id="chart-category-progress"></canvas>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+          <!-- #dashboard-scale-wrapper -->
         </section>
 
         <!-- ===== タスク一覧 ===== -->
