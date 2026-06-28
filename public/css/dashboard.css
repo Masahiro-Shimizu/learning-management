@@ -52,7 +52,6 @@
   margin-bottom: var(--space-16) !important;
 }
 
-/* 1. カード自体の高さを復活させ、中身を自由に配置できるようにします */
 .summary-card {
   background-color: var(--color-bg-card) !important;
   border-radius: 12px !important;
@@ -62,12 +61,8 @@
   border: 1px solid rgb(255 255 255 / 0.1) !important;
   box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6) !important;
 
-  /* 【修正】カード自体は縦並び（column）にしてゆったりとした高さを戻します */
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: flex-start !important;
-  min-width: 0 !important;
-  position: relative !important; /* 絶対配置の基準にします */
+  position: relative !important;
+  display: block !important;
 }
 
 .summary-card-header {
@@ -112,7 +107,7 @@
   color: #6ee7b7;
 }
 
-/* 2. 大きな数値ブロック（元のスタイルを維持） */
+/* 大きな数値ブロック */
 .summary-card-value {
   font-size: 2.8rem !important;
   font-weight: 700;
@@ -120,7 +115,6 @@
   color: var(--color-text-primary);
   margin-bottom: 0 !important;
   padding-left: 14px !important;
-  display: block !important;
 }
 
 .summary-card-value .value-unit {
@@ -130,30 +124,19 @@
   margin-left: 2px;
 }
 
-/* 3. 【重要】HTML構造に左右されず、数字の右横にピタッと固定して自動縮小させる設定 */
-/* サブテキストの設定（元の文字サイズでゆとりを持たせた配置） */
+/* サブテキストの設定（右側の余白位置へ固定） */
 .summary-card-sub {
   position: absolute !important;
-
-  /* 【修正】文字サイズを大きくした分、重ならないよう左からの位置を 195px に広げます */
-  left: 195px !important;
+  left: 180px !important;
   bottom: 22px !important;
+  right: auto !important;
 
-  /* 右端の壁の位置 */
-  right: var(--space-12) !important;
-
-  margin: 0 !important;
-  padding: 0 !important;
-
-  /* 【修正】文字の大きさを元の見やすいサイズ（1.25rem）に戻します */
   font-size: 1.25rem !important;
   font-weight: 600 !important;
   color: var(--color-text-secondary) !important;
-
-  /* はみ出し防止の安全装置 */
   white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 .summary-card-sub .sub-highlight {
@@ -202,15 +185,15 @@
 
 /* 各種グラフの高さ指定 */
 .chart-daily-wrapper {
-  height: 200px !important;
+  height: 175px !important;
   position: relative;
 }
 .chart-category-time-wrapper {
-  height: 200px !important;
+  height: 175px !important;
   position: relative;
 }
 .chart-progress-wrapper {
-  height: 230px !important;
+  height: 200px !important;
   position: relative;
 }
 
@@ -231,7 +214,7 @@
   width: 100%;
 }
 .chart-category-progress-wrapper {
-  height: 180px !important;
+  height: 155px !important;
   min-height: auto !important;
   position: relative;
   width: 100%;
