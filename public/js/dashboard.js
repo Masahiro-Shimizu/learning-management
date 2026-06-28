@@ -145,7 +145,10 @@ function updateSummaryCardLabel() {
   const el = document.getElementById("period-study-label");
   if (!el) return;
 
-  // グラフタイトルの要素を取得
+  // ★「進捗率」のラベルは常に固定にするため、textContent を一律「進捗率」にします
+  const progressLabelEl = document.getElementById("progress-card-title");
+  if (progressLabelEl) progressLabelEl.textContent = "進捗率";
+
   const chartTitleEl = document.getElementById("chart-daily-title");
 
   if (currentPeriod === "week") {
@@ -159,13 +162,18 @@ function updateSummaryCardLabel() {
     if (chartTitleEl) chartTitleEl.textContent = "月別学習時間";
   } else if (currentPeriod === "all") {
     el.textContent = "通算の学習時間";
-    if (chartTitleEl) chartTitleEl.textContent = "年別学習時間"; // ★全期間のときは年別にする
+    if (chartTitleEl) chartTitleEl.textContent = "年別学習時間";
   }
 }
 
 function renderCharts() {
   const tasks = allTasks;
   const books = allBooks;
+
+  // ★一時的な調査用：データの中身をブラウザのコンソールに出力します
+  console.log("【デバッグ】全タスクデータの一覧:", tasks);
+  if (tasks.length > 0)
+    console.log("【デバッグ】タスク1件目のプロパティ:", Object.keys(tasks[0]));
 
   updatePeriodLabel();
   updateSummaryCardLabel();
@@ -405,17 +413,127 @@ function renderCharts() {
       `${periodLabel} <span class="sub-highlight">${diffSign}${diffHours}時間</span>`;
   }
 
-  // ② 進捗率（全タスクベースの完了率%）
+  // ==========================================
+  // ② 進捗率（選択された年月の同日時点で集計）
+  // ==========================================
+
+  // リアルな「今日」の日付・時間を取得（同日時点の判定用）
+  const realNow = new Date();
+  const todayDate = realNow.getDate();
+  const todayHours = realNow.getHours();
+  const todayMinutes = realNow.getMinutes();
+
+  // 年・月・日を確実に指定して当月の基準日オブジェクトを作成
+  const borderDate = new Date(
+    viewDate.getFullYear(),
+    viewDate.getMonth(),
+    todayDate,
+    todayHours,
+    todayMinutes,
+    0,
+    0,
+  );
+
+  // 全期間の総タスク数（分母：26件）
   const totalAllTasks = tasks.length;
-  const completedAllTasks = tasks.filter((t) => t.status === "完了").length;
-  const progressRate =
+
+  // 選択された月の「今日と同じ日」の時点までに完了していたタスク数をカウント
+  const currentCompletedTasks = tasks.filter((t) => {
+    if (t.status !== "完了") return false;
+
+    // デバッグ結果から end_date を確実に取得
+    const targetDateStr = t.end_date || t.updated_at || t.created_at;
+    if (!targetDateStr) return false;
+
+    if (currentPeriod === "all") return true; // 全期間ならすべて含める
+
+    // 文字列の日付をタイムスタンプに変換して確実に比較
+    return new Date(targetDateStr).getTime() <= borderDate.getTime();
+  }).length;
+
+  // 進捗率を計算（4月なら 5/26 = 19%、5月なら 11/26 = 42% になります）
+  const currentProgressRate =
     totalAllTasks > 0
-      ? Math.round((completedAllTasks / totalAllTasks) * 100)
+      ? Math.round((currentCompletedTasks / totalAllTasks) * 100)
       : 0;
-  document.getElementById("progress-rate").textContent = progressRate;
-  // 【v2.9.0】完了数のみ .sub-highlight でハイライトするため innerHTML に変更
-  document.getElementById("progress-sub").innerHTML =
-    `完了 <span class="sub-highlight">${completedAllTasks}</span> / 全 ${totalAllTasks} 件`;
+
+  // 画面中央の大きな数字を更新
+  const progressRateEl = document.getElementById("progress-rate");
+  if (progressRateEl) {
+    progressRateEl.textContent = currentProgressRate;
+  }
+
+  // B. 前の期間（先週/先月/前年）の「同日時点」の境界線を計算
+  let prevProgressRate = 0;
+
+  if (currentPeriod !== "all") {
+    let prevBorderDate = new Date(borderDate);
+
+    if (currentPeriod === "week") {
+      prevBorderDate.setDate(borderDate.getDate() - 7);
+    } else if (currentPeriod === "month") {
+      // 1ヶ月前の同じ日・同じ時刻
+      prevBorderDate = new Date(
+        borderDate.getFullYear(),
+        borderDate.getMonth() - 1,
+        todayDate,
+        todayHours,
+        todayMinutes,
+        0,
+        0,
+      );
+    } else if (currentPeriod === "year") {
+      // 1年前の同じ日・同じ時刻
+      prevBorderDate = new Date(
+        borderDate.getFullYear() - 1,
+        borderDate.getMonth(),
+        todayDate,
+        todayHours,
+        todayMinutes,
+        0,
+        0,
+      );
+    }
+
+    // 前期の基準日までに完了していたタスク数をカウント
+    const prevCompletedTasks = tasks.filter((t) => {
+      if (t.status !== "完了") return false;
+      const targetDateStr = t.end_date || t.updated_at || t.created_at;
+      if (!targetDateStr) return false;
+
+      return new Date(targetDateStr).getTime() <= prevBorderDate.getTime();
+    }).length;
+
+    prevProgressRate =
+      totalAllTasks > 0
+        ? Math.round((prevCompletedTasks / totalAllTasks) * 100)
+        : 0;
+  }
+
+  // C. 前期からの進捗差分（％）を計算
+  const progressDiff = currentProgressRate - prevProgressRate;
+  const progressDiffSign = progressDiff > 0 ? "+" : "";
+
+  // D. 選択中の期間に合わせてサブタイトルのラベルを動的に変更
+  const progressLabel =
+    currentPeriod === "week"
+      ? "先週比"
+      : currentPeriod === "month"
+        ? "先月比"
+        : "前年比";
+
+  const progressSubEl = document.getElementById("progress-sub");
+  if (progressSubEl) {
+    if (currentPeriod === "all") {
+      progressSubEl.innerHTML = `<span class="sub-highlight">全データの通算</span>`;
+    } else {
+      const diffText =
+        progressDiff === 0 ? "0%" : `${progressDiffSign}${progressDiff}%`;
+
+      // サブテキストを表示（例：先月比 +23%）
+      progressSubEl.innerHTML = `${progressLabel} <span class="sub-highlight">${diffText}</span>`;
+    }
+  }
 
   // ③ 進行中タスク数（v2.11.0：旧「完了タスク」カードを変更）
   // 期間内タスクのうち status === '進行中' の件数を表示する。
