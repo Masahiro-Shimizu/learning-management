@@ -1030,6 +1030,41 @@
   border-radius: 4px;
 }
 
+/* ===== モーダルの重なり順の修正 ===== */
+#task-modal,
+#group-modal,
+#group-picker-modal {
+  position: fixed !important;
+  inset: 0 !important;
+  background-color: var(--color-bg-overlay) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* ヘッダー(100)やサイドバー(100)より確実に手前に出す */
+  z-index: 1000 !important;
+}
+
+/* JavaScriptの .hidden クラスと競合しないように設定 */
+#task-modal.hidden,
+#group-modal.hidden,
+#group-picker-modal.hidden {
+  display: none !important;
+}
+
+/* モーダルの中身（ダイアログボックス）のスタイル調整 */
+#task-modal > .card,
+#group-modal > .card,
+#group-picker-modal > .card,
+#task-modal > div,
+#group-modal > div,
+#group-picker-modal > div {
+  background-color: var(--color-bg-modal);
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  z-index: 1001; /* 背景オーバーレイよりさらに手前 */
+}
+
 @media (max-width: 1024px) {
   .kanban {
     grid-template-columns: 1fr;
