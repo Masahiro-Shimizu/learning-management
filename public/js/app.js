@@ -83,9 +83,16 @@ function showPage() {
     }, 100);
   }
   // ページごと初期化
-  if (pageId === "page-books" && !booksInitialized) {
-    initBooks();
-    booksInitialized = true;
+  if (pageId === "page-books") {
+    if (!booksInitialized) {
+      initBooks();
+      booksInitialized = true;
+    } else {
+      // ⭕️ 2回目以降の表示の際も、データを最新に更新して再描画する
+      if (typeof renderBooks === "function") {
+        renderBooks();
+      }
+    }
   }
 
   if (pageId === "page-dashboard" && !dashboardInitialized) {

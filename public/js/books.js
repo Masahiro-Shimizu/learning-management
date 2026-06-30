@@ -1,47 +1,121 @@
 let allBooksList = [];
+let allTasksForBooks = [];
 
-function renderBookList(books) {
-  const bookList = document.getElementById("book-list");
-  bookList.innerHTML = "";
+// ==========================================
+// 1. 自動算出：未読／読書中／読了の判定
+// ==========================================
+function calcBookStatus(book, tasks = []) {
+  const completed = Number(book.completed_count) || 0;
+  // 読了：全何章が設定済みかつ完了数が全何章以上
+  if (book.total_chapters && completed >= book.total_chapters) return "読了";
 
-  books.forEach((book) => {
-    const totalChapters = book.total_chapters;
-    const completedCount = Number(book.completed_count) || 0;
+  // tasksが空または配列でない場合の安全対策
+  const safeTasks = Array.isArray(tasks) ? tasks : [];
+  const children = safeTasks.filter(
+    (t) => String(t.book_id) === String(book.id),
+  );
 
-    let progressHtml = "";
-    if (totalChapters) {
-      const percent = Math.min(
-        100,
-        Math.round((completedCount / totalChapters) * 100),
-      );
-      progressHtml = `
-        <div class="book-card-progress-wrap">
-          <div class="book-card-progress-bar"><i style="width:${percent}%"></i></div>
-          <div class="book-card-progress-lbl"><span>進捗</span><span>${percent}%（${completedCount} / ${totalChapters}章）</span></div>
-        </div>
-      `;
-    }
+  // 子タスクが0件、または全て未着手 → 未読
+  if (children.length === 0 || children.every((t) => t.status === "未着手")) {
+    return "未読";
+  }
+  // それ以外（着手中・一部完了など）→ 読書中
+  return "読書中";
+}
 
-    const memoHtml = book.memo
-      ? `<div class="book-card-memo">${book.memo}</div>`
-      : "";
+// ==========================================
+// 2. 書籍カードのHTMLを生成する関数
+// ==========================================
+function createBookCardHtml(book) {
+  const totalChapters = book.total_chapters;
+  const completedCount = Number(book.completed_count) || 0;
 
-    const bookHtml = `
-        <div class="card book-card" data-book-id="${book.id}">
-            <div class="cover">${book.cover_url ? `<img src="${book.cover_url}" alt="${book.title}">` : "表紙"}</div>
-            <div class="book-card-info">
-              <p class="book-card-title">${book.title}</p>
-              <p class="book-card-author">${book.author}</p>
-              ${memoHtml}
-              ${progressHtml}
-            </div>
-        </div>
+  let progressHtml = "";
+  if (totalChapters) {
+    const percent = Math.min(
+      100,
+      Math.round((completedCount / totalChapters) * 100),
+    );
+    progressHtml = `
+      <div class="book-card-progress-wrap">
+        <div class="book-card-progress-bar"><i style="width:${percent}%"></i></div>
+        <div class="book-card-progress-lbl"><span>進捗</span><span>${percent}%（${completedCount} / ${totalChapters}章）</span></div>
+      </div>
     `;
-    bookList.insertAdjacentHTML("beforeend", bookHtml);
+  }
+
+  const memoHtml = book.memo
+    ? `<div class="book-card-memo">${book.memo}</div>`
+    : "";
+
+  const displayTitle = book.title || "タイトルなし";
+  const displayAuthor = book.author || "著者不明";
+
+  const coverHtml =
+    book.cover_url && book.cover_url !== "undefined"
+      ? `<img src="${book.cover_url}" alt="${displayTitle}">`
+      : `<span class="no-cover">表紙</span>`;
+
+  return `
+    <div class="card book-card" data-book-id="${book.id}">
+        <div class="cover">${coverHtml}</div>
+        <div class="book-card-info">
+          <p class="book-card-title">${displayTitle}</p>
+          <p class="book-card-author">${displayAuthor}</p>
+          ${memoHtml}
+          ${progressHtml}
+        </div>
+    </div>
+  `;
+}
+
+// ==========================================
+// 3. 書籍一覧をカンバンに描画する関数
+// ==========================================
+function renderBookList(books, tasks) {
+  // まず画面上に「書籍のカンバン（外枠）」が存在するか確認する
+  const kanbanContainer = document.getElementById("book-kanban");
+  if (!kanbanContainer) {
+    console.warn(
+      "書籍のカンバン要素（#book-kanban）が画面上に見つかりません。描画をスキップします。",
+    );
+    return; // 要素がなければここで処理を中断する
+  }
+
+  // カンバンの枠の中から、確実に子要素の列を取得する
+  const columns = {
+    未読: kanbanContainer.querySelector('.kanban-cards[data-status="未読"]'),
+    読書中: kanbanContainer.querySelector(
+      '.kanban-cards[data-status="読書中"]',
+    ),
+    読了: kanbanContainer.querySelector('.kanban-cards[data-status="読了"]'),
+  };
+
+  // 各列の中身を一度空っぽにする
+  Object.values(columns).forEach((col) => {
+    if (col) col.innerHTML = "";
   });
 
-  // カードクリックでモーダルを開く
-  document.querySelectorAll(".book-card").forEach((card) => {
+  const statusCounts = { 未読: 0, 読書中: 0, 読了: 0 };
+
+  // 書籍カードをそれぞれの列に追加していく
+  books.forEach((book) => {
+    const status = calcBookStatus(book, tasks);
+    statusCounts[status]++;
+    const col = columns[status];
+    if (col) {
+      col.insertAdjacentHTML("beforeend", createBookCardHtml(book));
+    }
+  });
+
+  // 件数バッジも、必ずこの書籍カンバンの中にあるものだけを書き換える
+  Object.entries(statusCounts).forEach(([status, count]) => {
+    const badge = kanbanContainer.querySelector(`[data-count-for="${status}"]`);
+    if (badge) badge.textContent = count;
+  });
+
+  // カードクリックでモーダルを開くイベントを設定
+  kanbanContainer.querySelectorAll(".book-card").forEach((card) => {
     card.addEventListener("click", async () => {
       const bookId = card.dataset.bookId;
       const book = await api(`/api/books/${bookId}`);
@@ -60,13 +134,21 @@ function closeBookModal() {
   document.getElementById("book-modal").classList.add("hidden");
 }
 
+// ⭕️ タスクデータの取得処理を復活させ、renderBookListへ2つの引数を正しく渡すよう修正
 async function renderBooks() {
   allBooksList = await api("/api/books");
-  renderBookList(allBooksList);
+  allTasksForBooks = await api("/api/tasks"); // 復活
+  renderBookList(allBooksList, allTasksForBooks); // 修正
 }
 
 function initBooks() {
-  renderBooks();
+  // ⭕️ 100ミリ秒だけ待ってからデータを取得・描画することで、確実に対象のHTMLをキャッチさせます
+  setTimeout(() => {
+    renderBooks();
+  }, 100);
+
+  // モーダルを閉じる（✕・キャンセル・オーバーレイクリック）
+  document.getElementById("btn-book-close-x");
 
   // モーダルを閉じる（✕・キャンセル・オーバーレイクリック）
   document
@@ -116,7 +198,8 @@ function initBooks() {
           b.title.toLowerCase().includes(keyword) ||
           (b.author && b.author.toLowerCase().includes(keyword)),
       );
-      renderBookList(filtered);
+      // ⭕️ 第2引数（allTasksForBooks）を確実に渡すよう修正
+      renderBookList(filtered, allTasksForBooks);
     });
 
   // Google Books 検索
@@ -170,4 +253,26 @@ function initBooks() {
       renderBooks();
       alert("登録しました");
     });
+  // ===== カンバンの列（未読・読書中・読了）のクリック開閉機能（修正版） =====
+  document.querySelectorAll("#book-kanban .kanban-header").forEach((header) => {
+    header.style.cursor = "pointer";
+    header.style.userSelect = "none";
+
+    header.addEventListener("click", () => {
+      const column = header.closest(".kanban-column");
+      const cardsContainer = column.querySelector(".kanban-cards");
+
+      if (cardsContainer) {
+        // .collapsed クラスがあれば消し、なければ付ける（トグル処理）
+        cardsContainer.classList.toggle("collapsed");
+
+        // 閉じているときはヘッダーを少し薄くする
+        if (cardsContainer.classList.contains("collapsed")) {
+          header.style.opacity = "0.5";
+        } else {
+          header.style.opacity = "1";
+        }
+      }
+    });
+  });
 }

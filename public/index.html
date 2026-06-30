@@ -480,7 +480,58 @@
               />
             </div>
           </div>
-          <div id="book-list"></div>
+          <div class="kanban" id="book-kanban">
+            <div class="kanban-column">
+              <div class="kanban-header">
+                <div class="kanban-header-left">
+                  <span
+                    class="kanban-status-dot kanban-status-dot--todo"
+                    aria-hidden="true"
+                  ></span>
+
+                  <span class="kanban-header-title">未読</span>
+
+                  <span class="kanban-count" data-count-for="未読">0</span>
+                </div>
+              </div>
+
+              <div class="kanban-cards" data-status="未読"></div>
+            </div>
+
+            <div class="kanban-column">
+              <div class="kanban-header">
+                <div class="kanban-header-left">
+                  <span
+                    class="kanban-status-dot kanban-status-dot--inprogress"
+                    aria-hidden="true"
+                  ></span>
+
+                  <span class="kanban-header-title">読書中</span>
+
+                  <span class="kanban-count" data-count-for="読書中">0</span>
+                </div>
+              </div>
+
+              <div class="kanban-cards" data-status="読書中"></div>
+            </div>
+
+            <div class="kanban-column">
+              <div class="kanban-header">
+                <div class="kanban-header-left">
+                  <span
+                    class="kanban-status-dot kanban-status-dot--done"
+                    aria-hidden="true"
+                  ></span>
+
+                  <span class="kanban-header-title">読了</span>
+
+                  <span class="kanban-count" data-count-for="読了">0</span>
+                </div>
+              </div>
+
+              <div class="kanban-cards" data-status="読了"></div>
+            </div>
+          </div>
         </section>
 
         <!-- ===== マンダラチャート ===== -->
