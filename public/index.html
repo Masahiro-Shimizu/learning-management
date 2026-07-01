@@ -89,7 +89,34 @@
           <div class="dashboard-header">
             <div>
               <h2>ダッシュボード</h2>
-              <p class="dashboard-sub">今週もコツコツ積み上げています。</p>
+              <!-- 【変更】ボタンを横並びにするため、d-flexなどのスタイルを適用したコンテナに変更 -->
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 10px;
+                  margin-top: 4px;
+                "
+              >
+                <p class="dashboard-sub" style="margin: 0">
+                  今週もコツコツ積み上げています。
+                </p>
+                <button
+                  id="btn-edit-week-goal"
+                  class="btn"
+                  style="
+                    padding: 2px 8px;
+                    font-size: 0.8rem;
+                    border-radius: 4px;
+                    background: rgba(77, 127, 212, 0.15);
+                    border: 1px solid rgba(77, 127, 212, 0.4);
+                    color: #4d7fd4;
+                    cursor: pointer;
+                  "
+                >
+                  ⚙️ 目標を設定
+                </button>
+              </div>
             </div>
             <div class="period-controls">
               <div class="period-toggle">
@@ -1083,6 +1110,146 @@
             class="btn btn-primary"
           >
             リザルトページで見る
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 今週の目標設定用モーダル -->
+    <div
+      id="week-goal-modal"
+      class="modal"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 1050;
+        align-items: center;
+        justify-content: center;
+      "
+    >
+      <div
+        class="modal-dialog"
+        style="
+          background: #212529;
+          border: 1px solid #3c4146;
+          padding: 20px;
+          border-radius: 8px;
+          width: 100%;
+          max-width: 500px;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+        "
+      >
+        <!-- モーダルヘッダー -->
+        <div
+          class="modal-header"
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #3c4146;
+            padding-bottom: 10px;
+          "
+        >
+          <h5
+            class="modal-title"
+            style="margin: 0; font-weight: bold; color: #fff"
+          >
+            今週の目標を設定
+          </h5>
+          <button
+            type="button"
+            id="btn-close-goal-modal"
+            style="
+              background: none;
+              border: none;
+              font-size: 1.5rem;
+              cursor: pointer;
+              color: #aaa;
+              line-height: 1;
+            "
+          >
+            &times;
+          </button>
+        </div>
+
+        <!-- モーダルボディ -->
+        <div class="modal-body" style="margin-bottom: 20px">
+          <div class="form-group">
+            <label
+              for="input-week-goal"
+              style="
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 500;
+                color: #ccc;
+              "
+              >目標内容</label
+            >
+            <textarea
+              id="input-week-goal"
+              rows="4"
+              style="
+                width: 100%;
+                box-sizing: border-box;
+                padding: 10px;
+                border: 1px solid #495057;
+                border-radius: 4px;
+                font-size: 0.95rem;
+                resize: none;
+                background: #111;
+                color: #fff;
+              "
+              placeholder="目標を掲げてやっていきましょう！"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- モーダルフッター -->
+        <div
+          class="modal-footer"
+          style="
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            border-top: 1px solid #3c4146;
+            padding-top: 12px;
+          "
+        >
+          <button
+            type="button"
+            id="btn-cancel-goal-modal"
+            style="
+              padding: 6px 14px;
+              background: #6c757d;
+              color: #fff;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+              font-size: 0.9rem;
+            "
+          >
+            キャンセル
+          </button>
+          <button
+            type="button"
+            id="btn-save-week-goal"
+            style="
+              padding: 6px 14px;
+              background: #4d7fd4;
+              color: #fff;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+              font-size: 0.9rem;
+            "
+          >
+            保存する
           </button>
         </div>
       </div>

@@ -117,3 +117,23 @@ ALTER TABLE tasks
     FOREIGN KEY (category_id) REFERENCES task_categories (id)
     ON UPDATE CASCADE
     ON DELETE RESTRICT;
+
+-- =========================================
+-- result_reviews（週次・月次・年次の振り返り）v2.18.0追加
+-- =========================================
+CREATE TABLE IF NOT EXISTS result_reviews (
+  id              INT UNSIGNED    NOT NULL AUTO_INCREMENT,
+  period_type     ENUM('week','month','year') NOT NULL,
+  start_date      DATE            NOT NULL,
+  end_date        DATE            NOT NULL,
+  goal            TEXT,
+  achievement     TEXT,
+  good_points     TEXT,
+  reflection      TEXT,
+  memo            TEXT,
+  mood            VARCHAR(10),
+  created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_result_reviews_period (period_type, start_date, end_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

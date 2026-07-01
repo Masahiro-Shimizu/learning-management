@@ -23,6 +23,7 @@ app.use("/api/steps", require("./routes/steps"));
 app.use("/api/task-types", taskTypeRoutes);
 app.use("/api/task-categories", taskCategoriesRouter);
 app.use("/api/mandalas", mandalaRoutes);
+app.use("/api/result-reviews", require("./routes/result_reviews"));
 
 app.get("/{*path}", (req, res) => {
   res.sendFile(path.join(__dirname, "..", "public", "index.html"));

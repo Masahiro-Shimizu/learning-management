@@ -307,6 +307,12 @@
   white-space: nowrap;
 }
 
+.dashboard-goal-label {
+  font-weight: 700;
+  color: var(--color-accent-secondary);
+  margin-right: 4px;
+}
+
 /* レスポンシブ */
 @media (max-width: 768px) {
   .charts-row {

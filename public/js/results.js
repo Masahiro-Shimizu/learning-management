@@ -307,6 +307,9 @@ function buildResultContent(result, tasks, allTasks, prefix = "") {
   const barId = `${prefix}result-chart-bar-${result.id}`;
   const doughnutId = `${prefix}result-chart-doughnut-${result.id}`;
 
+  // v2.18.0: 振り返りセクションを追加
+  const reviewHtml = buildReviewSectionHtml(result, prefix);
+
   return {
     html: `
         <div class="result-header">
@@ -347,6 +350,7 @@ function buildResultContent(result, tasks, allTasks, prefix = "") {
             </div>
           </div>
         </div>
+        ${reviewHtml}
       `,
     barId,
     doughnutId,
@@ -438,9 +442,11 @@ function closeResultModal() {
 
 let resultsPageInitialized = false;
 
+// v2.18.0: loadReviewsCache() を先頭で呼ぶ
 async function initResults() {
   if (resultsPageInitialized) return;
   resultsPageInitialized = true;
+  await loadReviewsCache();
   const tasks = await api("/api/tasks");
   renderResultsPage(tasks);
   initResultsPageFilter();
@@ -514,6 +520,25 @@ function generatePastPeriods() {
   const periods = [];
   const today = new Date();
 
+  // 0. 今週（月曜〜日曜）を先頭に追加（目標設定・進行中の記録用）
+  const dayOfWeekNow = today.getDay();
+  const daysToMondayNow = dayOfWeekNow === 0 ? 6 : dayOfWeekNow - 1;
+  const thisMonday = new Date(today);
+  thisMonday.setDate(today.getDate() - daysToMondayNow);
+  thisMonday.setHours(0, 0, 0, 0);
+  const thisSunday = new Date(thisMonday);
+  thisSunday.setDate(thisMonday.getDate() + 6);
+  thisSunday.setHours(23, 59, 59, 999);
+  periods.push({
+    id: "week-page-current",
+    type: "week",
+    label: `今週（${thisMonday.getMonth() + 1}/${thisMonday.getDate()} 〜 ${thisSunday.getMonth() + 1}/${thisSunday.getDate()}）`,
+    periodLabel: "今週",
+    startDate: thisMonday,
+    endDate: thisSunday,
+    isCurrent: true,
+  });
+
   // 1. 直近4週分を月曜スタート・日曜エンドで厳密に算出
   for (let w = 1; w <= 4; w++) {
     const monday = new Date(today);
@@ -568,10 +593,12 @@ function generatePastPeriods() {
 }
 /* ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー */
 
+// v2.18.0: loadReviewsCache() を先頭で呼ぶ
 async function checkAndShowResultPopup() {
   const pending = getPendingResults();
   if (pending.length === 0) return;
   if (!document.getElementById("result-modal")) return;
+  await loadReviewsCache();
   const tasks = await api("/api/tasks");
   showResultModal(pending, tasks);
 }
@@ -610,3 +637,213 @@ function initResultModal() {
       location.hash = "#page-results";
     });
 }
+
+// ===== 振り返り（目標・実績・よかった点・反省点・備考）v2.18.0追加 =====
+
+let reviewsCache = [];
+
+async function loadReviewsCache() {
+  reviewsCache = await api("/api/result-reviews");
+  return reviewsCache;
+}
+
+function ymd(d) {
+  const dt = new Date(d);
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+}
+
+function findReview(periodType, startDate, endDate) {
+  const s = ymd(startDate);
+  const e = ymd(endDate);
+  return (
+    reviewsCache.find(
+      (r) =>
+        r.period_type === periodType &&
+        ymd(r.start_date) === s &&
+        ymd(r.end_date) === e,
+    ) || null
+  );
+}
+
+// 月の振り返りを書く際に参考表示する「その月に含まれる週次振り返り」、
+// 年の振り返りを書く際に参考表示する「その年に含まれる月次振り返り」を取得する
+// （あくまで閲覧用の参考表示であり、自動集約・自動転記は行わない）
+function findChildReviews(result) {
+  if (result.type === "month") {
+    return reviewsCache.filter((r) => {
+      if (r.period_type !== "week") return false;
+      const s = new Date(r.start_date);
+      return s >= result.startDate && s <= result.endDate;
+    });
+  }
+  if (result.type === "year") {
+    return reviewsCache.filter((r) => {
+      if (r.period_type !== "month") return false;
+      const s = new Date(r.start_date);
+      return s >= result.startDate && s <= result.endDate;
+    });
+  }
+  return [];
+}
+
+function escapeHtml(str) {
+  if (!str) return "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function buildChildReviewsHtml(result) {
+  const children = findChildReviews(result);
+  if (children.length === 0) return "";
+
+  const childLabel = result.type === "month" ? "週次" : "月次";
+  const items = children
+    .map((r) => {
+      const label = `${ymd(r.start_date).slice(5)} 〜 ${ymd(r.end_date).slice(5)}`;
+      const parts = [];
+      if (r.goal)
+        parts.push(
+          `<p class="review-ref-line"><span>🎯</span>${escapeHtml(r.goal)}</p>`,
+        );
+      if (r.good_points)
+        parts.push(
+          `<p class="review-ref-line"><span>👍</span>${escapeHtml(r.good_points)}</p>`,
+        );
+      if (r.reflection)
+        parts.push(
+          `<p class="review-ref-line"><span>🔍</span>${escapeHtml(r.reflection)}</p>`,
+        );
+      if (parts.length === 0) return "";
+      return `
+        <div class="review-ref-item">
+          <p class="review-ref-period">${label}</p>
+          ${parts.join("")}
+        </div>
+      `;
+    })
+    .filter(Boolean)
+    .join("");
+
+  if (!items) return "";
+
+  return `
+    <details class="review-ref-accordion">
+      <summary>この期間の${childLabel}振り返りを見る（参考）</summary>
+      <div class="review-ref-list">${items}</div>
+    </details>
+  `;
+}
+
+function buildReviewSectionHtml(result, prefix) {
+  const review = findReview(result.type, result.startDate, result.endDate);
+  const reviewId = `${prefix}review-${result.id}`;
+  const childHtml = buildChildReviewsHtml(result);
+
+  const moodOptions = ["😄", "🙂", "😐", "😣", "😢"];
+  const currentMood = review?.mood || "";
+  const moodHtml = moodOptions
+    .map(
+      (m) =>
+        `<button type="button" class="review-mood-btn${m === currentMood ? " active" : ""}" data-mood="${m}">${m}</button>`,
+    )
+    .join("");
+
+  return `
+    <div class="review-section" data-review-id="${reviewId}"
+      data-period-type="${result.type}"
+      data-start-date="${ymd(result.startDate)}"
+      data-end-date="${ymd(result.endDate)}">
+      <p class="review-section-title">振り返り</p>
+      ${childHtml}
+      <div class="review-field">
+        <label>目標</label>
+        <textarea class="review-input" data-field="goal" placeholder="この期間の目標">${escapeHtml(review?.goal)}</textarea>
+      </div>
+      <div class="review-field">
+        <label>実績</label>
+        <textarea class="review-input" data-field="achievement" placeholder="実際にやったこと">${escapeHtml(review?.achievement)}</textarea>
+      </div>
+      <div class="review-field">
+        <label>よかった点</label>
+        <textarea class="review-input" data-field="good_points" placeholder="うまくいったこと">${escapeHtml(review?.good_points)}</textarea>
+      </div>
+      <div class="review-field">
+        <label>反省点</label>
+        <textarea class="review-input" data-field="reflection" placeholder="改善したいこと">${escapeHtml(review?.reflection)}</textarea>
+      </div>
+      <div class="review-field">
+        <label>備考</label>
+        <textarea class="review-input" data-field="memo" placeholder="自由記述">${escapeHtml(review?.memo)}</textarea>
+      </div>
+      <div class="review-mood-row">
+        <span class="review-mood-label">気分</span>
+        ${moodHtml}
+      </div>
+      <div class="review-actions">
+        <button type="button" class="btn btn-primary btn-review-save">保存</button>
+        <span class="review-save-status"></span>
+      </div>
+    </div>
+  `;
+}
+
+async function handleReviewSave(sectionEl) {
+  const periodType = sectionEl.dataset.periodType;
+  const startDate = sectionEl.dataset.startDate;
+  const endDate = sectionEl.dataset.endDate;
+
+  const body = {
+    period_type: periodType,
+    start_date: startDate,
+    end_date: endDate,
+  };
+  sectionEl.querySelectorAll(".review-input").forEach((el) => {
+    body[el.dataset.field] = el.value || null;
+  });
+  const activeMoodBtn = sectionEl.querySelector(".review-mood-btn.active");
+  body.mood = activeMoodBtn ? activeMoodBtn.dataset.mood : null;
+
+  const statusEl = sectionEl.querySelector(".review-save-status");
+  if (statusEl) statusEl.textContent = "保存中…";
+
+  const saved = await api("/api/result-reviews", "POST", body);
+
+  const idx = reviewsCache.findIndex(
+    (r) =>
+      r.period_type === saved.period_type &&
+      ymd(r.start_date) === ymd(saved.start_date) &&
+      ymd(r.end_date) === ymd(saved.end_date),
+  );
+  if (idx >= 0) reviewsCache[idx] = saved;
+  else reviewsCache.push(saved);
+
+  if (statusEl) {
+    statusEl.textContent = "✓ 保存しました";
+    setTimeout(() => {
+      if (statusEl) statusEl.textContent = "";
+    }, 2000);
+  }
+}
+
+// 振り返りセクション内のイベント（気分選択・保存ボタン）を委譲で処理
+document.addEventListener("click", (e) => {
+  const moodBtn = e.target.closest(".review-mood-btn");
+  if (moodBtn) {
+    const section = moodBtn.closest(".review-section");
+    section
+      .querySelectorAll(".review-mood-btn")
+      .forEach((b) => b.classList.remove("active"));
+    moodBtn.classList.add("active");
+    return;
+  }
+
+  const saveBtn = e.target.closest(".btn-review-save");
+  if (saveBtn) {
+    const section = saveBtn.closest(".review-section");
+    if (section) handleReviewSave(section);
+    return;
+  }
+});

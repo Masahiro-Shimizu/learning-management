@@ -78,6 +78,7 @@ async function initDashboard() {
     .getElementById("period-next-btn")
     .addEventListener("click", () => shiftPeriod(1));
 
+  loadAndShowCurrentWeekGoal();
   renderCharts();
 }
 
@@ -976,3 +977,193 @@ function renderCharts() {
   if (chartCategoryTime) chartCategoryTime.resize();
   if (chartProgress) chartProgress.resize();
 }
+const DASHBOARD_DEFAULT_SUB_TEXT = "今週もコツコツ積み上げています。";
+
+function getCurrentWeekRange() {
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+  monday.setHours(0, 0, 0, 0);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  return { monday, sunday };
+}
+
+function ymdDash(d) {
+  const dt = new Date(d);
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+}
+
+async function loadAndShowCurrentWeekGoal() {
+  const subEl = document.querySelector(".dashboard-sub");
+  if (!subEl) return;
+
+  try {
+    const reviews = await api("/api/result-reviews");
+    const { monday, sunday } = getCurrentWeekRange();
+    const mondayStr = ymdDash(monday);
+    const sundayStr = ymdDash(sunday);
+
+    const currentWeekReview = reviews.find(
+      (r) =>
+        r.period_type === "week" &&
+        ymdDash(r.start_date) === mondayStr &&
+        ymdDash(r.end_date) === sundayStr,
+    );
+
+    if (currentWeekReview && currentWeekReview.goal) {
+      subEl.innerHTML = `<span class="dashboard-goal-label">今週の目標</span> ${currentWeekReview.goal}`;
+    } else {
+      subEl.textContent = DASHBOARD_DEFAULT_SUB_TEXT;
+    }
+  } catch (err) {
+    // 取得失敗時は既存の固定文言のまま維持（ダッシュボード全体を壊さない）
+    console.error("今週の目標の取得に失敗:", err);
+  }
+}
+// =========================================================================
+// 【C案：追加機能】今週の目標モーダルのイベント制御 ＆ 標準fetch保存同期ロジック
+// =========================================================================
+
+// グローバルで目標レコードの状態を保持する変数
+let currentWeekReviewRecord = null;
+
+/**
+ * 目標設定モーダルの開閉および保存処理イベントを登録する関数
+ */
+function setupGoalModalEvents() {
+  const modal = document.getElementById("week-goal-modal");
+  const editBtn = document.getElementById("btn-edit-week-goal");
+  const closeBtn = document.getElementById("btn-close-goal-modal");
+  const cancelBtn = document.getElementById("btn-cancel-goal-modal");
+  const saveBtn = document.getElementById("btn-save-week-goal");
+  const inputGoal = document.getElementById("input-week-goal");
+  const subEl = document.querySelector(".dashboard-sub");
+
+  if (!modal || !editBtn) return;
+
+  // 「⚙️ 目標を設定」ボタンクリックでモーダルを表示
+  editBtn.onclick = () => {
+    if (currentWeekReviewRecord && currentWeekReviewRecord.goal) {
+      inputGoal.value = currentWeekReviewRecord.goal;
+    } else {
+      // 既存の目標表示テキストからデフォルト文言を除外して初期値にする
+      const currentText = subEl ? subEl.textContent : "";
+      inputGoal.value =
+        currentText === DASHBOARD_DEFAULT_SUB_TEXT
+          ? ""
+          : currentText.replace("今週の目標 ", "");
+    }
+    modal.style.display = "flex";
+  };
+
+  // モーダルを閉じる共通処理
+  const closeModal = () => {
+    modal.style.display = "none";
+  };
+  if (closeBtn) closeBtn.onclick = closeModal;
+  if (cancelBtn) cancelBtn.onclick = closeModal;
+
+  // 背景クリックで閉じる
+  window.addEventListener("click", (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  // 保存するボタンの通信処理（エラー回避のため標準fetchを使用）
+  if (saveBtn) {
+    saveBtn.onclick = async () => {
+      const newGoal = inputGoal.value.trim();
+      if (!newGoal) {
+        alert("目標内容を入力してください。");
+        return;
+      }
+
+      try {
+        saveBtn.disabled = true;
+        saveBtn.textContent = "保存中...";
+
+        const { monday, sunday } = getCurrentWeekRange();
+
+        // URLとHTTPメソッドを決定
+        let url = "/api/result-reviews";
+        let method = "POST";
+
+        if (currentWeekReviewRecord && currentWeekReviewRecord.id) {
+          url = `/api/result-reviews/${currentWeekReviewRecord.id}`;
+          method = "PUT";
+        }
+
+        // リクエスト送信データの構築
+        const requestData = {
+          period_type: "week",
+          start_date: ymdDash(monday),
+          end_date: ymdDash(sunday),
+          goal: newGoal,
+        };
+
+        // api()関数のバグを回避するため、標準のfetchで確実にリクエストを投げる
+        const response = await fetch(url, {
+          method: method,
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(requestData),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        // 保存成功：ダッシュボード上の表記を即時更新
+        if (subEl) {
+          subEl.innerHTML = `<span class="dashboard-goal-label">今週の目標</span> ${newGoal}`;
+        }
+
+        // 保持データを最新の状態に更新
+        currentWeekReviewRecord = result || {
+          ...currentWeekReviewRecord,
+          goal: newGoal,
+        };
+
+        alert("今週の目標を保存しました！");
+        closeModal();
+      } catch (error) {
+        console.error("目標の保存に失敗しました:", error);
+        alert("保存に失敗しました。時間をおいて再度お試しください。");
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "保存する";
+      }
+    };
+  }
+}
+
+// 既存の loadAndShowCurrentWeekGoal をフックして保持変数にレコードを格納するよう拡張
+const originalLoadAndShowCurrentWeekGoal = loadAndShowCurrentWeekGoal;
+loadAndShowCurrentWeekGoal = async function () {
+  try {
+    const reviews = await api("/api/result-reviews");
+    const { monday, sunday } = getCurrentWeekRange();
+    const mondayStr = ymdDash(monday);
+    const sundayStr = ymdDash(sunday);
+
+    // 今週のデータを探して参照を保持しておく
+    currentWeekReviewRecord = reviews.find(
+      (r) =>
+        r.period_type === "week" &&
+        ymdDash(r.start_date) === mondayStr &&
+        ymdDash(r.end_date) === sundayStr,
+    );
+  } catch (err) {
+    console.error("イベント用事前ロードに失敗:", err);
+  }
+
+  // 既存の描画処理を実行
+  await originalLoadAndShowCurrentWeekGoal();
+  // モーダルのイベントをバインド
+  setupGoalModalEvents();
+};

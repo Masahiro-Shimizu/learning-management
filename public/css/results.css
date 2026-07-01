@@ -546,3 +546,138 @@ html.light .result-page-card .result-chart-block {
 .result-stats .result-stat-card:nth-child(3) .result-stat-value--anim {
   animation-delay: 0.19s;
 }
+/* ===== 振り返り（目標・実績・よかった点・反省点・備考）v2.18.0追加 ===== */
+
+.review-section {
+  margin-top: var(--space-16);
+  padding-top: var(--space-16);
+  border-top: 1px solid rgb(255 255 255 / 0.08);
+}
+
+.review-section-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-12);
+}
+
+.review-field {
+  margin-bottom: var(--space-8);
+}
+
+.review-field label {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--color-text-tertiary);
+  margin-bottom: 4px;
+}
+
+.review-input {
+  width: 100%;
+  min-height: 48px;
+  resize: vertical;
+  background-color: var(--color-bg-base);
+  color: var(--color-text-primary);
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 0.85rem;
+}
+
+.review-mood-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: var(--space-8) 0;
+}
+
+.review-mood-label {
+  font-size: 0.78rem;
+  color: var(--color-text-tertiary);
+  margin-right: 4px;
+}
+
+.review-mood-btn {
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: var(--color-bg-base);
+  border-radius: 6px;
+  font-size: 1rem;
+  padding: 4px 8px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition:
+    opacity 0.15s,
+    border-color 0.15s;
+}
+
+.review-mood-btn:hover {
+  opacity: 0.85;
+}
+
+.review-mood-btn.active {
+  opacity: 1;
+  border-color: var(--color-accent-primary);
+  background: rgb(99 102 241 / 0.12);
+}
+
+.review-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin-top: var(--space-8);
+}
+
+.review-save-status {
+  font-size: 0.78rem;
+  color: var(--color-status-done);
+}
+
+/* 参考表示（子期間の振り返り抜粋） */
+
+.review-ref-accordion {
+  margin-bottom: var(--space-16);
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: rgb(255 255 255 / 0.02);
+}
+
+.review-ref-accordion summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.review-ref-list {
+  margin-top: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.review-ref-item {
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--color-bg-base);
+}
+
+.review-ref-period {
+  font-size: 0.72rem;
+  color: var(--color-text-tertiary);
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.review-ref-line {
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+  display: flex;
+  gap: 6px;
+  line-height: 1.5;
+}
+
+.review-ref-line span {
+  flex-shrink: 0;
+}
