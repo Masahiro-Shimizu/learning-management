@@ -177,16 +177,16 @@ function buildDiffBadgeHtml(current, prev, unit = "") {
 
 // ===== グラフ描画（個別独立生成ロジック） =====
 
-const RESULT_CHART_COLORS = [
-  "#4d7fd4",
-  "#e6a817",
-  "#3a9d6e",
-  "#e05c5c",
-  "#9b6fd4",
-  "#4dc4d4",
-  "#d46f9b",
-  "#7fd46f",
-];
+// const RESULT_CHART_COLORS = [
+//   "#4d7fd4",
+//   "#e6a817",
+//   "#3a9d6e",
+//   "#e05c5c",
+//   "#9b6fd4",
+//   "#4dc4d4",
+//   "#d46f9b",
+//   "#7fd46f",
+// ];
 
 function createBarChart(canvasEl, filteredTasks) {
   if (!canvasEl) return null;
@@ -206,9 +206,7 @@ function createBarChart(canvasEl, filteredTasks) {
         {
           label: "学習時間（h）",
           data: catHours.length > 0 ? catHours : [],
-          backgroundColor: catNames.map(
-            (_, i) => RESULT_CHART_COLORS[i % RESULT_CHART_COLORS.length],
-          ),
+          backgroundColor: catNames.map((n) => getCategoryChartColor(n)),
           borderRadius: 4,
         },
       ],
@@ -310,48 +308,57 @@ function buildResultContent(result, tasks, allTasks, prefix = "") {
   // v2.18.0: 振り返りセクションを追加
   const reviewHtml = buildReviewSectionHtml(result, prefix);
 
+  // ★統合修正：カード全体も、振り返りセクションも個別に▼で閉じられる構造にします
   return {
     html: `
-        <div class="result-header">
-          <span class="result-type-badge result-type-badge--${result.type}">
-            ${typeIcon} ${result.type === "week" ? "週次" : result.type === "month" ? "月次" : "年次"}
-          </span>
-          <p class="result-period">${result.label}</p>
-        </div>
-        ${hasPrevData ? `<p class="result-compare-label">前${result.type === "week" ? "週" : result.type === "month" ? "月" : "年"}との比較</p>` : ""}
-        <div class="result-stats">
-          <div class="result-stat-card">
-            <p class="result-stat-label">学習時間</p>
-            <p class="result-stat-value result-stat-value--anim">${studyHours}<span class="result-stat-unit">h</span></p>
-            ${hasPrevData ? buildDiffBadgeHtml(studyHours, prevStudyHours, "h") : ""}
-          </div>
-          <div class="result-stat-card">
-            <p class="result-stat-label">完了タスク</p>
-            <p class="result-stat-value result-stat-value--anim">${doneCount}<span class="result-stat-unit">件</span></p>
-            ${hasPrevData ? buildDiffBadgeHtml(doneCount, prevDoneCount, "件") : ""}
-          </div>
-          <div class="result-stat-card">
-            <p class="result-stat-label">進捗率（期間内）</p>
-            <p class="result-stat-value result-stat-value--anim">${progressRate}<span class="result-stat-unit">%</span></p>
-            ${hasPrevData ? buildDiffBadgeHtml(progressRate, prevProgressRate, "%") : ""}
-          </div>
-        </div>
-        <div class="result-charts">
-          <div class="result-chart-block">
-            <p class="result-chart-label">カテゴリ別学習時間</p>
-            <div class="result-chart-wrap" style="height:180px;position:relative;">
-              <canvas id="${barId}"></canvas>
+          <details class="result-card-accordion" open>
+            <summary class="result-card-summary">
+              <div class="result-header-wrap">
+                <span class="result-type-badge result-type-badge--${result.type}">
+                  ${typeIcon} ${result.type === "week" ? "週次" : result.type === "month" ? "月次" : "年次"}
+                </span>
+                <p class="result-period">${result.label}</p>
+              </div>
+              <span class="result-card-toggle-icon">▼</span>
+            </summary>
+            
+            <div class="result-card-body">
+              ${hasPrevData ? `<p class="result-compare-label">前${result.type === "week" ? "週" : result.type === "month" ? "月" : "年"}との比較</p>` : ""}
+              <div class="result-stats">
+                <div class="result-stat-card">
+                  <p class="result-stat-label">学習時間</p>
+                  <p class="result-stat-value result-stat-value--anim">${studyHours}<span class="result-stat-unit">h</span></p>
+                  ${hasPrevData ? buildDiffBadgeHtml(studyHours, prevStudyHours, "h") : ""}
+                </div>
+                <div class="result-stat-card">
+                  <p class="result-stat-label">完了タスク</p>
+                  <p class="result-stat-value result-stat-value--anim">${doneCount}<span class="result-stat-unit">件</span></p>
+                  ${hasPrevData ? buildDiffBadgeHtml(doneCount, prevDoneCount, "件") : ""}
+                </div>
+                <div class="result-stat-card">
+                  <p class="result-stat-label">進捗率（期間内）</p>
+                  <p class="result-stat-value result-stat-value--anim">${progressRate}<span class="result-stat-unit">%</span></p>
+                  ${hasPrevData ? buildDiffBadgeHtml(progressRate, prevProgressRate, "%") : ""}
+                </div>
+              </div>
+              <div class="result-charts">
+                <div class="result-chart-block">
+                  <p class="result-chart-label">カテゴリ別学習時間</p>
+                  <div class="result-chart-wrap" style="height:180px;position:relative;">
+                    <canvas id="${barId}"></canvas>
+                  </div>
+                </div>
+                <div class="result-chart-block">
+                  <p class="result-chart-label">ステータス別件数</p>
+                  <div class="result-chart-wrap" style="height:180px;position:relative;">
+                    <canvas id="${doughnutId}"></canvas>
+                  </div>
+                </div>
+              </div>
+              ${reviewHtml}
             </div>
-          </div>
-          <div class="result-chart-block">
-            <p class="result-chart-label">ステータス別件数</p>
-            <div class="result-chart-wrap" style="height:180px;position:relative;">
-              <canvas id="${doughnutId}"></canvas>
-            </div>
-          </div>
-        </div>
-        ${reviewHtml}
-      `,
+          </details>
+        `,
     barId,
     doughnutId,
     filtered,
@@ -756,36 +763,45 @@ function buildReviewSectionHtml(result, prefix) {
       data-period-type="${result.type}"
       data-start-date="${ymd(result.startDate)}"
       data-end-date="${ymd(result.endDate)}">
-      <p class="review-section-title">振り返り</p>
-      ${childHtml}
-      <div class="review-field">
-        <label>目標</label>
-        <textarea class="review-input" data-field="goal" placeholder="この期間の目標">${escapeHtml(review?.goal)}</textarea>
-      </div>
-      <div class="review-field">
-        <label>実績</label>
-        <textarea class="review-input" data-field="achievement" placeholder="実際にやったこと">${escapeHtml(review?.achievement)}</textarea>
-      </div>
-      <div class="review-field">
-        <label>よかった点</label>
-        <textarea class="review-input" data-field="good_points" placeholder="うまくいったこと">${escapeHtml(review?.good_points)}</textarea>
-      </div>
-      <div class="review-field">
-        <label>反省点</label>
-        <textarea class="review-input" data-field="reflection" placeholder="改善したいこと">${escapeHtml(review?.reflection)}</textarea>
-      </div>
-      <div class="review-field">
-        <label>備考</label>
-        <textarea class="review-input" data-field="memo" placeholder="自由記述">${escapeHtml(review?.memo)}</textarea>
-      </div>
-      <div class="review-mood-row">
-        <span class="review-mood-label">気分</span>
-        ${moodHtml}
-      </div>
-      <div class="review-actions">
-        <button type="button" class="btn btn-primary btn-review-save">保存</button>
-        <span class="review-save-status"></span>
-      </div>
+      
+      <details class="review-section-accordion">
+        <summary class="review-section-summary">
+          <span class="review-section-title">振り返りを入力・編集する</span>
+          <span class="review-section-toggle-icon">▼</span>
+        </summary>
+        
+        <div class="review-section-body">
+          ${childHtml}
+          <div class="review-field">
+            <label>目標</label>
+            <textarea class="review-input" data-field="goal" placeholder="この期間の目標">${escapeHtml(review?.goal)}</textarea>
+          </div>
+          <div class="review-field">
+            <label>実績</label>
+            <textarea class="review-input" data-field="achievement" placeholder="実際にやったこと">${escapeHtml(review?.achievement)}</textarea>
+          </div>
+          <div class="review-field">
+            <label>よかった点</label>
+            <textarea class="review-input" data-field="good_points" placeholder="うまくいったこと">${escapeHtml(review?.good_points)}</textarea>
+          </div>
+          <div class="review-field">
+            <label>反省点</label>
+            <textarea class="review-input" data-field="reflection" placeholder="改善したいこと">${escapeHtml(review?.reflection)}</textarea>
+          </div>
+          <div class="review-field">
+            <label>備考</label>
+            <textarea class="review-input" data-field="memo" placeholder="自由記述">${escapeHtml(review?.memo)}</textarea>
+          </div>
+          <div class="review-mood-row">
+            <span class="review-mood-label">気分</span>
+            ${moodHtml}
+          </div>
+          <div class="review-actions">
+            <button type="button" class="btn btn-primary btn-review-save">保存</button>
+            <span class="review-save-status"></span>
+          </div>
+        </div>
+      </details>
     </div>
   `;
 }

@@ -55,30 +55,84 @@ function getTypeInfo(typeName) {
   return { label: typeName, class: TASK_TYPE_COLOR_CLASSES[hash] };
 }
 
-const TASK_CATEGORY_COLOR_CLASSES = [
-  "indigo",
-  "amber",
-  "teal",
-  "rose",
-  "lime",
-  "sky",
-  "violet",
+// ==========================================
+// タスク・カテゴリ共通処理
+// ==========================================
+
+// ===== グラフ用カラーパレット（カテゴリ名固定・全ダッシュボードグラフ共通） =====
+// dashboard.js / results.js の両方から参照する。カテゴリ名の文字列ハッシュから
+// 固定的に色を決定することで、同じカテゴリはどのグラフでも常に同じ色になる
+// （配列内の並び順に依存する i % length 方式は、期間や絞り込みでカテゴリの
+// 出現順が変わるため色がグラフ間でズレる原因になっていた）
+const CHART_COLORS = [
+  "#4d7fd4",
+  "#e6a817",
+  "#3a9d6e",
+  "#e05c5c",
+  "#9b6fd4",
+  "#4dc4d4",
+  "#d46f9b",
+  "#7fd46f",
 ];
 
-function getCategoryInfo(categoryName) {
-  if (!categoryName) return { label: "", class: "default" };
-  let hash = 0;
-  for (let i = 0; i < categoryName.length; i++) {
-    hash =
-      (hash * 31 + categoryName.charCodeAt(i)) %
-      TASK_CATEGORY_COLOR_CLASSES.length;
-  }
-  return { label: categoryName, class: TASK_CATEGORY_COLOR_CLASSES[hash] };
+// ===== カテゴリの色（GitHub言語色 + グラフ/バッジ共通） =====
+
+// GitHub Linguist準拠の言語カラー（主要言語のみ。随時追加可）
+const GITHUB_LANGUAGE_COLORS = {
+  JavaScript: "#f1e05a",
+  TypeScript: "#3178c6",
+  Python: "#3572A5",
+  Java: "#b07219",
+  "C++": "#f34b7d",
+  C: "#555555",
+  "C#": "#178600",
+  Go: "#00ADD8",
+  Rust: "#dea584",
+  PHP: "#4F5D95",
+  Ruby: "#701516",
+  Swift: "#F05138",
+  Kotlin: "#A97BFF",
+  HTML: "#e34c26",
+  CSS: "#563d7c",
+  "HTML＆CSS": "#e34c26",
+  React: "#61dafb",
+  Shell: "#89e051",
+  Dart: "#00B4AB",
+  SQL: "#e38c00",
+};
+
+// hex → rgba変換（バッジの半透明背景生成に使用）
+function hexToRgba(hex, alpha) {
+  const h = hex.replace("#", "");
+  const bigint = parseInt(h, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
+// カテゴリ名 → 色（hex）。GitHub言語色に一致すればそれを使い、
+// 一致しない独自カテゴリ名は文字列ハッシュでCHART_COLORSから固定的に決定する。
+// グラフ（dashboard.js / results.js）とバッジの両方がこの関数を参照する。
+function getCategoryChartColor(categoryName) {
+  const name = categoryName || "(言語不問)";
+  if (GITHUB_LANGUAGE_COLORS[name]) {
+    return GITHUB_LANGUAGE_COLORS[name];
+  }
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash * 31 + name.charCodeAt(i)) % CHART_COLORS.length;
+  }
+  return CHART_COLORS[hash];
+}
+
+/**
+ * カテゴリのバッジHTMLを生成する（GitHub色・グラフ共通カラー同期版）
+ */
 function createCategoryBadgeHtml(categoryName) {
-  const categoryInfo = getCategoryInfo(categoryName);
-  return `<span class="task-category-badge task-category-badge--${categoryInfo.class}">${categoryInfo.label}</span>`;
+  const label = categoryName || "(言語不問)";
+  const color = getCategoryChartColor(label);
+  return `<span class="task-category-badge" style="background-color:${hexToRgba(color, 0.18)};color:${color};">${label}</span>`;
 }
 
 function formatDateShort(dateStr) {
@@ -729,12 +783,20 @@ const TASK_STATUS_DOT_CLASS = {
   完了: "done",
 };
 
+// ステータス大枠の開閉状態を管理するローカルストレージ用ヘルパー
+function getCollapsedStatuses() {
+  return JSON.parse(localStorage.getItem("collapsedTableStatuses") || "[]");
+}
+function saveCollapsedStatuses(statuses) {
+  localStorage.setItem("collapsedTableStatuses", JSON.stringify(statuses));
+}
+
 function createGroupRowHtml(group, childCount, status) {
   const statusClassMap = { 未着手: "todo", 進行中: "inprogress", 完了: "done" };
   const modifierClass = statusClassMap[status] || "todo";
 
   return `
-      <tr class="group-row group-row--${modifierClass}" data-group-id="${group.id}">
+      <tr class="group-row group-row--${modifierClass}" data-group-id="${group.id}" data-parent-status="${status}">
         <td colspan="7">
           <span class="group-row-toggle">▾</span>
           ${group.title}（${childCount}件）
@@ -749,7 +811,7 @@ function createGroupRowHtml(group, childCount, status) {
     `;
 }
 
-function createTaskRowHtml(task, steps) {
+function createTaskRowHtml(task, steps, status) {
   const typeInfo = getTypeInfo(task.type_name);
   const categoryBadgeHtml = createCategoryBadgeHtml(task.category_name);
   const dotClass = TASK_STATUS_DOT_CLASS[task.status] || "todo";
@@ -758,13 +820,11 @@ function createTaskRowHtml(task, steps) {
   const minutes =
     task.study_time != null ? `${minutesToHours(task.study_time)}h` : "－";
 
-  // --- 【追加】ステップから進捗率を計算するロジック ---
   const totalSteps = steps ? steps.length : 0;
   const completedSteps = steps ? steps.filter((s) => s.is_completed).length : 0;
   const progressPercent =
     totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
 
-  // 【追加】進捗バーのHTML
   const progressHtml = `
     <div class="table-progress">
       <div class="table-progress-bar">
@@ -779,9 +839,8 @@ function createTaskRowHtml(task, steps) {
       ? `<span class="task-step-badge">${steps.filter((s) => s.is_completed).length}/${steps.length}</span>`
       : `<span class="task-table-dim">－</span>`;
 
-  // <td>を1つ増やして合計8個にしています
   return `
-      <tr class="task-row" data-task-id="${task.id}" tabindex="0">
+      <tr class="task-row" data-task-id="${task.id}" data-parent-status="${status}" data-child-of-group="${task.group_id}" tabindex="0">
         <td>${task.title}</td>
         <td>
           <div class="task-table-badges">
@@ -805,6 +864,58 @@ function createTaskRowHtml(task, steps) {
 }
 
 function bindTableEvents() {
+  // ① 「未着手」「進行中」「完了」ステータス大枠の開閉
+  document
+    .querySelectorAll("#task-table-body .table-status-header-row")
+    .forEach((header) => {
+      header.addEventListener("click", () => {
+        const status = header.dataset.tableStatusToggle;
+        const toggle = header.querySelector(".status-row-toggle");
+
+        let collapsedStatuses = getCollapsedStatuses();
+        const isCollapsed = !collapsedStatuses.includes(status);
+
+        if (isCollapsed) {
+          collapsedStatuses.push(status);
+          toggle.textContent = "▸";
+        } else {
+          collapsedStatuses = collapsedStatuses.filter((s) => s !== status);
+          toggle.textContent = "▾";
+        }
+        saveCollapsedStatuses(collapsedStatuses);
+
+        const collapsedGroups = JSON.parse(
+          localStorage.getItem("collapsedTableGroups") || "[]",
+        );
+
+        // 親行（教材）の表示切り替え
+        document
+          .querySelectorAll(
+            `#task-table-body .group-row[data-parent-status="${status}"]`,
+          )
+          .forEach((row) => {
+            row.style.display = isCollapsed ? "none" : "";
+          });
+
+        // 子行（タスク）の表示切り替え（親自体が折りたたまれていないものだけ表示）
+        document
+          .querySelectorAll(
+            `#task-table-body .task-row[data-parent-status="${status}"]`,
+          )
+          .forEach((row) => {
+            const parentGroupId = row.getAttribute("data-child-of-group");
+            const isParentCollapsed = collapsedGroups.includes(parentGroupId);
+
+            if (isCollapsed) {
+              row.style.display = "none";
+            } else {
+              row.style.display = isParentCollapsed ? "none" : "";
+            }
+          });
+      });
+    });
+
+  // ② 親タスク（グループ）行の開閉
   document.querySelectorAll("#task-table-body .group-row").forEach((row) => {
     row.addEventListener("click", (e) => {
       if (
@@ -821,6 +932,7 @@ function bindTableEvents() {
       let collapsedGroups = JSON.parse(
         localStorage.getItem("collapsedTableGroups") || "[]",
       );
+
       if (isCollapsed) {
         if (!collapsedGroups.includes(groupId)) collapsedGroups.push(groupId);
       } else {
@@ -831,14 +943,17 @@ function bindTableEvents() {
         JSON.stringify(collapsedGroups),
       );
 
-      let nextRow = row.nextElementSibling;
-      while (nextRow && nextRow.classList.contains("task-row")) {
-        nextRow.style.display = isCollapsed ? "none" : "";
-        nextRow = nextRow.nextElementSibling;
-      }
+      document
+        .querySelectorAll(
+          `#task-table-body .task-row[data-child-of-group="${groupId}"]`,
+        )
+        .forEach((childRow) => {
+          childRow.style.display = isCollapsed ? "none" : "";
+        });
     });
   });
 
+  // ③ インライン保存ボタンの制御
   const inlineTitleInput = document.getElementById("inline-parent-title");
   const inlineSaveBtn = document.getElementById("btn-inline-parent-save");
   if (inlineSaveBtn && inlineTitleInput) {
@@ -846,7 +961,11 @@ function bindTableEvents() {
       const title = inlineTitleInput.value.trim();
       if (!title) return;
       await api("/api/groups", "POST", { title, memo: null });
-      renderTaskViews();
+      if (typeof renderTaskViews === "function") {
+        renderTaskViews();
+      } else if (typeof fetchTaskViewData === "function") {
+        fetchTaskViewData().then((data) => renderTable(data));
+      }
     };
     inlineSaveBtn.onclick = handleInlineSave;
     inlineTitleInput.onkeypress = (e) => {
@@ -854,6 +973,7 @@ function bindTableEvents() {
     };
   }
 
+  // 子タスク追加・編集イベントのバインド
   document
     .querySelectorAll("#task-table-body .btn-add-task-table")
     .forEach((btn) => {
@@ -862,7 +982,6 @@ function bindTableEvents() {
         openTaskModal(btn.dataset.groupId);
       });
     });
-
   document
     .querySelectorAll("#task-table-body .btn-edit-group")
     .forEach((btn) => {
@@ -871,7 +990,6 @@ function bindTableEvents() {
         openGroupEditModal(btn.dataset.groupId);
       });
     });
-
   document.querySelectorAll("#task-table-body .task-row").forEach((row) => {
     row.addEventListener("click", () => {
       openTaskEditModal(row.dataset.taskId);
@@ -890,27 +1008,73 @@ function renderTable(data) {
   const tbody = document.getElementById("task-table-body");
   tbody.innerHTML = "";
 
-  const sortedGroups = sortGroupsByCreatedAtDesc(groups);
+  // 「未着手」「進行中」「完了」の3つのステータス枠のみに限定
+  const statuses = ["未着手", "進行中", "完了"];
 
-  sortedGroups.forEach((group) => {
-    const childTasks = tasks.filter((t) => t.group_id === group.id);
+  // 親タスクを3つのステータスに分類
+  const groupedGroups = { 未着手: [], 進行中: [], 完了: [] };
+  groups.forEach((group) => {
     const status = calcStatus(group.id, tasks);
-    tbody.insertAdjacentHTML(
-      "beforeend",
-      createGroupRowHtml(group, childTasks.length, status),
-    );
-    childTasks.forEach((task) => {
-      tbody.insertAdjacentHTML(
-        "beforeend",
-        createTaskRowHtml(task, stepsByTaskId[task.id] || []),
-      );
-    });
+    if (groupedGroups[status]) {
+      groupedGroups[status].push(group);
+    } else {
+      // 該当しない場合は「未着手」へフォールバック
+      groupedGroups["未着手"].push(group);
+    }
   });
 
+  // 3つのステータスを順に処理してテーブル行をビルド
+  statuses.forEach((status) => {
+    const targetGroups = sortGroupsByCreatedAtDesc(groupedGroups[status] || []);
+    const collapsedStatuses = getCollapsedStatuses();
+    const isStatusCollapsed = collapsedStatuses.includes(status);
+    const statusArrow = isStatusCollapsed ? "▸" : "▾";
+
+    // A. 各ステータスを区切る太字ヘッダー行を追加
+    tbody.insertAdjacentHTML(
+      "beforeend",
+      `<tr class="table-status-header-row font-bold select-none cursor-pointer" data-table-status-toggle="${status}" style="background-color: #1e1e24;">
+        <td colspan="8" style="padding: 10px 14px; color: #fff;">
+          <span class="status-row-toggle" style="margin-right: 6px;">${statusArrow}</span>
+          ${status} （${targetGroups.length}件）
+        </td>
+      </tr>`,
+    );
+
+    // B. 所属する親・子タスクを追加
+    if (targetGroups.length === 0) {
+      tbody.insertAdjacentHTML(
+        "beforeend",
+        `<tr class="table-status-empty-row" data-parent-status="${status}">
+          <td colspan="8" style="padding: 12px; text-align: center; color: #555; font-size: 13px; background: #141419;">
+            ページがありません
+          </td>
+        </tr>`,
+      );
+    } else {
+      targetGroups.forEach((group) => {
+        const childTasks = tasks.filter((t) => t.group_id === group.id);
+
+        tbody.insertAdjacentHTML(
+          "beforeend",
+          createGroupRowHtml(group, childTasks.length, status),
+        );
+
+        childTasks.forEach((task) => {
+          tbody.insertAdjacentHTML(
+            "beforeend",
+            createTaskRowHtml(task, stepsByTaskId[task.id] || [], status),
+          );
+        });
+      });
+    }
+  });
+
+  // C. テーブル最下部にインライン親タスク追加行を配置
   tbody.insertAdjacentHTML(
     "beforeend",
     `<tr class="inline-add-row" style="background-color: transparent;">
-        <td colspan="8" style="padding: 10px; border-top: 1px solid #333;">
+        <td colspan="8" style="padding: 20px 10px 10px 10px; border-top: 1px solid #333;">
           <div class="inline-add-container" style="display: flex; align-items: center; gap: 12px; box-sizing: border-box; width: 100%;">
             <input type="text" id="inline-parent-title" placeholder="+ 新しい親タスクを追加..." style="flex: 1; min-width: 0; padding: 8px 12px; background: #1e1e24; border: 1px dashed #555; color: #fff; border-radius: 4px; font-size: 14px;" />
             <button type="button" id="btn-inline-parent-save" class="btn btn-primary" style="cursor: pointer; white-space: nowrap; flex-shrink: 0;">保存</button>
@@ -919,30 +1083,62 @@ function renderTable(data) {
       </tr>`,
   );
 
+  // 4. ストレージから前回の開閉状態を復元して初期適用
+  const collapsedStatuses = getCollapsedStatuses();
   const collapsedGroups = JSON.parse(
     localStorage.getItem("collapsedTableGroups") || "[]",
   );
+
+  // A. ステータス大枠の折りたたみを適用
+  collapsedStatuses.forEach((status) => {
+    tbody
+      .querySelectorAll(`[data-parent-status="${status}"]`)
+      .forEach((row) => {
+        row.style.display = "none";
+      });
+  });
+
+  // B. 親グループ（教材単位）の折りたたみを適用
   collapsedGroups.forEach((groupId) => {
     const row = tbody.querySelector(`.group-row[data-group-id="${groupId}"]`);
     if (row) {
       row.classList.add("collapsed");
       const toggle = row.querySelector(".group-row-toggle");
       if (toggle) toggle.textContent = "▸";
-      let nextRow = row.nextElementSibling;
-      while (nextRow && nextRow.classList.contains("task-row")) {
-        nextRow.style.display = "none";
-        nextRow = nextRow.nextElementSibling;
+
+      // ステータス大枠自体が開いている場合のみ、配下の子タスク行を個別に非表示にする
+      const currentStatus = row.getAttribute("data-parent-status");
+      if (!collapsedStatuses.includes(currentStatus)) {
+        tbody
+          .querySelectorAll(`.task-row[data-child-of-group="${groupId}"]`)
+          .forEach((childRow) => {
+            childRow.style.display = "none";
+          });
       }
     }
   });
 
+  // イベントハンドラをバインド
   bindTableEvents();
 }
 
 // ===== カレンダービュー =====
 
+// ===== カレンダービュー =====
+
 let calendarDate = new Date();
-calendarDate.setDate(1);
+
+// 【修正】ローカルストレージに保存された年月があれば、それを優先して復元する
+const savedYear = localStorage.getItem("calendar_selected_year");
+const savedMonth = localStorage.getItem("calendar_selected_month");
+
+if (savedYear !== null && savedMonth !== null) {
+  calendarDate.setFullYear(parseInt(savedYear, 10));
+  calendarDate.setMonth(parseInt(savedMonth, 10));
+} else {
+  // 保存データがなければ、これまで通り今月の1日にセットする
+  calendarDate.setDate(1);
+}
 
 function formatDateForCompare(dateStr) {
   if (!dateStr) return null;
@@ -996,6 +1192,25 @@ function bindCalendarEvents() {
 function renderCalendar(data) {
   const { tasks, stepsByTaskId } = data;
 
+  // 1. ストレージから保存されたモードを読み出す（デフォルトは 'all'）
+  const savedMode = localStorage.getItem("calendar_display_mode") || "all";
+
+  // 2. 一度すべての切り替えタブの「active（下線）」クラスをリセットする
+  document.querySelectorAll(".calendar-mode-tab").forEach((tab) => {
+    tab.classList.remove("active");
+  });
+
+  // 3. 保存されていたモードに該当するタブだけに「active（下線）」を付与する
+  const targetTab = document.querySelector(
+    `.calendar-mode-tab[data-mode="${savedMode}"]`,
+  );
+  if (targetTab) {
+    targetTab.classList.add("active");
+  }
+
+  // 4. 現在アクティブなモードを基準にして描画を進める
+  const displayMode = savedMode;
+
   const year = calendarDate.getFullYear();
   const month = calendarDate.getMonth();
 
@@ -1025,17 +1240,22 @@ function renderCalendar(data) {
   }
 
   // ===== バー高さ定数 =====
-  // 予定バー: 20px、実績バー: 18px、バー間隔: 2px、タスク間隔: 4px
   const BAR_PLANNED_H = 20; // 予定バーの高さ
   const BAR_ACTUAL_H = 18; // 実績バーの高さ
   const BAR_GAP = 2; // 予定バーと実績バーの間隔
   const TASK_GAP = 4; // タスク同士の間隔
 
-  // 1タスクの占有高さを計算（実績バーの有無で変わる）
+  // 1タスクの占有高さを計算
   function getTaskHeight(task) {
+    if (displayMode === "planned") {
+      return BAR_PLANNED_H + TASK_GAP;
+    }
+    if (displayMode === "actual") {
+      return task.start_date ? BAR_ACTUAL_H + TASK_GAP : 0;
+    }
     return task.start_date
-      ? BAR_PLANNED_H + BAR_GAP + BAR_ACTUAL_H + TASK_GAP // 44px
-      : BAR_PLANNED_H + TASK_GAP; // 24px
+      ? BAR_PLANNED_H + BAR_GAP + BAR_ACTUAL_H + TASK_GAP
+      : BAR_PLANNED_H + TASK_GAP;
   }
 
   // 週ごとにグリッド行を生成
@@ -1085,53 +1305,86 @@ function renderCalendar(data) {
       999,
     );
 
-    // この週に予定期間が重なるタスクを抽出・ソート
+    // 【修正完了】この中で displayMode が安全に使用できるようになりました
+    // 【完全解決版】この週の枠（weekStart 〜 weekEnd）に重なるタスクを、モード別に完璧に抽出する
     const weekTasks = tasks.filter((task) => {
-      if (!task.start_planned_date) return false;
-      const taskStartStr = formatDateForInput(task.start_planned_date);
-      const taskEndStr = task.end_planned_date
-        ? formatDateForInput(task.end_planned_date)
-        : taskStartStr;
-      const start = new Date(taskStartStr).setHours(0, 0, 0, 0);
-      const end = new Date(taskEndStr).setHours(0, 0, 0, 0);
-      return start <= weekEnd && end >= weekStart;
+      if (displayMode === "actual" && !task.start_date) return false;
+      if (displayMode === "planned" && !task.start_planned_date) return false;
+
+      // 1. 予定期間がこの週に重なっているか判定
+      let hasPlannedOverlap = false;
+      if (task.start_planned_date) {
+        const pStartStr = formatDateForInput(task.start_planned_date);
+        const pEndStr = task.end_planned_date
+          ? formatDateForInput(task.end_planned_date)
+          : pStartStr;
+        const pStart = new Date(pStartStr).setHours(0, 0, 0, 0);
+        const pEnd = new Date(pEndStr).setHours(0, 0, 0, 0);
+        hasPlannedOverlap = pStart <= weekEnd && pEnd >= weekStart;
+      }
+
+      // 2. 実績期間がこの週に重なっているか判定
+      let hasActualOverlap = false;
+      if (task.start_date) {
+        const aStartStr = formatDateForInput(task.start_date);
+        const aEndStr = task.end_date
+          ? formatDateForInput(task.end_date)
+          : aStartStr;
+        const aStart = new Date(aStartStr).setHours(0, 0, 0, 0);
+        const aEnd = new Date(aEndStr).setHours(0, 0, 0, 0);
+        hasActualOverlap = aStart <= weekEnd && aEnd >= weekStart;
+      }
+
+      // 3. モードに応じて抽出フラグを返す
+      if (displayMode === "planned") return hasPlannedOverlap;
+      if (displayMode === "actual") return hasActualOverlap;
+
+      // 「すべて」モードの場合は、予定または実績のどちらかが被っていれば必ず通過させる
+      return hasPlannedOverlap || hasActualOverlap;
     });
 
+    // ソート処理
     weekTasks.sort((a, b) => {
-      const aTime = a.start_planned_date
-        ? new Date(a.start_planned_date.substring(0, 10)).getTime()
-        : 0;
-      const bTime = b.start_planned_date
-        ? new Date(b.start_planned_date.substring(0, 10)).getTime()
-        : 0;
+      const useActual = displayMode === "actual";
+      const aTarget = useActual ? a.start_date : a.start_planned_date;
+      const bTarget = useActual ? b.start_date : b.start_planned_date;
+      const aTime = aTarget ? new Date(aTarget.substring(0, 10)).getTime() : 0;
+      const bTime = bTarget ? new Date(bTarget.substring(0, 10)).getTime() : 0;
       return aTime - bTime;
     });
 
-    // 各タスクのtop位置を積み上げ計算（可変高さ対応）
     let currentTop = 0;
 
     weekTasks.forEach((task) => {
+      // 予定バー用の位置計算（予定日ベース）
       const taskStartStr = formatDateForInput(task.start_planned_date);
       const taskEndStr = task.end_planned_date
         ? formatDateForInput(task.end_planned_date)
         : taskStartStr;
 
-      const taskStart = new Date(taskStartStr).setHours(0, 0, 0, 0);
-      const taskEnd = new Date(taskEndStr).setHours(0, 0, 0, 0);
+      const startPercent = taskStartStr
+        ? Math.max(
+            0,
+            Math.round(
+              (new Date(taskStartStr).setHours(0, 0, 0, 0) - weekStart) /
+                (1000 * 60 * 60 * 24),
+            ),
+          )
+        : 0;
+      const endPercent = taskEndStr
+        ? Math.min(
+            6,
+            Math.round(
+              (new Date(taskEndStr).setHours(0, 0, 0, 0) - weekStart) /
+                (1000 * 60 * 60 * 24),
+            ),
+          )
+        : 0;
 
-      const startDiff = Math.max(
-        0,
-        Math.round((taskStart - weekStart) / (1000 * 60 * 60 * 24)),
-      );
-      const endDiff = Math.min(
-        6,
-        Math.round((taskEnd - weekStart) / (1000 * 60 * 60 * 24)),
-      );
-      const durationDays = endDiff - startDiff + 1;
+      const leftPercent = (startPercent / 7) * 100;
+      const widthPercent = ((endPercent - startPercent + 1) / 7) * 100;
 
-      const leftPercent = (startDiff / 7) * 100;
-      const widthPercent = (durationDays / 7) * 100;
-      const plannedTopPx = currentTop;
+      const taskBaseTop = currentTop;
 
       const categoryBadgeHtml = createCategoryBadgeHtml(task.category_name);
       const steps = stepsByTaskId[task.id] || [];
@@ -1140,71 +1393,22 @@ function renderCalendar(data) {
           ? `<span class="calendar-chip-badge" style="background: #333; color: #aaa; padding: 0 4px; border-radius: 3px; font-size: 10px; margin-left: auto; flex-shrink: 0;">${steps.filter((s) => s.is_completed).length}/${steps.length}</span>`
           : "";
 
-      // 予定バー（上段）
-      layer.insertAdjacentHTML(
-        "beforeend",
-        `
-        <div class="calendar-task-bar calendar-task-bar--planned" data-task-id="${task.id}" style="
-          position: absolute;
-          left: calc(${leftPercent}% + 4px);
-          width: calc(${widthPercent}% - 8px);
-          top: ${plannedTopPx}px;
-          height: ${BAR_PLANNED_H}px;
-          font-size: 12px;
-          padding: 2px 6px;
-          border-radius: 4px;
-          cursor: pointer;
-          pointer-events: auto;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          box-sizing: border-box;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        ">
-          ${categoryBadgeHtml}
-          <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">${task.title}</span>
-          ${stepBadge}
-        </div>
-      `,
-      );
-
-      // 実績バー（下段）：start_date がある場合のみ
-      if (task.start_date) {
-        const actualStartStr = formatDateForInput(task.start_date);
-        const actualEndStr = task.end_date
-          ? formatDateForInput(task.end_date)
-          : actualStartStr;
-
-        const actualStart = new Date(actualStartStr).setHours(0, 0, 0, 0);
-        const actualEnd = new Date(actualEndStr).setHours(0, 0, 0, 0);
-
-        if (actualStart <= weekEnd && actualEnd >= weekStart) {
-          const actualStartDiff = Math.max(
-            0,
-            Math.round((actualStart - weekStart) / (1000 * 60 * 60 * 24)),
-          );
-          const actualEndDiff = Math.min(
-            6,
-            Math.round((actualEnd - weekStart) / (1000 * 60 * 60 * 24)),
-          );
-          const actualDurationDays = actualEndDiff - actualStartDiff + 1;
-          const actualLeftPercent = (actualStartDiff / 7) * 100;
-          const actualWidthPercent = (actualDurationDays / 7) * 100;
-          const actualTopPx = plannedTopPx + BAR_PLANNED_H + BAR_GAP;
-
-          layer.insertAdjacentHTML(
-            "beforeend",
-            `
-            <div class="calendar-task-bar calendar-task-bar--actual" data-task-id="${task.id}" style="
+      // 🔴 1. 予定バーのレンダリング（'all' または 'planned' のとき）
+      if (
+        (displayMode === "all" || displayMode === "planned") &&
+        task.start_planned_date
+      ) {
+        layer.insertAdjacentHTML(
+          "beforeend",
+          `
+            <div class="calendar-task-bar calendar-task-bar--planned" data-task-id="${task.id}" style="
               position: absolute;
-              left: calc(${actualLeftPercent}% + 4px);
-              width: calc(${actualWidthPercent}% - 8px);
-              top: ${actualTopPx}px;
-              height: ${BAR_ACTUAL_H}px;
-              font-size: 11px;
-              padding: 1px 6px;
+              left: calc(${leftPercent}% + 4px);
+              width: calc(${widthPercent}% - 8px);
+              top: ${taskBaseTop}px;
+              height: ${BAR_PLANNED_H}px;
+              font-size: 12px;
+              padding: 2px 6px;
               border-radius: 4px;
               cursor: pointer;
               pointer-events: auto;
@@ -1214,30 +1418,90 @@ function renderCalendar(data) {
               box-sizing: border-box;
               display: flex;
               align-items: center;
-              gap: 4px;
+              gap: 6px;
             ">
-              <span style="font-size: 10px; opacity: 0.75; flex-shrink: 0;">実</span>
+              ${categoryBadgeHtml}
               <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">${task.title}</span>
+              ${stepBadge}
             </div>
           `,
+        );
+      }
+
+      // 🟢 2. 実績バーのレンダリング（'all' または 'actual' のとき）
+      if (
+        task.start_date &&
+        (displayMode === "all" || displayMode === "actual")
+      ) {
+        const actualStartStr = formatDateForInput(task.start_date);
+        const actualEndStr = task.end_date
+          ? formatDateForInput(task.end_date)
+          : actualStartStr;
+
+        const actualStart = new Date(actualStartStr).setHours(0, 0, 0, 0);
+        const actualEnd = new Date(actualEndStr).setHours(0, 0, 0, 0);
+
+        // 実績期間がこの週（weekStart 〜 weekEnd）に重なっている場合のみ描画する
+        if (actualStart <= weekEnd && actualEnd >= weekStart) {
+          // 【バグ修正】実績用の週内開始・終了位置を独立して正確に計算します
+          const actStartDiff = Math.max(
+            0,
+            Math.round((actualStart - weekStart) / (1000 * 60 * 60 * 24)),
+          );
+          const actEndDiff = Math.min(
+            6,
+            Math.round((actualEnd - weekStart) / (1000 * 60 * 60 * 24)),
+          );
+
+          const actualLeftPercent = (actStartDiff / 7) * 100;
+          const actualWidthPercent =
+            ((actEndDiff - actStartDiff + 1) / 7) * 100;
+
+          // 縦位置の決定：実績モードなら最上段、すべて表示なら予定バーの下に配置
+          const actualTopPx =
+            displayMode === "actual"
+              ? taskBaseTop
+              : taskBaseTop + BAR_PLANNED_H + BAR_GAP;
+
+          layer.insertAdjacentHTML(
+            "beforeend",
+            `
+                  <div class="calendar-task-bar calendar-task-bar--actual" data-task-id="${task.id}" style="
+                    position: absolute;
+                    left: calc(${actualLeftPercent}% + 4px);
+                    width: calc(${actualWidthPercent}% - 8px);
+                    top: ${actualTopPx}px;
+                    height: ${BAR_ACTUAL_H}px;
+                    font-size: 11px;
+                    padding: 1px 6px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    pointer-events: auto;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    box-sizing: border-box;
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                  ">
+                    <span style="font-size: 10px; opacity: 0.75; flex-shrink: 0;">実</span>
+                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">${task.title}</span>
+                  </div>
+                `,
           );
         }
       }
 
-      // このタスクの占有高さ分だけ次のタスクのtopをずらす
       currentTop += getTaskHeight(task);
     });
 
-    // バーの総高さに合わせてセルとバーレイヤーの高さを動的に設定
-    // 日付行28px + バー総高さ + 下余白8px、最低値は110px
     const totalBarsHeight = currentTop;
     const rowHeight = Math.max(110, 28 + totalBarsHeight + 8);
 
-    // セルの高さを統一
     weekGrid.querySelectorAll(".calendar-cell").forEach((cell) => {
       cell.style.minHeight = `${rowHeight}px`;
     });
-    // バーレイヤーの高さも合わせる
     layer.style.height = `${rowHeight - 28}px`;
   });
 
@@ -1252,14 +1516,35 @@ function formatDateStr(date) {
   return `${y}-${m}-${d}`;
 }
 
+// 【修正】前月ボタン：月を切り替えたら、その年月をローカルストレージに保存する
 document.getElementById("btn-calendar-prev")?.addEventListener("click", () => {
   calendarDate.setMonth(calendarDate.getMonth() - 1);
+  localStorage.setItem("calendar_selected_year", calendarDate.getFullYear());
+  localStorage.setItem("calendar_selected_month", calendarDate.getMonth());
   renderCalendar(lastTaskViewData);
 });
 
+// 【修正】次月ボタン：月を切り替えたら、その年月をローカルストレージに保存する
 document.getElementById("btn-calendar-next")?.addEventListener("click", () => {
   calendarDate.setMonth(calendarDate.getMonth() + 1);
+  localStorage.setItem("calendar_selected_year", calendarDate.getFullYear());
+  localStorage.setItem("calendar_selected_month", calendarDate.getMonth());
   renderCalendar(lastTaskViewData);
+});
+
+// 【更新】カレンダー表示切り替えタブのクリックイベント
+document.querySelectorAll(".calendar-mode-tab").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    const selectedMode = tab.dataset.mode;
+
+    // ローカルストレージにモードを保存
+    localStorage.setItem("calendar_display_mode", selectedMode);
+
+    // 画面全体の表示を最新データで再描画
+    if (lastTaskViewData && typeof renderCalendar === "function") {
+      renderCalendar(lastTaskViewData);
+    }
+  });
 });
 
 // ビュータブ

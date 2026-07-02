@@ -142,9 +142,9 @@
 /* ===== リザルトコンテンツ共通（カード等ベーススタイル） ===== */
 
 .result-header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-12);
+  display: flex !important;
+  align-items: center !important;
+  gap: var(--space-12) !important;
   margin-bottom: var(--space-16);
 }
 
@@ -243,12 +243,12 @@
   min-height: 100% !important;
 }
 
-/* 【大修正】ダッシュボードと同じく、タイトルとボタンを真横に並べて右端へ配置します */
+/* タイトルとボタンを真横に並べて右端へ配置 */
 .results-page-header {
   display: flex !important;
-  flex-direction: row !important; /* 縦並びから、ダッシュボードと同じ横並びに変更 */
-  justify-content: space-between !important; /* タイトルを左端、ボタンを右端へ分配 */
-  align-items: center !important; /* 縦方向の中央を綺麗に揃えます */
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
 
   position: sticky !important;
   top: 0 !important;
@@ -259,10 +259,9 @@
   padding-left: var(--space-32) !important;
   padding-right: var(--space-32) !important;
 
-  /* 横並びになって極薄スリム化されたため、ダッシュボードと同じ黄金の余白感に調整 */
   padding-top: var(--space-24) !important;
   padding-bottom: var(--space-16) !important;
-  margin-bottom: var(--space-16) !important; /* 下のカードコンテナとの隙間 */
+  margin-bottom: var(--space-16) !important;
 }
 
 .results-page-header > div:first-child {
@@ -285,13 +284,10 @@
   margin-bottom: 0 !important;
 }
 
-/* 【修正】タイトルと横一列に並ぶように、余計な上マージンや隙間の指定をすべてクリアにします */
+/* タイトルと横一列に並ぶように、余計な上マージンや隙間の指定をすべてクリア */
 .results-filter-tabs {
   display: flex !important;
-  gap: var(
-    --space-8,
-    8px
-  ) !important; /* ボタン同士の間隔をダッシュボードと完全同期 */
+  gap: var(--space-8, 8px) !important;
   border-bottom: none !important;
 
   position: relative !important;
@@ -302,22 +298,20 @@
   pointer-events: auto !important;
 }
 
-/* ダッシュボードの `.btn-period` のコンパクトなシャープさをミリ単位で完全再現 */
+/* コンパクトなシャープさをミリ単位で完全再現 */
 .results-filter-tab {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-
-  /* 【ここを修正】上下4px、左右12pxに極薄化し、ダッシュボードと同じミニサイズに統一 */
   padding: 4px 12px !important;
-  font-size: 0.8rem !important; /* 文字も少し小さくしてシャープに */
+  font-size: 0.8rem !important;
   font-weight: 600 !important;
   line-height: 1.5 !important;
 
   background-color: var(--color-bg-card, #1e1e24) !important;
   color: var(--color-text-secondary, #aaa) !important;
   border: 1px solid rgb(255 255 255 / 0.1) !important;
-  border-radius: var(--radius-md, 6px) !important; /* 丸みの規則を統一 */
+  border-radius: var(--radius-md, 6px) !important;
 
   cursor: pointer !important;
   transition:
@@ -326,13 +320,62 @@
     border-color 0.15s ease !important;
 }
 
-/* ホバー時の挙動もダッシュボードと100%同期 */
-.results-filter-tab:hover {
-  background-color: rgb(255 255 255 / 0.05) !important;
-  color: var(--color-text-primary) !important;
-  border-color: rgb(255 255 255 / 0.2) !important;
+/* ==========================================================================
+   【Wトグル統合】アコーディオン共通設定（ブラウザ標準マーカー消去）
+========================================================================== */
+.result-card-accordion summary::-webkit-details-marker,
+.review-section-accordion summary::-webkit-details-marker {
+  display: none !important;
+}
+.result-card-accordion summary,
+.review-section-accordion summary {
+  list-style: none !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  cursor: pointer !important;
+  user-select: none !important;
 }
 
+/* ==========================================================================
+   1. リザルトカード全体のアコーディオン（外側トグル枠・位置ズレ防止）
+========================================================================== */
+.result-page-card {
+  background-color: var(--color-bg-card);
+  border-radius: 12px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
+  padding: 0 !important; /* 枠組み内の余白ズレを防ぐため0にリセット */
+  overflow: hidden !important;
+}
+
+/* カード全体のヘッダーを100%幅でクリック領域化 */
+.result-card-summary {
+  padding: var(--space-24) !important;
+  background-color: transparent !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.result-card-summary:hover {
+  background-color: rgb(255 255 255 / 0.02) !important;
+}
+
+html.light .result-card-summary:hover {
+  background-color: rgb(0 0 0 / 0.01) !important;
+}
+
+/* アコーディオンヘッダー内での垂直中央揃えのため、下余白をリセット */
+.result-card-summary .result-header {
+  margin-bottom: 0 !important;
+}
+
+/* 外側アコーディオン用のトグル矢印（▼） */
+.result-card-toggle-icon {
+  font-size: 0.8rem !important;
+  color: var(--color-text-tertiary) !important;
+  transition: transform 0.2s ease !important;
+  display: inline-block !important;
+}
 /* アクティブ状態（ダッシュボードの選択中と同じ、明るい紫インディゴのハイライト） */
 .results-filter-tab.active {
   background-color: var(--color-accent-primary, #6366f1) !important;
@@ -349,12 +392,14 @@
   z-index: 1 !important;
 }
 
-.result-page-card {
-  background-color: var(--color-bg-card);
-  border-radius: 12px;
-  padding: var(--space-24);
-  border: 1px solid rgb(255 255 255 / 0.1);
-  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
+/* 開いている（open）ときはカード全体の矢印を180度反転 */
+.result-card-accordion[open] > .result-card-summary .result-card-toggle-icon {
+  transform: rotate(180deg) !important;
+}
+
+/* 展開されるリザルト本体領域（元のパディング余白をここで完全に復元してズレを解消） */
+.result-card-body {
+  padding: 0 var(--space-24) var(--space-24) var(--space-24) !important;
 }
 
 .result-page-card .result-stat-card {
@@ -400,6 +445,13 @@ html.light .result-page-card .result-chart-block {
   }
   #result-modal .modal-content {
     width: 95vw;
+  }
+  /* スマホ環境下での精密パディングの最適化 */
+  .result-card-summary {
+    padding: var(--space-16) !important;
+  }
+  .result-card-body {
+    padding: 0 var(--space-16) var(--space-16) var(--space-16) !important;
   }
 }
 
@@ -546,21 +598,93 @@ html.light .result-page-card .result-chart-block {
 .result-stats .result-stat-card:nth-child(3) .result-stat-value--anim {
   animation-delay: 0.19s;
 }
-/* ===== 振り返り（目標・実績・よかった点・反省点・備考）v2.18.0追加 ===== */
 
+/* ==========================================================================
+   2. 振り返りセクションのアコーディオン（はみ出し・ガタつき完全修正版）
+========================================================================== */
 .review-section {
-  margin-top: var(--space-16);
-  padding-top: var(--space-16);
-  border-top: 1px solid rgb(255 255 255 / 0.08);
+  margin-top: var(--space-24) !important; /* グラフブロックとの適正な縦の間隔 */
+  padding-top: 0 !important;
+  border-top: none !important; /* 境界線は枠線（border）に置き換えるためクリア */
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
-.review-section-title {
+/* 振り返り用アコーディオンの独立したカード枠（背景を元のカード色と同調） */
+.review-section-accordion {
+  border: 1px solid rgb(255 255 255 / 0.08) !important;
+  border-radius: 8px !important;
+  background-color: var(
+    --color-bg-card
+  ) !important; /* カード背景と同じにして綺麗にはめ込む */
+  overflow: hidden !important; /* ★最重要：これで内側のsummaryのはみ出しを角丸で綺麗にマスクカットします */
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+html.light .review-section-accordion {
+  border-color: rgb(0 0 0 / 0.08) !important;
+  background-color: var(--color-bg-card) !important;
+}
+
+/* 折りたたみヘッダーのクリック領域 */
+.review-section-summary {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important; /* 文字と矢印の縦位置を完璧に揃える */
+  padding: var(--space-12) var(--space-16) !important;
+  background-color: rgba(
+    255,
+    255,
+    255,
+    0.03
+  ) !important; /* ほんの少しだけ明るい座布団にして立体感を出す */
+  width: 100% !important;
+  box-sizing: border-box !important;
+  cursor: pointer !important;
+  user-select: none !important;
+}
+
+.review-section-summary:hover {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* タイトルのスタイル（横並び化に合わせ、上下のズレを無くすためマージンをリセット） */
+.review-section-summary .review-section-title {
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--color-text-primary);
-  margin-bottom: var(--space-12);
+  margin: 0 !important;
+  line-height: 1.5 !important;
 }
 
+/* 内側トグル用の矢印アイコン（▼） */
+.review-section-toggle-icon {
+  font-size: 0.75rem !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: var(--color-text-tertiary) !important;
+  transition: transform 0.2s ease !important;
+}
+
+.review-section-accordion[open] .review-section-toggle-icon {
+  transform: rotate(180deg) !important;
+}
+
+/* 展開される入力エリアフォームのコンテナ */
+.review-section-body {
+  padding: var(--space-16) !important;
+  border-top: 1px solid rgb(255 255 255 / 0.08) !important;
+  background-color: transparent !important; /* 親のアコーディオン枠の背景をそのまま透過 */
+}
+
+html.light .review-section-body {
+  border-top-color: rgb(0 0 0 / 0.08) !important;
+}
+
+/* 既存のフォームパーツ用スタイルを完全流用 */
 .review-field {
   margin-bottom: var(--space-8);
 }
@@ -634,7 +758,6 @@ html.light .result-page-card .result-chart-block {
 }
 
 /* 参考表示（子期間の振り返り抜粋） */
-
 .review-ref-accordion {
   margin-bottom: var(--space-16);
   border: 1px solid rgb(255 255 255 / 0.08);

@@ -99,6 +99,18 @@
                 "
               >
                 <p class="dashboard-sub" style="margin: 0">
+                  <button
+                    type="button"
+                    id="btn-open-goal-modal"
+                    class="btn btn-secondary"
+                    style="
+                      margin-top: 6px;
+                      font-size: 0.75rem;
+                      padding: 4px 12px;
+                    "
+                  >
+                    🎯 今週の目標を設定
+                  </button>
                   今週もコツコツ積み上げています。
                 </p>
                 <button
@@ -445,9 +457,11 @@
               >
                 ＜
               </button>
-              <span id="calendar-month-label" class="calendar-month-label"
-                >2026年6月</span
-              >
+
+              <span id="calendar-month-label" class="calendar-month-label">
+                2026年7月
+              </span>
+
               <button
                 type="button"
                 id="btn-calendar-next"
@@ -456,7 +470,29 @@
               >
                 ＞
               </button>
+
+              <!-- 右側：スッキリ整理された表示切り替えタブ -->
+              <div class="calendar-display-selector">
+                <button type="button" class="calendar-mode-tab" data-mode="all">
+                  すべて
+                </button>
+                <button
+                  type="button"
+                  class="calendar-mode-tab"
+                  data-mode="planned"
+                >
+                  予定
+                </button>
+                <button
+                  type="button"
+                  class="calendar-mode-tab"
+                  data-mode="actual"
+                >
+                  実績
+                </button>
+              </div>
             </div>
+
             <div class="calendar-grid" id="calendar-grid"></div>
           </div>
 
@@ -1251,6 +1287,75 @@
           >
             保存する
           </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="goal-modal" class="modal hidden">
+      <div class="modal-content" style="width: 480px">
+        <div class="modal-header">
+          <h3>🎯 今週の目標</h3>
+          <button
+            type="button"
+            id="btn-goal-modal-close-x"
+            class="btn-modal-close"
+            aria-label="閉じる"
+          >
+            ✕
+          </button>
+        </div>
+        <p
+          id="goal-modal-period"
+          style="
+            font-size: 0.8rem;
+            color: var(--color-text-tertiary);
+            margin-bottom: var(--space-8);
+          "
+        ></p>
+        <label
+          for="goal-modal-input"
+          style="
+            font-size: 0.85rem;
+            color: var(--color-text-secondary);
+            display: block;
+            margin-bottom: 4px;
+          "
+          >目標</label
+        >
+        <textarea
+          id="goal-modal-input"
+          placeholder="この週の目標を入力してください"
+          style="
+            min-height: 100px;
+            resize: vertical;
+            width: 100%;
+            background: var(--color-bg-card);
+            color: var(--color-text-primary);
+            border: 1px solid rgb(255 255 255 / 0.1);
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-family: &quot;DM Sans&quot;, sans-serif;
+            font-size: 1rem;
+          "
+        ></textarea>
+        <div class="modal-actions" style="margin-top: var(--space-16)">
+          <div></div>
+          <div style="display: flex; gap: var(--space-8)">
+            <button
+              type="button"
+              id="btn-goal-modal-cancel"
+              class="btn btn-secondary"
+            >
+              キャンセル
+            </button>
+            <button
+              type="button"
+              id="btn-goal-modal-save"
+              class="btn btn-primary"
+            >
+              保存
+            </button>
+          </div>
         </div>
       </div>
     </div>

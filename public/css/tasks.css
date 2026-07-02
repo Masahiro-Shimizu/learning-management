@@ -562,17 +562,64 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-16);
+  gap: 24px; /* HTML側の指定に合わせて24pxに固定します */
   margin-bottom: var(--space-16);
   min-height: 38px;
   width: 100%;
+  position: relative; /* 【最重要】右側の切り替えタブを絶対配置(absolute)にするための基準にします */
 }
 
 .calendar-month-label {
-  font-size: 0.95rem;
-  font-weight: 600;
-  min-width: 110px;
+  font-size: 16px; /* HTML側の指定に合わせます */
+  font-weight: bold; /* HTML側の指定に合わせます */
+  min-width: 100px; /* HTML側の指定に合わせます */
   text-align: center;
+}
+
+/* 【新規追加】右端の切り替えタブ用ラッパーコンテナ */
+.calendar-display-selector {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 16px; /* 12pxからタブ幅に合わせて16pxへ最適化 */
+  padding-right: 4px;
+}
+
+/* カレンダー表示切り替えタブの基本スタイル */
+.calendar-mode-tab {
+  background: none;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  padding: 4px 0;
+  font-size: 13px;
+  position: relative;
+  transition: color 0.2s ease;
+}
+
+/* マウスを乗せた時 */
+.calendar-mode-tab:hover {
+  color: #fff !important;
+}
+
+/* 選択されている（アクティブな）タブのデザイン */
+.calendar-mode-tab.active {
+  color: #fff !important;
+  font-weight: bold;
+}
+
+/* 選択時に下線を引っ張る処理 */
+.calendar-mode-tab.active::after {
+  content: "";
+  position: absolute;
+  bottom: -4px; /* 下線と文字の間隔を絶妙な距離(-4px)に微調整 */
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #a855f7; /* メインタブと同じ紫色 */
+  border-radius: 2px;
 }
 
 .calendar-grid {
