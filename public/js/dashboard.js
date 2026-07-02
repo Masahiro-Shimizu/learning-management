@@ -34,58 +34,6 @@ function minutesToHours(minutes) {
   return Math.round((minutes / 60) * 10) / 10;
 }
 
-async function initDashboard() {
-  const tasks = await api("/api/tasks");
-  const books = await api("/api/books");
-
-  allTasks = tasks;
-  allBooks = books;
-
-  document.querySelectorAll(".btn-period").forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.period === currentPeriod);
-  });
-
-  document.querySelectorAll(".btn-period").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document
-        .querySelectorAll(".btn-period")
-        .forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      currentPeriod = btn.dataset.period;
-      localStorage.setItem(PERIOD_STORAGE_KEY, currentPeriod);
-      viewDate = new Date();
-      renderCharts();
-    });
-  });
-
-  document
-    .getElementById("period-prev-btn")
-    .addEventListener("click", () => shiftPeriod(-1));
-  document
-    .getElementById("period-next-btn")
-    .addEventListener("click", () => shiftPeriod(1));
-
-  // v2.18.0: 現在期間の目標表示 + 目標設定モーダルのイベント登録
-  loadAndShowCurrentPeriodGoal(currentPeriod);
-  document
-    .getElementById("btn-open-goal-modal")
-    ?.addEventListener("click", openGoalModal);
-  document
-    .getElementById("btn-goal-modal-close-x")
-    ?.addEventListener("click", closeGoalModal);
-  document
-    .getElementById("btn-goal-modal-cancel")
-    ?.addEventListener("click", closeGoalModal);
-  document.getElementById("goal-modal")?.addEventListener("click", (e) => {
-    if (e.target.id === "goal-modal") closeGoalModal();
-  });
-  document
-    .getElementById("btn-goal-modal-save")
-    ?.addEventListener("click", saveGoalFromModal);
-
-  renderCharts();
-}
-
 function shiftPeriod(direction) {
   if (currentPeriod === "week") {
     viewDate.setDate(viewDate.getDate() + 7 * direction);
@@ -964,57 +912,57 @@ function getCurrentPeriodRange(period) {
   return null; // "all" は期間なし
 }
 
-// トグルに連動してサブテキストと設定ボタンを更新する
+// トグルに連動してサブテキストと設定ボタンを更新する（増殖バグ修正＆目標テキスト表示版）
 async function loadAndShowCurrentPeriodGoal(period) {
   const subEl = document.querySelector(".dashboard-sub");
   const btnEl = document.getElementById("btn-open-goal-modal");
   if (!subEl) return;
 
+  // 1. 全期間（all）が選択された場合の処理
+  if (period === "all") {
+    subEl.textContent =
+      DASHBOARD_DEFAULT_SUB_TEXTS.all || "コツコツ積み上げています。";
+    if (btnEl) btnEl.style.display = "none";
+    return;
+  }
+
+  // 2. week / month / year の場合は設定ボタンを表示状態に戻す
+  if (btnEl) {
+    btnEl.style.display = "inline-block";
+
+    // 【増殖防止】ボタンのテキストだけを書き換える（HTML要素自体は増やさない）
+    const btnLabels = {
+      week: "🎯 今週の目標を設定",
+      month: "🎯 今月の目標を設定",
+      year: "🎯 今年の目標を設定",
+    };
+    btnEl.textContent = btnLabels[period] || "🎯 目標を設定";
+  }
+
+  // 3. 【追加】APIから現在の期間の目標データを取得して画面に反映させる
   const goalLabels = {
     week: "今週の目標",
     month: "今月の目標",
     year: "今年の目標",
   };
-  const btnLabels = {
-    week: "🎯 今週の目標を設定",
-    month: "🎯 今月の目標を設定",
-    year: "🎯 今年の目標を設定",
-  };
-
-  // 「全」のときはボタン非表示・デフォルト文言
-  if (period === "all") {
-    subEl.textContent = DASHBOARD_DEFAULT_SUB_TEXTS.all;
-    if (btnEl) btnEl.style.display = "none";
-    return;
-  }
-
-  if (btnEl) {
-    btnEl.style.display = "";
-    btnEl.textContent = btnLabels[period] || "🎯 目標を設定";
-  }
-
-  const range = getCurrentPeriodRange(period);
-  if (!range) return;
 
   try {
-    const reviews = await api("/api/result-reviews");
-    const startStr = ymdDash(range.start);
-    const endStr = ymdDash(range.end);
-    const review = reviews.find(
-      (r) =>
-        r.period_type === period &&
-        ymdDash(r.start_date) === startStr &&
-        ymdDash(r.end_date) === endStr,
-    );
+    // 現在の期間（week/month/year）をパラメータにしてAPIから目標を取得
+    const res = await api(`/api/goals?period=${period}`);
 
-    if (review && review.goal) {
-      subEl.innerHTML = `<span class="dashboard-goal-label">${goalLabels[period]}</span> ${review.goal}`;
+    if (res && res.text) {
+      // 目標が保存されている場合は「今週の目標: テスト」のように表示
+      subEl.textContent = `🎯 ${goalLabels[period]}: ${res.text}`;
     } else {
-      subEl.textContent = DASHBOARD_DEFAULT_SUB_TEXTS[period];
+      // まだ目標がない場合はデフォルトのサブテキストを表示
+      subEl.textContent =
+        DASHBOARD_DEFAULT_SUB_TEXTS[period] || "コツコツ積み上げています。";
     }
-  } catch (err) {
-    console.error("目標の取得に失敗:", err);
-    subEl.textContent = DASHBOARD_DEFAULT_SUB_TEXTS[period];
+  } catch (e) {
+    console.error("目標データの取得に失敗しました:", e);
+    // エラー時のフォールバック
+    subEl.textContent =
+      DASHBOARD_DEFAULT_SUB_TEXTS[period] || "コツコツ積み上げています。";
   }
 }
 
@@ -1063,19 +1011,130 @@ function closeGoalModal() {
   document.getElementById("goal-modal").classList.add("hidden");
 }
 
-async function saveGoalFromModal() {
-  const range = getCurrentPeriodRange(currentPeriod);
-  if (!range) return;
+// トグルに連動してサブテキストと設定ボタンを更新する（構文エラー修正版）
+async function loadAndShowCurrentPeriodGoal(period) {
+  const subEl = document.querySelector(".dashboard-sub");
+  const btnEl = document.getElementById("btn-open-goal-modal");
+  if (!subEl) return;
 
-  const goal = document.getElementById("goal-modal-input")?.value || null;
+  // 1. 全期間（all）が選択された場合の処理
+  if (period === "all") {
+    subEl.textContent =
+      DASHBOARD_DEFAULT_SUB_TEXTS.all || "コツコツ積み上げています。";
+    if (btnEl) btnEl.style.display = "none";
+    return;
+  }
 
-  await api("/api/result-reviews", "POST", {
-    period_type: currentPeriod,
-    start_date: ymdDash(range.start),
-    end_date: ymdDash(range.end),
-    goal,
+  // 2. week / month / year の場合は設定ボタンを表示状態に戻す
+  if (btnEl) {
+    btnEl.style.display = "inline-block";
+    const btnLabels = {
+      week: "🎯 今週の目標を設定",
+      month: "🎯 今月の目標を設定",
+      year: "🎯 今年の目標を設定",
+    };
+    btnEl.textContent = btnLabels[period] || "🎯 目標を設定";
+  }
+
+  // 3. 選択されている期間の日付範囲を取得してAPIからレビュー（目標）データを取得
+  const goalLabels = {
+    week: "今週の目標",
+    month: "今月の目標",
+    year: "今年の目標",
+  };
+
+  try {
+    const range = getCurrentPeriodRange(period);
+    if (!range) {
+      subEl.textContent =
+        DASHBOARD_DEFAULT_SUB_TEXTS[period] || "コツコツ積み上げています。";
+      return;
+    }
+
+    const startDateStr = ymdDash(range.start);
+    const endDateStr = ymdDash(range.end);
+
+    const res = await api(
+      `/api/result-reviews?period_type=${period}&start_date=${startDateStr}&end_date=${endDateStr}`,
+    );
+
+    const savedGoal = res && (res.goal || (Array.isArray(res) && res[0]?.goal));
+
+    if (savedGoal) {
+      // インラインスタイルを直接指定して、確実に「オレンジ色」と「太字」を強制します
+      subEl.innerHTML = `<strong style="color: #ffc107; font-weight: bold; margin-right: 8px;">${goalLabels[period]}</strong><span>${savedGoal}</span>`;
+    } else {
+      subEl.textContent =
+        DASHBOARD_DEFAULT_SUB_TEXTS[period] || "コツコツ積み上げています。";
+    }
+  } catch (e) {
+    console.error("目標（レビュー）データの取得に失敗しました:", e);
+    subEl.textContent =
+      DASHBOARD_DEFAULT_SUB_TEXTS[period] || "コツコツ積み上げています。";
+  }
+}
+async function initDashboard() {
+  const tasks = await api("/api/tasks");
+  const books = await api("/api/books");
+
+  allTasks = tasks;
+  allBooks = books;
+
+  document.querySelectorAll(".btn-period").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.period === currentPeriod);
   });
 
-  closeGoalModal();
-  await loadAndShowCurrentPeriodGoal(currentPeriod);
+  document.querySelectorAll(".btn-period").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document
+        .querySelectorAll(".btn-period")
+        .forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentPeriod = btn.dataset.period;
+      localStorage.setItem(PERIOD_STORAGE_KEY, currentPeriod);
+      viewDate = new Date();
+      // 1. まずは最優先でグラフと集計カードを描画・更新する
+      renderCharts();
+      // 2. そのあと裏側で非同期に目標データを取得して反映させる
+      loadAndShowCurrentPeriodGoal(currentPeriod);
+    });
+  });
+
+  document
+    .getElementById("period-prev-btn")
+    .addEventListener("click", () => shiftPeriod(-1));
+  document
+    .getElementById("period-next-btn")
+    .addEventListener("click", () => shiftPeriod(1));
+
+  // ========================================================
+  // 【修正】すべてのイベントが安全にバインドされるように位置を一番下にまとめました
+  // ========================================================
+  document
+    .getElementById("btn-open-goal-modal")
+    ?.addEventListener("click", openGoalModal);
+  document
+    .getElementById("btn-goal-modal-close-x")
+    ?.addEventListener("click", closeGoalModal);
+  document
+    .getElementById("btn-goal-modal-cancel")
+    ?.addEventListener("click", closeGoalModal);
+  document.getElementById("goal-modal")?.addEventListener("click", (e) => {
+    if (e.target.id === "goal-modal") closeGoalModal();
+  });
+  document
+    .getElementById("btn-goal-modal-save")
+    ?.addEventListener("click", () => {
+      if (typeof saveGoalFromModal === "function") {
+        saveGoalFromModal();
+      } else {
+        console.warn("saveGoalFromModalがまだ読み込まれていません");
+      }
+    });
+
+  // 最初のロード時に現在期間の目標を表示
+  loadAndShowCurrentPeriodGoal(currentPeriod);
+
+  // 最後に初期グラフ全体のレンダリングを実行
+  renderCharts();
 }
