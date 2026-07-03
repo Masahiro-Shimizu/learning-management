@@ -1200,36 +1200,44 @@
 }
 
 /* ========================================================
-   💡 タイムラインビュー：無理な固定（sticky）をすべて解除し、元の正常な表示に戻す
+   タイムラインビュー：テーブルビューと同様に本体のみ高さ固定＋
+   日付軸行（1行目）をスクロール追従（sticky）させる
    ======================================================== */
 [data-view-panel="timeline"].hidden {
   display: none !important;
 }
 
-/* タイムライン表示時は縦の強制制限（枠）を一切作らず、すべて元のJSの自動計算に戻す */
-[data-view-panel="timeline"]:not(.hidden),
-.timeline-wrapper {
+[data-view-panel="timeline"]:not(.hidden) {
   height: auto !important;
-  overflow-y: visible !important;
   position: relative !important;
 }
 
+/* テーブルビューの .task-table-wrapper と同仕様：本体のみ高さ制限してスクロールを閉じ込める */
 .timeline-wrapper {
   border: 1px solid rgb(255 255 255 / 0.06);
   border-radius: 10px;
-  overflow-x: auto !important; /* 横方向（日付）のスクロールのみ元の仕様に戻す */
+  overflow-x: auto !important; /* 横方向（日付）のスクロール */
+  overflow-y: auto !important; /* 縦方向のスクロールをこの枠内に閉じ込める */
+  height: 70vh !important;
   margin-top: var(--space-16);
+  position: relative !important;
 }
 
-/* 💡バグを引き起こしていた、タイムライン内の無理な個別固定（sticky）をすべて完全に無効化 */
 .timeline-toolbar,
 .timeline-row,
 .timeline-row-header--axis,
 .timeline-track,
 .timeline-axis,
 .timeline-axis-cell {
-  position: static !important;
-  margin: 0 !important;
+  margin: 0;
+}
+
+/* 日付軸行（1行目）をテーブルビューのtheadと同様に先頭固定で追従させる */
+.timeline-grid > .timeline-row:first-child {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 50 !important;
+  background-color: var(--color-bg-base);
 }
 
 /* ========================================================
@@ -1261,12 +1269,14 @@
 
 /* スクロールバーのデザイン */
 [data-view-panel="kanban"] .kanban::-webkit-scrollbar,
-[data-view-panel="table"] .task-table-wrapper::-webkit-scrollbar {
+[data-view-panel="table"] .task-table-wrapper::-webkit-scrollbar,
+.timeline-wrapper::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 [data-view-panel="kanban"] .kanban::-webkit-scrollbar-thumb,
-[data-view-panel="table"] .task-table-wrapper::-webkit-scrollbar-thumb {
+[data-view-panel="table"] .task-table-wrapper::-webkit-scrollbar-thumb,
+.timeline-wrapper::-webkit-scrollbar-thumb {
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 3px;
 }
