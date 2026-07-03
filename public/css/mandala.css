@@ -117,11 +117,21 @@
   display: block;
 }
 
+/* 🔴 Issue #50対応：チャートエリア全体を中央寄せにする */
+.mandala-chart-title-row,
+.mandala-progress-wrap,
+.mandala-grid-wrapper,
+.mandala-legend {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
 .mandala-chart-title-row {
   display: flex;
   align-items: center;
   gap: var(--space-16);
   margin-bottom: var(--space-8);
+  max-width: 900px;
 }
 
 .mandala-chart-title-row h3 {
@@ -167,6 +177,9 @@
   grid-template-rows: repeat(3, 1fr);
   gap: 6px;
   max-width: 900px;
+  /* 🔴 Issue #50対応：ページ幅いっぱいの中で中央寄せにする */
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .mandala-block {
@@ -458,9 +471,11 @@
 
 .mandala-legend {
   display: flex;
+  justify-content: center;
   gap: var(--space-16);
   margin-top: var(--space-16);
   flex-wrap: wrap;
+  max-width: 900px;
 }
 
 .mandala-legend-item {

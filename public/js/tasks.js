@@ -94,7 +94,7 @@ const GITHUB_LANGUAGE_COLORS = {
   Kotlin: "#A97BFF",
   HTML: "#e34c26",
   CSS: "#563d7c",
-  "HTML＆CSS": "#e34c26",
+  "HTML&CSS": "#e34c26",
   React: "#61dafb",
   Shell: "#89e051",
   Dart: "#00B4AB",
@@ -1124,8 +1124,6 @@ function renderTable(data) {
 
 // ===== カレンダービュー =====
 
-// ===== カレンダービュー =====
-
 let calendarDate = new Date();
 
 // 【修正】ローカルストレージに保存された年月があれば、それを優先して復元する
@@ -1825,7 +1823,8 @@ function renderTimeline(data) {
               <input type="month" id="timeline-month-picker" class="timeline-month-picker" aria-label="年月を選択" />
             </div>
           </div>
-          <div class="timeline-track" style="overflow-x: auto;">
+          <!-- 💡 崩れの原因だった style="overflow-x: auto;" を完全に削除しました -->
+          <div class="timeline-track">
             <div class="timeline-axis" style="display: grid; grid-template-columns: repeat(${daysInMonth}, minmax(40px, 1fr)); width: 100%;">
               ${axisCellsHtml}
             </div>
