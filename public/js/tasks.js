@@ -1555,6 +1555,29 @@ document.querySelectorAll(".view-tab").forEach((tab) => {
 let timelineDate = new Date();
 timelineDate.setDate(1);
 
+// ===== タイムライン：表示モード・折りたたみ状態の永続化 =====
+// - timeline_display_mode: "all" | "planned" | "actual"（カレンダーの表示切替タブと同じ考え方）
+// - collapsedTimelineStatuses: 未着手/進行中/完了の大枠見出しの折りたたみ状態（テーブルビューと同じ考え方）
+// - collapsedTimelineGroups: 各親グループ行の子タスクバー表示/非表示（テーブルビューのグループ行折りたたみと同じ考え方）
+
+function getTimelineDisplayMode() {
+  return localStorage.getItem("timeline_display_mode") || "all";
+}
+
+function getCollapsedTimelineStatuses() {
+  return JSON.parse(localStorage.getItem("collapsedTimelineStatuses") || "[]");
+}
+function saveCollapsedTimelineStatuses(statuses) {
+  localStorage.setItem("collapsedTimelineStatuses", JSON.stringify(statuses));
+}
+
+function getCollapsedTimelineGroups() {
+  return JSON.parse(localStorage.getItem("collapsedTimelineGroups") || "[]");
+}
+function saveCollapsedTimelineGroups(groupIds) {
+  localStorage.setItem("collapsedTimelineGroups", JSON.stringify(groupIds));
+}
+
 function getDateOnly(dateStr) {
   if (!dateStr) return null;
   const date = new Date(dateStr);
@@ -1595,6 +1618,39 @@ function bindTimelineEvents() {
   const year = timelineDate.getFullYear();
   const month = timelineDate.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  // ステータス大枠（未着手/進行中/完了）の開閉
+  document
+    .querySelectorAll("[data-timeline-status-toggle]")
+    .forEach((header) => {
+      header.addEventListener("click", () => {
+        const status = header.dataset.timelineStatusToggle;
+        let collapsed = getCollapsedTimelineStatuses();
+        if (collapsed.includes(status)) {
+          collapsed = collapsed.filter((s) => s !== status);
+        } else {
+          collapsed.push(status);
+        }
+        saveCollapsedTimelineStatuses(collapsed);
+        renderTimeline(lastTaskViewData);
+      });
+    });
+
+  // グループ行の▼トグル（子タスクバーの表示/非表示）
+  document.querySelectorAll(".timeline-group-toggle").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const groupId = btn.dataset.groupId;
+      let collapsed = getCollapsedTimelineGroups();
+      if (collapsed.includes(groupId)) {
+        collapsed = collapsed.filter((id) => id !== groupId);
+      } else {
+        collapsed.push(groupId);
+      }
+      saveCollapsedTimelineGroups(collapsed);
+      renderTimeline(lastTaskViewData);
+    });
+  });
 
   document.querySelectorAll(".timeline-bar").forEach((bar) => {
     bar.addEventListener("click", (e) => {
@@ -1755,6 +1811,7 @@ function bindTimelineEvents() {
     track.addEventListener("click", (e) => {
       if (
         e.target.closest(".timeline-bar") ||
+        e.target.closest(".timeline-group-toggle") ||
         track.parentElement.querySelector(".timeline-row-header--axis")
       )
         return;
@@ -1763,12 +1820,9 @@ function bindTimelineEvents() {
       const clickedDay = Math.floor(percent * daysInMonth) + 1;
       const safeDay = Math.max(1, Math.min(daysInMonth, clickedDay));
       const cellDateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(safeDay).padStart(2, "0")}`;
-      const rowHeader = track.parentElement.querySelector(
-        ".timeline-row-header",
-      );
-      const groupTitle = rowHeader ? rowHeader.textContent.trim() : "";
+      const groupId = track.dataset.groupId;
       const group = lastTaskViewData?.groups.find(
-        (g) => g.title === groupTitle,
+        (g) => String(g.id) === String(groupId),
       );
       if (group) {
         openTaskModal(group.id, "未着手", cellDateStr);
@@ -1842,94 +1896,144 @@ function renderTimeline(data) {
   const hideCompleted =
     document.getElementById("timeline-hide-completed")?.checked ?? false;
 
-  const sortedGroups = sortGroupsByEarliestPlannedDate(groups, tasks);
+  // 表示モード（すべて/予定/実績）をタブに反映
+  const displayMode = getTimelineDisplayMode();
+  document.querySelectorAll(".timeline-mode-tab").forEach((tab) => {
+    tab.classList.toggle("active", tab.dataset.mode === displayMode);
+  });
 
-  // タイムラインの行高さ定数（予定バー上段20px + 実績バー下段18px + 行内余白10px = 48px固定）
-  const TASK_ROW_HEIGHT = 48;
+  const collapsedStatuses = getCollapsedTimelineStatuses();
+  const collapsedGroups = getCollapsedTimelineGroups();
 
-  sortedGroups.forEach((group) => {
-    let childTasks = tasks.filter(
-      (t) => String(t.group_id) === String(group.id),
+  // タイムラインの行高さ：モードが「すべて」（予定+実績の2段）のときのみ48px、
+  // 「予定」「実績」いずれか単独表示のときは1本分の高さに圧縮する
+  const TASK_ROW_HEIGHT = displayMode === "all" ? 48 : 26;
+
+  const statuses = ["未着手", "進行中", "完了"];
+  const groupedByStatus = { 未着手: [], 進行中: [], 完了: [] };
+  groups.forEach((group) => {
+    const status = calcStatus(group.id, tasks);
+    (groupedByStatus[status] || groupedByStatus["未着手"]).push(group);
+  });
+
+  statuses.forEach((status) => {
+    const statusGroups = sortGroupsByEarliestPlannedDate(
+      groupedByStatus[status] || [],
+      tasks,
     );
-    // 親タスク（グループ）単位で完了判定し、完了グループのみ丸ごと非表示
-    // 進行中の親グループは完了済みの子タスクも含めて表示する
-    if (hideCompleted && calcStatus(group.id, tasks) === "完了") return;
+    const isStatusCollapsed = collapsedStatuses.includes(status);
+    const statusArrow = isStatusCollapsed ? "▸" : "▾";
 
-    childTasks.sort((a, b) => {
-      const aTime = a.start_planned_date
-        ? new Date(a.start_planned_date).getTime()
-        : 0;
-      const bTime = b.start_planned_date
-        ? new Date(b.start_planned_date).getTime()
-        : 0;
-      return aTime - bTime;
-    });
-
-    const barsHtml = childTasks
-      .map((task, index) => {
-        // 48px固定行高さ：上段に予定バー、下段に実績バー
-        const rowTop = 8 + index * TASK_ROW_HEIGHT;
-        let html = "";
-
-        // 予定バー（上段）
-        const plannedPos = calcTimelineBarPosition(
-          task.start_planned_date,
-          task.end_planned_date,
-          daysInMonth,
-          monthStart,
-          monthEnd,
-        );
-        if (plannedPos) {
-          html += `
-            <div class="timeline-bar timeline-bar--planned" data-task-id="${task.id}" tabindex="0"
-              style="left: ${plannedPos.leftPercent}%; width: ${plannedPos.widthPercent}%; top: ${rowTop}px; position: absolute; height: 20px;">
-              <div class="timeline-resize-handle handle-left" style="position: absolute; left: 0; top: 0; width: 6px; height: 100%; cursor: ew-resize; z-index: 10;"></div>
-              <span class="timeline-bar-title" style="pointer-events: none; padding: 0 8px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${task.title}</span>
-              <div class="timeline-resize-handle handle-right" style="position: absolute; right: 0; top: 0; width: 6px; height: 100%; cursor: ew-resize; z-index: 10;"></div>
-            </div>
-          `;
-        }
-
-        // 実績バー（下段）：start_date がある場合のみ
-        if (task.start_date) {
-          const actualPos = calcTimelineBarPosition(
-            task.start_date,
-            task.end_date,
-            daysInMonth,
-            monthStart,
-            monthEnd,
-          );
-          if (actualPos) {
-            const actualTop = rowTop + 22;
-            html += `
-              <div class="timeline-bar timeline-bar--actual" data-task-id="${task.id}" tabindex="0"
-                style="left: ${actualPos.leftPercent}%; width: ${actualPos.widthPercent}%; top: ${actualTop}px; position: absolute; height: 18px;">
-                <span class="timeline-bar-title" style="pointer-events: none; padding: 0 6px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.65rem;">実 ${task.title}</span>
-              </div>
-            `;
-          }
-        }
-
-        return html;
-      })
-      .join("");
-
-    const trackHeight = Math.max(40, childTasks.length * TASK_ROW_HEIGHT + 16);
-    const todayLineHtml =
-      todayLeftPercent !== null
-        ? `<div class="timeline-today-line" style="left: ${todayLeftPercent}%;"></div>`
-        : "";
-
+    // ステータス大枠見出し行（テーブルビューと同じ考え方）
     grid.insertAdjacentHTML(
       "beforeend",
-      `<div class="timeline-row">
-          <div class="timeline-row-header">${group.title}</div>
-          <div class="timeline-track" style="min-height: ${trackHeight}px;">
-            ${todayLineHtml}
-            ${barsHtml}
-          </div>
+      `<div class="timeline-status-header-row" data-timeline-status-toggle="${status}">
+          <span class="status-row-toggle">${statusArrow}</span>${status}（${statusGroups.length}件）
         </div>`,
     );
+
+    if (isStatusCollapsed) return;
+
+    statusGroups.forEach((group) => {
+      let childTasks = tasks.filter(
+        (t) => String(t.group_id) === String(group.id),
+      );
+      // 親タスク（グループ）単位で完了判定し、完了グループのみ丸ごと非表示
+      // 進行中の親グループは完了済みの子タスクも含めて表示する
+      if (hideCompleted && status === "完了") return;
+
+      childTasks.sort((a, b) => {
+        const aTime = a.start_planned_date
+          ? new Date(a.start_planned_date).getTime()
+          : 0;
+        const bTime = b.start_planned_date
+          ? new Date(b.start_planned_date).getTime()
+          : 0;
+        return aTime - bTime;
+      });
+
+      const isGroupCollapsed = collapsedGroups.includes(String(group.id));
+      const groupArrow = isGroupCollapsed ? "▸" : "▾";
+
+      let barsHtml = "";
+      if (!isGroupCollapsed) {
+        barsHtml = childTasks
+          .map((task, index) => {
+            const rowTop = 8 + index * TASK_ROW_HEIGHT;
+            let html = "";
+
+            // 予定バー（上段）：モードが「すべて」または「予定」のとき表示
+            if (displayMode === "all" || displayMode === "planned") {
+              const plannedPos = calcTimelineBarPosition(
+                task.start_planned_date,
+                task.end_planned_date,
+                daysInMonth,
+                monthStart,
+                monthEnd,
+              );
+              if (plannedPos) {
+                html += `
+                  <div class="timeline-bar timeline-bar--planned" data-task-id="${task.id}" tabindex="0"
+                    style="left: ${plannedPos.leftPercent}%; width: ${plannedPos.widthPercent}%; top: ${rowTop}px; position: absolute; height: 20px;">
+                    <div class="timeline-resize-handle handle-left" style="position: absolute; left: 0; top: 0; width: 6px; height: 100%; cursor: ew-resize; z-index: 10;"></div>
+                    <span class="timeline-bar-title" style="pointer-events: none; padding: 0 8px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${task.title}</span>
+                    <div class="timeline-resize-handle handle-right" style="position: absolute; right: 0; top: 0; width: 6px; height: 100%; cursor: ew-resize; z-index: 10;"></div>
+                  </div>
+                `;
+              }
+            }
+
+            // 実績バー（下段）：start_date があり、モードが「すべて」または「実績」のとき表示
+            if (
+              task.start_date &&
+              (displayMode === "all" || displayMode === "actual")
+            ) {
+              const actualPos = calcTimelineBarPosition(
+                task.start_date,
+                task.end_date,
+                daysInMonth,
+                monthStart,
+                monthEnd,
+              );
+              if (actualPos) {
+                const actualTop =
+                  displayMode === "actual" ? rowTop : rowTop + 22;
+                html += `
+                  <div class="timeline-bar timeline-bar--actual" data-task-id="${task.id}" tabindex="0"
+                    style="left: ${actualPos.leftPercent}%; width: ${actualPos.widthPercent}%; top: ${actualTop}px; position: absolute; height: 18px;">
+                    <span class="timeline-bar-title" style="pointer-events: none; padding: 0 6px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.65rem;">実 ${task.title}</span>
+                  </div>
+                `;
+              }
+            }
+
+            return html;
+          })
+          .join("");
+      }
+
+      const trackHeight = isGroupCollapsed
+        ? 40
+        : Math.max(40, childTasks.length * TASK_ROW_HEIGHT + 16);
+      const todayLineHtml =
+        !isGroupCollapsed && todayLeftPercent !== null
+          ? `<div class="timeline-today-line" style="left: ${todayLeftPercent}%;"></div>`
+          : "";
+
+      grid.insertAdjacentHTML(
+        "beforeend",
+        `<div class="timeline-row">
+            <div class="timeline-row-header">
+              <button type="button" class="timeline-group-toggle" data-group-id="${group.id}" aria-label="子タスクの表示切替">${groupArrow}</button>
+              <span class="timeline-row-header-title">${group.title}（${childTasks.length}件）</span>
+            </div>
+            <div class="timeline-track" data-group-id="${group.id}" style="min-height: ${trackHeight}px;">
+              ${todayLineHtml}
+              ${barsHtml}
+            </div>
+          </div>`,
+      );
+    });
   });
 
   bindTimelineEvents();
@@ -1941,6 +2045,14 @@ function renderTimeline(data) {
     monthPicker.value = `${year}-${String(month + 1).padStart(2, "0")}`;
   }
 }
+
+// タイムライン表示モードタブ（すべて/予定/実績）のクリックイベント
+document.querySelectorAll(".timeline-mode-tab").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    localStorage.setItem("timeline_display_mode", tab.dataset.mode);
+    if (lastTaskViewData) renderTimeline(lastTaskViewData);
+  });
+});
 
 // ===== ビュー全体の描画・切り替え =====
 

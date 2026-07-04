@@ -13,10 +13,10 @@
   z-index: 200 !important; /* 最前面に持ってくる */
   background-color: var(--color-bg-base) !important;
 
-  margin-left: calc(var(--space-24) * -1) !important;
+  /* margin-left: calc(var(--space-24) * -1) !important;
   margin-right: calc(var(--space-24) * -1) !important;
   padding-left: var(--space-24) !important;
-  padding-right: var(--space-24) !important;
+  padding-right: var(--space-24) !important; */
 
   padding-top: var(--space-24) !important;
   padding-bottom: var(--space-16) !important;
@@ -806,7 +806,7 @@
 
 .timeline-toolbar {
   display: flex !important;
-  justify-content: flex-start !important;
+  justify-content: space-between !important;
   align-items: center !important;
   padding: 8px 0;
   margin-bottom: var(--space-8);
@@ -820,6 +820,62 @@
   font-size: 0.85rem;
   color: var(--color-text-secondary);
   cursor: pointer;
+}
+
+/* 💡 追加：ビューパネル（タイムライン等の土台）が親要素の幅を超えないようにする */
+.view-panel {
+  width: 100% !important;
+  max-width: calc(
+    100vw - 250px
+  ) !important; /* 👈 画面幅からサイドバーの幅(約250px)を引いたサイズに制限 */
+  overflow: hidden !important;
+}
+
+/* 💡 追加または上書き：タイムラインのコンテナ */
+.timeline-wrapper {
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-radius: 10px;
+  overflow-x: auto !important; /* 👈 これにより、900pxの表はこの枠内だけでスクロールするようになります */
+  margin-top: var(--space-16);
+  width: 100% !important;
+}
+
+/* 表示切替タブ（すべて/予定/実績）：カレンダービューと同じ見た目に統一 */
+.timeline-display-selector {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.timeline-mode-tab {
+  background: none;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  padding: 4px 0;
+  font-size: 13px;
+  position: relative;
+  transition: color 0.2s ease;
+}
+
+.timeline-mode-tab:hover {
+  color: #fff !important;
+}
+
+.timeline-mode-tab.active {
+  color: #fff !important;
+  font-weight: bold;
+}
+
+.timeline-mode-tab.active::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #a855f7;
+  border-radius: 2px;
 }
 
 .timeline-wrapper {
@@ -843,6 +899,23 @@
   border-bottom: none;
 }
 
+/* ===== タイムライン：ステータス大枠見出し行（未着手/進行中/完了） ===== */
+/* テーブルビューの .table-status-header-row と同じ考え方（▾/▸で開閉） */
+.timeline-status-header-row {
+  display: block;
+  padding: 10px 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-sidebar);
+  border-bottom: 1px solid rgb(255 255 255 / 0.06);
+  cursor: pointer;
+  user-select: none;
+}
+
+.timeline-status-header-row:hover {
+  background-color: var(--color-bg-card);
+}
+
 .timeline-row-header {
   padding: 8px 12px;
   font-size: 0.85rem;
@@ -851,6 +924,38 @@
   align-items: center;
   border-right: 1px solid rgb(255 255 255 / 0.06);
   background-color: var(--color-bg-sidebar);
+}
+
+/* ===== タイムライン：グループ行の▼トグル（子タスクバーの表示/非表示） ===== */
+.timeline-group-toggle {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: 0.7rem;
+  cursor: pointer;
+  margin-right: 6px;
+  padding: 0;
+  border-radius: 4px;
+  transition:
+    color 0.15s,
+    background-color 0.15s;
+}
+
+.timeline-group-toggle:hover {
+  color: var(--color-text-primary);
+  background-color: rgb(255 255 255 / 0.08);
+}
+
+.timeline-row-header-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .timeline-row-header--axis {
@@ -1200,44 +1305,36 @@
 }
 
 /* ========================================================
-   タイムラインビュー：テーブルビューと同様に本体のみ高さ固定＋
-   日付軸行（1行目）をスクロール追従（sticky）させる
+   💡 タイムラインビュー：無理な固定（sticky）をすべて解除し、元の正常な表示に戻す
    ======================================================== */
 [data-view-panel="timeline"].hidden {
   display: none !important;
 }
 
-[data-view-panel="timeline"]:not(.hidden) {
+/* タイムライン表示時は縦の強制制限（枠）を一切作らず、すべて元のJSの自動計算に戻す */
+[data-view-panel="timeline"]:not(.hidden),
+.timeline-wrapper {
   height: auto !important;
+  overflow-y: visible !important;
   position: relative !important;
 }
 
-/* テーブルビューの .task-table-wrapper と同仕様：本体のみ高さ制限してスクロールを閉じ込める */
 .timeline-wrapper {
   border: 1px solid rgb(255 255 255 / 0.06);
   border-radius: 10px;
-  overflow-x: auto !important; /* 横方向（日付）のスクロール */
-  overflow-y: auto !important; /* 縦方向のスクロールをこの枠内に閉じ込める */
-  height: 70vh !important;
+  overflow-x: auto !important; /* 横方向（日付）のスクロールのみ元の仕様に戻す */
   margin-top: var(--space-16);
-  position: relative !important;
 }
 
+/* 💡バグを引き起こしていた、タイムライン内の無理な個別固定（sticky）をすべて完全に無効化 */
 .timeline-toolbar,
 .timeline-row,
 .timeline-row-header--axis,
 .timeline-track,
 .timeline-axis,
 .timeline-axis-cell {
-  margin: 0;
-}
-
-/* 日付軸行（1行目）をテーブルビューのtheadと同様に先頭固定で追従させる */
-.timeline-grid > .timeline-row:first-child {
-  position: sticky !important;
-  top: 0 !important;
-  z-index: 50 !important;
-  background-color: var(--color-bg-base);
+  position: static !important;
+  margin: 0 !important;
 }
 
 /* ========================================================
@@ -1269,14 +1366,12 @@
 
 /* スクロールバーのデザイン */
 [data-view-panel="kanban"] .kanban::-webkit-scrollbar,
-[data-view-panel="table"] .task-table-wrapper::-webkit-scrollbar,
-.timeline-wrapper::-webkit-scrollbar {
+[data-view-panel="table"] .task-table-wrapper::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 [data-view-panel="kanban"] .kanban::-webkit-scrollbar-thumb,
-[data-view-panel="table"] .task-table-wrapper::-webkit-scrollbar-thumb,
-.timeline-wrapper::-webkit-scrollbar-thumb {
+[data-view-panel="table"] .task-table-wrapper::-webkit-scrollbar-thumb {
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 3px;
 }
@@ -1291,5 +1386,11 @@
 @media (max-width: 768px) {
   #page-tasks {
     padding: var(--space-16);
+  }
+
+  .timeline-toolbar {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: var(--space-8);
   }
 }

@@ -500,11 +500,32 @@
           <!-- タイムラインビュー -->
           <div class="view-panel hidden" data-view-panel="timeline">
             <div class="timeline-toolbar">
-              <!-- 完了タスク非表示チェックボックスのみ（子タスク追加ボタンは廃止） -->
+              <!-- 完了タスク非表示チェックボックス -->
               <label class="timeline-hide-label">
                 <input type="checkbox" id="timeline-hide-completed" />
                 完了タスクを非表示
               </label>
+
+              <!-- 表示切替タブ（すべて/予定/実績）：カレンダービューと同じ仕組み -->
+              <div class="timeline-display-selector">
+                <button type="button" class="timeline-mode-tab" data-mode="all">
+                  すべて
+                </button>
+                <button
+                  type="button"
+                  class="timeline-mode-tab"
+                  data-mode="planned"
+                >
+                  予定
+                </button>
+                <button
+                  type="button"
+                  class="timeline-mode-tab"
+                  data-mode="actual"
+                >
+                  実績
+                </button>
+              </div>
             </div>
             <div class="timeline-wrapper">
               <div class="timeline-grid" id="timeline-grid"></div>
