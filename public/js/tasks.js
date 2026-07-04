@@ -1859,15 +1859,14 @@ function renderTimeline(data) {
   const monthStart = new Date(year, month, 1);
   const monthEnd = new Date(year, month, daysInMonth);
 
-  // 💡 【修正】タスクバーの計算(leftPercent)と完璧に同期させるため、
-  // 「- 0.5」ではなく、他のバーと同じ「- 1（マスの左端基準）」に統一します！
+  // 💡 タスクバーの計算(leftPercent)と完璧に同期させるため、「- 1（マスの左端基準）」に統一
   const isCurrentMonth =
     today.getFullYear() === year && today.getMonth() === month;
   const todayLeftPercent = isCurrentMonth
-    ? ((today.getDate() - 1) / daysInMonth) * 100 /* 👈 ここを「- 1」に修正 */
+    ? ((today.getDate() - 1) / daysInMonth) * 100
     : null;
 
-  // 💡 共通のオレンジ線HTML（これ以外の todayLeftPercent や todayLineHtml の二重定義はすべて削除）
+  // 💡 横スクロールする「.timeline-track」の内部に埋め込むための共通オレンジ線HTML
   const commonTodayLineHtml =
     todayLeftPercent !== null
       ? `<div class="timeline-today-line" style="left: ${todayLeftPercent}%;"></div>`
@@ -1882,26 +1881,24 @@ function renderTimeline(data) {
   ).join("");
 
   // 1. 一番上のカレンダー目盛り行の描画
-  // 1. 一番上のカレンダー目盛り行の描画
   grid.insertAdjacentHTML(
     "beforeend",
     `<div class="timeline-row">
-            <div class="timeline-row-header" style="min-height: 38px; padding: 4px 12px;">
-              <div class="timeline-month-nav">
-                <button type="button" id="btn-timeline-prev" class="btn btn-secondary" aria-label="前の月" style="padding: 1px 6px;">＜</button>
-                <span id="timeline-month-label" class="timeline-month-label" role="button" tabindex="0"></span>
-                <button type="button" id="btn-timeline-next" class="btn btn-secondary" aria-label="次の月" style="padding: 1px 6px;">＞</button>
-                <input type="month" id="timeline-month-picker" class="timeline-month-picker" aria-label="年月を選択" />
-              </div>
+          <div class="timeline-row-header" style="min-height: 38px; padding: 4px 12px;">
+            <div class="timeline-month-nav">
+              <button type="button" id="btn-timeline-prev" class="btn btn-secondary" aria-label="前の月" style="padding: 1px 6px;">＜</button>
+              <span id="timeline-month-label" class="timeline-month-label" role="button" tabindex="0"></span>
+              <button type="button" id="btn-timeline-next" class="btn btn-secondary" aria-label="次の月" style="padding: 1px 6px;">＞</button>
+              <input type="month" id="timeline-month-picker" class="timeline-month-picker" aria-label="年月を選択" />
             </div>
-            <div class="timeline-track" style="position: relative !important;">
-              <!-- 💡 【ここを修正】minmax(40px, 1fr) を廃止し、単純な 1fr の均等分配にすることで、下のトラックとマスの幅を完全に一致させます -->
-              <div class="timeline-axis" style="display: grid !important; grid-template-columns: repeat(${daysInMonth}, 1fr) !important; width: 100% !important;">
-                ${axisCellsHtml}
-              </div>
-              ${commonTodayLineHtml}
+          </div>
+          <div class="timeline-track" style="position: relative !important;">
+            <div class="timeline-axis" style="display: grid !important; grid-template-columns: repeat(${daysInMonth}, 1fr) !important; width: 100% !important;">
+              ${axisCellsHtml}
             </div>
-          </div>`,
+            ${commonTodayLineHtml}
+          </div>
+        </div>`,
   );
 
   const hideCompleted =
@@ -1962,28 +1959,87 @@ function renderTimeline(data) {
       const isGroupCollapsed = collapsedGroups.includes(String(group.id));
       const groupArrow = isGroupCollapsed ? "▸" : "▾";
 
-      const trackHeight = isGroupCollapsed
-        ? 40
-        : Math.max(40, childTasks.length * TASK_ROW_HEIGHT + 16);
-
-      // 💡 ループ内での重複計算を完全に排除し、関数トップで計算した共通のHTMLを適用する
-      const currentTodayLineHtml = !isGroupCollapsed ? commonTodayLineHtml : "";
-
-      // 各タスクバー（予定・実績）のHTML生成ロジック（既存のbarsHtml生成処理）
+      // 💡 重なり防止用のレーン管理配列
+      const lanes = [];
       let barsHtml = "";
+
       childTasks.forEach((task) => {
-        // ※お使いの環境の「barsHtmlを組み立てる既存のループコード」がここに自動で入るか、
-        // またはこの下に記述されている既存の処理を実行してください。
-        if (typeof calcAndGenerateBarsHtml === "function") {
-          barsHtml += calcAndGenerateBarsHtml(
-            task,
-            daysInMonth,
-            monthStart,
-            monthEnd,
-            displayMode,
-          );
+        // 予定バーの位置を計算
+        const plannedPos = calcTimelineBarPosition(
+          task.start_planned_date,
+          task.end_planned_date,
+          daysInMonth,
+          monthStart,
+          monthEnd,
+        );
+
+        let currentLane = 0;
+
+        if (
+          plannedPos &&
+          (displayMode === "all" || displayMode === "planned")
+        ) {
+          let targetLane = 0;
+          // 💡 【超重要】条件を「>=」に変更。これによって、同じ日から同時にスタートするタスクも確実に検知して段を分けます
+          while (
+            lanes[targetLane] !== undefined &&
+            lanes[targetLane] >= plannedPos.leftPercent
+          ) {
+            targetLane++;
+          }
+          lanes[targetLane] = plannedPos.leftPercent + plannedPos.widthPercent;
+          currentLane = targetLane;
+
+          const topPosition = currentLane * 24 + 4;
+
+          barsHtml += `<div class="timeline-bar timeline-bar--planned" data-task-id="${task.id}" style="left: ${plannedPos.leftPercent}%; width: ${plannedPos.widthPercent}%; top: ${topPosition}px;">
+                  <span class="timeline-bar-title">${task.title}</span>
+                </div>`;
+        }
+
+        // 実績バーの計算
+        const actualPos = calcTimelineBarPosition(
+          task.start_actual_date,
+          task.end_actual_date,
+          daysInMonth,
+          monthStart,
+          monthEnd,
+        );
+        if (actualPos && (displayMode === "all" || displayMode === "actual")) {
+          if (!plannedPos) {
+            let targetLane = 0;
+            // 💡 実績バー単独のときも同様に修正します
+            while (
+              lanes[targetLane] !== undefined &&
+              lanes[targetLane] > actualPos.leftPercent
+            ) {
+              targetLane++;
+            }
+            lanes[targetLane] = Math.max(
+              lanes[targetLane] || 0,
+              actualPos.leftPercent + actualPos.widthPercent,
+            );
+            currentLane = targetLane;
+          }
+
+          const topPosition =
+            displayMode === "all"
+              ? currentLane * 48 + 24
+              : currentLane * 24 + 2;
+
+          barsHtml += `<div class="timeline-bar timeline-bar--actual" data-task-id="${task.id}" style="left: ${actualPos.leftPercent}%; width: ${actualPos.widthPercent}%; top: ${topPosition}px;">
+                  <span class="timeline-bar-title">${task.title}</span>
+                </div>`;
         }
       });
+
+      // 💡 タスクが多段になった分、背景のグレーの枠（トラック）の高さを動的に広げる
+      const finalLaneCount = Math.max(lanes.length, 1);
+      const trackHeight = isGroupCollapsed
+        ? 40
+        : Math.max(40, finalLaneCount * 24 + 16);
+
+      const currentTodayLineHtml = !isGroupCollapsed ? commonTodayLineHtml : "";
 
       // 2. タスク行の描画
       grid.insertAdjacentHTML(
