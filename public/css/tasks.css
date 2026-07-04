@@ -878,21 +878,15 @@
   border-radius: 2px;
 }
 
-.timeline-wrapper {
-  border: 1px solid rgb(255 255 255 / 0.06);
-  border-radius: 10px;
-  overflow-x: auto;
-  margin-top: var(--space-16);
-}
-
 .timeline-grid {
   min-width: 900px;
 }
 
 .timeline-row {
   display: grid;
-  grid-template-columns: 140px 1fr;
+  grid-template-columns: 200px 1fr; /* 💡 140px から 200px に拡張 */
   border-bottom: 1px solid rgb(255 255 255 / 0.06);
+  position: relative !important;
 }
 
 .timeline-row:last-child {
@@ -909,7 +903,9 @@
   background-color: var(--color-bg-sidebar);
   border-bottom: 1px solid rgb(255 255 255 / 0.06);
   cursor: pointer;
-  user-select: none;
+  -webkit-user-select: none; /* Safari用 */
+  -moz-user-select: none; /* Firefox用 */
+  user-select: none; /* 標準設定 */
 }
 
 .timeline-status-header-row:hover {
@@ -924,6 +920,12 @@
   align-items: center;
   border-right: 1px solid rgb(255 255 255 / 0.06);
   background-color: var(--color-bg-sidebar);
+
+  /* 💡 ここから下の4行を追加してください */
+  white-space: nowrap; /* 絶対に自動改行させず、1行に強制する */
+  overflow: hidden; /* 200pxからはみ出た余計な文字を隠す */
+  text-overflow: ellipsis; /* はみ出た文字の末尾を自動で「…」にする */
+  min-width: 0; /* GridやFlex内で文字の省略を正常に効かせるおまじない */
 }
 
 /* ===== タイムライン：グループ行の▼トグル（子タスクバーの表示/非表示） ===== */
@@ -952,10 +954,11 @@
   background-color: rgb(255 255 255 / 0.08);
 }
 
-.timeline-row-header-title {
+.timeline-row-header--axis {
+  background-color: var(--color-bg-sidebar);
+  padding: 4px 4px;
+  min-height: 28px;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .timeline-row-header--axis {
@@ -1012,19 +1015,36 @@
   border: 0;
 }
 
+/* ========================================================
+   💡 タイムライン内の要素の配置ルールを最適化
+   ======================================================== */
+/* 縦線の基準点となるトラック要素には relative を付与し、static化は完全に解除 */
 .timeline-track {
-  position: relative;
-  min-height: 40px;
-  cursor: pointer;
+  position: relative !important;
 }
 
 .timeline-axis {
-  display: grid;
-  height: 100%;
+  display: grid !important;
+  direction: ltr !important;
+  flex-direction: row !important;
+
+  /* 💡 【追加】目盛りエリアの横幅を下のトラックと100%完全一致させるためのリセット */
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+}
+
+/* 💡 【念のため追加】一番上のトラックの基準位置をリセットする */
+.timeline-row-header--axis + .timeline-track {
+  position: relative !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 .timeline-axis-cell {
-  border-left: 1px solid rgb(255 255 255 / 0.04);
+  /* border-left: 1px solid rgb(255 255 255 / 0.04); */
+  box-sizing: border-box !important; /* 💡 【超重要】1pxの線をマスの内側に含め、全体の幅が伸びるのを防ぐ */
+
   font-size: 0.65rem;
   color: var(--color-text-tertiary);
   padding: 4px 2px;
@@ -1033,15 +1053,18 @@
   align-items: center;
   justify-content: center;
   min-height: 28px;
+  direction: ltr !important;
 }
 
 .timeline-today-line {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 0;
-  border-left: 1px solid #f59e0b;
-  z-index: 2;
+  width: 3px; /* 💡 線の太さを 3px にして存在感を出す */
+  background-color: #f59e0b; /* オレンジ色 */
+  z-index: 50 !important;
+  pointer-events: none;
+  box-shadow: 0 0 4px rgba(245, 158, 11, 0.5); /* 💡 ほんのり光らせて視認性をアップ */
 }
 
 /* ===== タイムラインバー（共通） ===== */
@@ -1326,14 +1349,12 @@
   margin-top: var(--space-16);
 }
 
-/* 💡バグを引き起こしていた、タイムライン内の無理な個別固定（sticky）をすべて完全に無効化 */
-.timeline-toolbar,
-.timeline-row,
-.timeline-row-header--axis,
-.timeline-track,
-.timeline-axis,
-.timeline-axis-cell {
-  position: static !important;
+/* 💡 バグの原因になっていたマルチセレクタを完全に解体し、安全に調整しました */
+.timeline-toolbar {
+  margin: 0 !important;
+}
+
+.timeline-row-header--axis {
   margin: 0 !important;
 }
 
