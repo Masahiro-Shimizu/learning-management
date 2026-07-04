@@ -811,6 +811,8 @@
   padding: 8px 0;
   margin-bottom: var(--space-8);
   width: 100% !important;
+  gap: 24px;
+  flex-wrap: wrap;
 }
 
 .timeline-hide-label {
@@ -878,6 +880,36 @@
   border-radius: 2px;
 }
 
+/* ===== タイムラインビュー：ステータスフィルタータブ ===== */
+.timeline-status-filter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.timeline-status-filter-tab {
+  background: none;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 12px;
+  position: relative;
+  transition: color 0.2s ease;
+  border-radius: 4px;
+}
+
+.timeline-status-filter-tab:hover {
+  color: #fff !important;
+  background-color: rgb(255 255 255 / 0.08);
+}
+
+.timeline-status-filter-tab.active {
+  color: #fff !important;
+  font-weight: bold;
+  background-color: rgb(255 255 255 / 0.12);
+}
+
 .timeline-grid {
   min-width: 900px;
 }
@@ -912,6 +944,14 @@
   background-color: var(--color-bg-card);
 }
 
+.status-row-toggle {
+  display: inline-block;
+  width: 16px;
+  color: var(--color-text-tertiary);
+  font-size: 0.7rem;
+  margin-right: 8px;
+}
+
 .timeline-row-header {
   padding: 8px 12px;
   font-size: 0.85rem;
@@ -926,6 +966,14 @@
   overflow: hidden; /* 200pxからはみ出た余計な文字を隠す */
   text-overflow: ellipsis; /* はみ出た文字の末尾を自動で「…」にする */
   min-width: 0; /* GridやFlex内で文字の省略を正常に効かせるおまじない */
+}
+
+.timeline-row-header-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 /* ===== タイムライン：グループ行の▼トグル（子タスクバーの表示/非表示） ===== */
@@ -999,419 +1047,6 @@
   min-width: 0;
 }
 
-.timeline-month-label:hover,
-.timeline-month-label:focus-visible {
-  background-color: rgb(255 255 255 / 0.08);
-  outline: none;
-}
-
 .timeline-month-picker {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  pointer-events: none;
-  border: 0;
-}
-
-/* ========================================================
-   💡 タイムライン内の要素の配置ルールを最適化
-   ======================================================== */
-/* 縦線の基準点となるトラック要素には relative を付与し、static化は完全に解除 */
-.timeline-track {
-  position: relative !important;
-}
-
-.timeline-axis {
-  display: grid !important;
-  direction: ltr !important;
-  flex-direction: row !important;
-
-  /* 💡 【追加】目盛りエリアの横幅を下のトラックと100%完全一致させるためのリセット */
-  margin: 0 !important;
-  padding: 0 !important;
-  border: none !important;
-}
-
-/* 💡 【念のため追加】一番上のトラックの基準位置をリセットする */
-.timeline-row-header--axis + .timeline-track {
-  position: relative !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-.timeline-axis-cell {
-  /* border-left: 1px solid rgb(255 255 255 / 0.04); */
-  box-sizing: border-box !important; /* 💡 【超重要】1pxの線をマスの内側に含め、全体の幅が伸びるのを防ぐ */
-
-  font-size: 0.65rem;
-  color: var(--color-text-tertiary);
-  padding: 4px 2px;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 28px;
-  direction: ltr !important;
-}
-
-.timeline-today-line {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 3px; /* 💡 線の太さを 3px にして存在感を出す */
-  background-color: #f59e0b; /* オレンジ色 */
-  z-index: 50 !important;
-  pointer-events: none;
-  box-shadow: 0 0 4px rgba(245, 158, 11, 0.5); /* 💡 ほんのり光らせて視認性をアップ */
-}
-
-/* ===== タイムラインバー（共通） ===== */
-.timeline-bar {
-  position: absolute;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-  white-space: nowrap;
-  cursor: pointer;
-  z-index: 10 !important; /* 💡背景の線より手前に出す */
-  transition: filter 0.15s;
-}
-
-.timeline-bar:hover {
-  filter: brightness(1.2);
-  z-index: 15 !important;
-}
-
-.timeline-bar-title {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* 予定バー（紫系） */
-.timeline-bar--planned {
-  background-color: rgb(139 92 246 / 0.25);
-  color: #c4b5fd;
-  font-size: 0.7rem;
-  height: 20px;
-}
-
-/* 実績バー（アンバー系） */
-.timeline-bar--actual {
-  background-color: rgba(245, 158, 11, 0.25);
-  border: 1px solid rgba(245, 158, 11, 0.45);
-  color: #fcd34d;
-  font-size: 0.65rem;
-  height: 18px;
-}
-
-/* ===== カテゴリバッジ（言語/技術カテゴリ） ===== */
-
-.task-card-badges {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: var(--space-8);
-}
-
-.task-card-badges .task-type-badge {
-  margin-bottom: 0;
-}
-
-.task-table-badges {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.task-category-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  line-height: 1.4;
-}
-
-.task-category-badge--indigo {
-  background-color: rgb(99 102 241 / 0.2);
-  color: #a5b4fc;
-}
-
-.task-category-badge--amber {
-  background-color: rgb(245 158 11 / 0.2);
-  color: #fcd34d;
-}
-
-.task-category-badge--teal {
-  background-color: rgb(20 184 166 / 0.2);
-  color: #5eead4;
-}
-
-.task-category-badge--rose {
-  background-color: rgb(244 63 94 / 0.2);
-  color: #fda4af;
-}
-
-.task-category-badge--lime {
-  background-color: rgb(132 204 22 / 0.2);
-  color: #d9f99d;
-}
-
-.task-category-badge--sky {
-  background-color: rgb(14 165 233 / 0.2);
-  color: #7dd3fc;
-}
-
-.task-category-badge--violet {
-  background-color: rgb(139 92 246 / 0.2);
-  color: #c4b5fd;
-}
-
-.task-category-badge--default {
-  background-color: rgb(255 255 255 / 0.08);
-  color: var(--color-text-secondary);
-}
-
-/* カレンダーチップ内のカテゴリバッジ */
-.calendar-chip .task-category-badge {
-  flex-shrink: 0;
-  padding: 1px 5px;
-  font-size: 0.65rem;
-}
-
-/* ===== 進捗率バー（親グループ：子タスク完了率） ===== */
-
-.group-card-progress {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-.group-card-progress-bar {
-  flex: 1;
-  height: 5px;
-  border-radius: 6px;
-  background-color: rgb(255 255 255 / 0.08);
-  overflow: hidden;
-}
-
-.group-card-progress-bar i {
-  display: block;
-  height: 100%;
-  background: linear-gradient(
-    135deg,
-    var(--color-accent-primary) 0%,
-    #f5a623 130%
-  );
-  border-radius: 6px;
-}
-
-.group-card-progress-label {
-  flex-shrink: 0;
-  font-size: 0.72rem;
-  color: var(--color-text-tertiary);
-  white-space: nowrap;
-}
-
-/* テーブルビューの進捗率カラム用（横幅固定の簡易バー） */
-.table-progress {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  width: 90px;
-}
-
-.table-progress-bar {
-  flex: 1;
-  height: 5px;
-  border-radius: 6px;
-  background-color: rgb(255 255 255 / 0.08);
-  overflow: hidden;
-}
-
-.table-progress-bar i {
-  display: block;
-  height: 100%;
-  background: linear-gradient(
-    135deg,
-    var(--color-accent-primary) 0%,
-    #f5a623 130%
-  );
-  border-radius: 6px;
-}
-
-.table-progress-label {
-  font-size: 0.72rem;
-  color: var(--color-text-tertiary);
-  white-space: nowrap;
-}
-
-/* ===== ステップ達成率バー（カンバンの子タスクカード） ===== */
-
-.task-card-step-progress {
-  margin-top: 8px;
-  height: 4px;
-  border-radius: 4px;
-  background-color: rgb(255 255 255 / 0.08);
-  overflow: hidden;
-}
-
-.task-card-step-progress i {
-  display: block;
-  height: 100%;
-  background-color: var(--color-status-done);
-  border-radius: 4px;
-}
-
-/* ===== モーダルの重なり順の修正 ===== */
-#task-modal,
-#group-modal,
-#group-picker-modal {
-  position: fixed !important;
-  inset: 0 !important;
-  background-color: var(--color-bg-overlay) !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000 !important;
-}
-
-#task-modal.hidden,
-#group-modal.hidden,
-#group-picker-modal.hidden {
-  display: none !important;
-}
-
-#task-modal > .card,
-#group-modal > .card,
-#group-picker-modal > .card,
-#task-modal > div,
-#group-modal > div,
-#group-picker-modal > div {
-  background-color: var(--color-bg-modal);
-  max-height: 90vh;
-  overflow-y: auto;
-  position: relative;
-  z-index: 1001;
-}
-/* カンバン・テーブル・カレンダーの切り替えタブを固定 */
-.view-tabs {
-  position: sticky !important;
-  top: 86px !important;
-  z-index: 190 !important;
-  background-color: var(--color-bg-base) !important;
-  margin-bottom: var(--space-16);
-  padding-bottom: 4px;
-}
-
-/* ========================================================
-   各ビュー（カンバン・テーブル）のスクロール範囲を個別に制限
-   ======================================================== */
-
-/* カンバンビュー：カードエリアのみを高さ制限（スクロール化） */
-[data-view-panel="kanban"] .kanban {
-  height: 68vh !important;
-  overflow-y: auto !important;
-  padding-right: 4px;
-}
-
-/* テーブルビュー：本体のみを高さ制限（スクロール化） */
-[data-view-panel="table"] .task-table-wrapper {
-  height: 70vh !important;
-  overflow-y: auto !important;
-}
-
-/* ========================================================
-   💡 タイムラインビュー：無理な固定（sticky）をすべて解除し、元の正常な表示に戻す
-   ======================================================== */
-[data-view-panel="timeline"].hidden {
-  display: none !important;
-}
-
-/* タイムライン表示時は縦の強制制限（枠）を一切作らず、すべて元のJSの自動計算に戻す */
-[data-view-panel="timeline"]:not(.hidden),
-.timeline-wrapper {
-  height: auto !important;
-  overflow-y: visible !important;
-  position: relative !important;
-}
-
-.timeline-wrapper {
-  border: 1px solid rgb(255 255 255 / 0.06);
-  border-radius: 10px;
-  overflow-x: auto !important; /* 横方向（日付）のスクロールのみ元の仕様に戻す */
-  margin-top: var(--space-16);
-}
-
-/* 💡 バグの原因になっていたマルチセレクタを完全に解体し、安全に調整しました */
-.timeline-toolbar {
-  margin: 0 !important;
-}
-
-.timeline-row-header--axis {
-  margin: 0 !important;
-}
-
-/* ========================================================
-   テーブルビュー：種別バッジ左寄せ設定
-   ======================================================== */
-.task-table tr.task-row td:nth-child(2) {
-  text-align: left !important;
-}
-
-.task-table-badges {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: flex-start !important;
-  justify-content: center !important;
-  gap: 4px !important;
-  width: 100% !important;
-  margin: 0 !important;
-}
-
-/* 回り込み（誤爆）を完全に遮断し、テーブルビューのバッジだけに限定して適応 */
-.task-table-badges .task-type-badge,
-.task-table-badges .task-category-badge {
-  text-align: left !important;
-  display: inline-block !important;
-  width: max-content !important;
-  padding-left: 6px !important;
-  padding-right: 6px !important;
-}
-
-/* スクロールバーのデザイン */
-[data-view-panel="kanban"] .kanban::-webkit-scrollbar,
-[data-view-panel="table"] .task-table-wrapper::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-[data-view-panel="kanban"] .kanban::-webkit-scrollbar-thumb,
-[data-view-panel="table"] .task-table-wrapper::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-}
-
-/* メディアクエリ */
-@media (max-width: 1024px) {
-  .kanban {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 768px) {
-  #page-tasks {
-    padding: var(--space-16);
-  }
-
-  .timeline-toolbar {
-    flex-direction: column;
-    align-items: flex-start !important;
-    gap: var(--space-8);
-  }
+  display: none;
 }
