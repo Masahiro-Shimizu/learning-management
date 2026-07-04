@@ -500,7 +500,7 @@
           <!-- タイムラインビュー -->
           <div class="view-panel hidden" data-view-panel="timeline">
             <div class="timeline-toolbar">
-              <!-- 表示切替タブ（すべて/予定/実績）：カレンダービューと同じ仕組み -->
+              <!-- 表示モード切替タブ（すべて/予定/実績） -->
               <div class="timeline-display-selector">
                 <button type="button" class="timeline-mode-tab" data-mode="all">
                   すべて
@@ -518,6 +518,38 @@
                   data-mode="actual"
                 >
                   実績
+                </button>
+              </div>
+
+              <!-- ステータスフィルタータブ（未着手/進行中/完了/すべて） -->
+              <div class="timeline-status-filter">
+                <button
+                  type="button"
+                  class="timeline-status-filter-tab active"
+                  data-status-filter="all"
+                >
+                  すべて
+                </button>
+                <button
+                  type="button"
+                  class="timeline-status-filter-tab"
+                  data-status-filter="未着手"
+                >
+                  未着手
+                </button>
+                <button
+                  type="button"
+                  class="timeline-status-filter-tab"
+                  data-status-filter="進行中"
+                >
+                  進行中
+                </button>
+                <button
+                  type="button"
+                  class="timeline-status-filter-tab"
+                  data-status-filter="完了"
+                >
+                  完了
                 </button>
               </div>
             </div>
@@ -1000,7 +1032,7 @@
     <div id="book-modal" class="modal hidden">
       <div class="modal-content">
         <div class="modal-header">
-          <h3 id="book-modal-title"></h3>
+          <h3 id="book-modal-title">書籍を編集</h3>
           <button
             type="button"
             id="btn-book-close-x"
@@ -1010,10 +1042,15 @@
             ✕
           </button>
         </div>
-        <p id="book-modal-author"></p>
 
-        <label for="book-total-chapters">全章数</label>
-        <input type="number" id="book-total-chapters" placeholder="例：14" />
+        <label for="book-title">書籍タイトル</label>
+        <div id="book-title" style="font-weight: 600; margin-bottom: 16px"></div>
+
+        <label for="book-author">著者名</label>
+        <input type="text" id="book-author" />
+
+        <label for="book-chapter-count">全章数</label>
+        <input type="number" id="book-chapter-count" />
 
         <label for="book-memo">メモ</label>
         <textarea id="book-memo"></textarea>
@@ -1022,8 +1059,12 @@
           <button type="button" id="btn-book-delete" class="btn btn-danger">
             削除
           </button>
-          <div style="display: flex; gap: 8px">
-            <button type="button" id="btn-book-close" class="btn btn-secondary">
+          <div class="task-actions-right">
+            <button
+              type="button"
+              id="btn-book-close"
+              class="btn btn-secondary"
+            >
               キャンセル
             </button>
             <button type="button" id="btn-book-save" class="btn btn-primary">
@@ -1034,61 +1075,11 @@
       </div>
     </div>
 
-    <!-- ===== マンダラ：子タスク選択モーダル ===== -->
-    <div id="mandala-task-picker-modal" class="modal hidden">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>タスクを紐づける</h3>
-          <button
-            type="button"
-            id="btn-mandala-task-picker-close"
-            class="btn-modal-close"
-            aria-label="閉じる"
-          >
-            ✕
-          </button>
-        </div>
-
-        <div class="mandala-task-picker-search-row">
-          <input
-            type="text"
-            id="mandala-task-picker-search"
-            placeholder="タスクを検索…"
-          />
-        </div>
-
-        <div
-          id="mandala-task-picker-list"
-          class="mandala-task-picker-list"
-        ></div>
-
-        <div class="modal-actions">
-          <div></div>
-          <div class="task-actions-right">
-            <button
-              type="button"
-              id="btn-mandala-task-picker-cancel"
-              class="btn btn-secondary"
-            >
-              キャンセル
-            </button>
-            <button
-              type="button"
-              id="btn-mandala-task-picker-save"
-              class="btn btn-primary"
-            >
-              保存
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== グループ選択モーダル（カレンダー・タイムラインからの子タスク追加用） ===== -->
+    <!-- ===== グループ選択モーダル ===== -->
     <div id="group-picker-modal" class="modal hidden">
-      <div class="modal-content" style="width: 360px">
+      <div class="modal-content" style="max-width: 400px">
         <div class="modal-header">
-          <h3>追加先の親タスクを選択</h3>
+          <h3>親タスクを選択</h3>
           <button
             type="button"
             id="btn-group-picker-close"
@@ -1098,286 +1089,8 @@
             ✕
           </button>
         </div>
-        <ul
-          id="group-picker-list"
-          class="settings-list"
-          style="max-height: 360px; overflow-y: auto"
-        ></ul>
+        <ul id="group-picker-list" class="settings-list"></ul>
       </div>
     </div>
-
-    <!-- ===== リザルトポップアップモーダル ===== -->
-    <div id="result-modal" class="modal hidden">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>🎉 学習リザルト</h3>
-          <button
-            type="button"
-            id="btn-result-modal-close-x"
-            class="btn-modal-close"
-            aria-label="閉じる"
-          >
-            ✕
-          </button>
-        </div>
-
-        <!-- ページネーション（複数リザルトがある場合） -->
-        <div id="result-modal-nav" class="result-modal-nav hidden">
-          <button
-            type="button"
-            id="result-modal-prev"
-            class="btn-result-nav"
-            aria-label="前へ"
-          >
-            &lt;
-          </button>
-          <span id="result-modal-page" class="result-modal-page-label"
-            >1 / 1</span
-          >
-          <button
-            type="button"
-            id="result-modal-next"
-            class="btn-result-nav"
-            aria-label="次へ"
-          >
-            &gt;
-          </button>
-        </div>
-
-        <!-- リザルトコンテンツ（JSで動的に挿入） -->
-        <div id="result-modal-content-area"></div>
-
-        <!-- フッター -->
-        <div class="result-modal-footer">
-          <button
-            type="button"
-            id="btn-result-modal-close"
-            class="btn btn-secondary"
-          >
-            閉じる
-          </button>
-          <button
-            type="button"
-            id="btn-result-modal-go-page"
-            class="btn btn-primary"
-          >
-            リザルトページで見る
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 今週の目標設定用モーダル -->
-    <div
-      id="week-goal-modal"
-      class="modal"
-      style="
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.6);
-        z-index: 1050;
-        align-items: center;
-        justify-content: center;
-      "
-    >
-      <div
-        class="modal-dialog"
-        style="
-          background: #212529;
-          border: 1px solid #3c4146;
-          padding: 20px;
-          border-radius: 8px;
-          width: 100%;
-          max-width: 500px;
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
-        "
-      >
-        <!-- モーダルヘッダー -->
-        <div
-          class="modal-header"
-          style="
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #3c4146;
-            padding-bottom: 10px;
-          "
-        >
-          <h5
-            class="modal-title"
-            style="margin: 0; font-weight: bold; color: #fff"
-          >
-            今週の目標を設定
-          </h5>
-          <button
-            type="button"
-            id="btn-close-goal-modal"
-            style="
-              background: none;
-              border: none;
-              font-size: 1.5rem;
-              cursor: pointer;
-              color: #aaa;
-              line-height: 1;
-            "
-          >
-            &times;
-          </button>
-        </div>
-
-        <!-- モーダルボディ -->
-        <div class="modal-body" style="margin-bottom: 20px">
-          <div class="form-group">
-            <label
-              for="input-week-goal"
-              style="
-                display: block;
-                margin-bottom: 8px;
-                font-weight: 500;
-                color: #ccc;
-              "
-              >目標内容</label
-            >
-            <textarea
-              id="input-week-goal"
-              rows="4"
-              style="
-                width: 100%;
-                box-sizing: border-box;
-                padding: 10px;
-                border: 1px solid #495057;
-                border-radius: 4px;
-                font-size: 0.95rem;
-                resize: none;
-                background: #111;
-                color: #fff;
-              "
-              placeholder="目標を掲げてやっていきましょう！"
-            ></textarea>
-          </div>
-        </div>
-
-        <!-- モーダルフッター -->
-        <div
-          class="modal-footer"
-          style="
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            border-top: 1px solid #3c4146;
-            padding-top: 12px;
-          "
-        >
-          <button
-            type="button"
-            id="btn-cancel-goal-modal"
-            style="
-              padding: 6px 14px;
-              background: #6c757d;
-              color: #fff;
-              border: none;
-              border-radius: 4px;
-              cursor: pointer;
-              font-size: 0.9rem;
-            "
-          >
-            キャンセル
-          </button>
-          <button
-            type="button"
-            id="btn-save-week-goal"
-            style="
-              padding: 6px 14px;
-              background: #4d7fd4;
-              color: #fff;
-              border: none;
-              border-radius: 4px;
-              cursor: pointer;
-              font-size: 0.9rem;
-            "
-          >
-            保存する
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div id="goal-modal" class="modal hidden">
-      <div class="modal-content" style="width: 480px">
-        <div class="modal-header">
-          <h3>🎯 今週の目標</h3>
-          <button
-            type="button"
-            id="btn-goal-modal-close-x"
-            class="btn-modal-close"
-            aria-label="閉じる"
-          >
-            ✕
-          </button>
-        </div>
-        <p
-          id="goal-modal-period"
-          style="
-            font-size: 0.8rem;
-            color: var(--color-text-tertiary);
-            margin-bottom: var(--space-8);
-          "
-        ></p>
-        <label
-          for="goal-modal-input"
-          style="
-            font-size: 0.85rem;
-            color: var(--color-text-secondary);
-            display: block;
-            margin-bottom: 4px;
-          "
-          >目標</label
-        >
-        <textarea
-          id="goal-modal-input"
-          placeholder="この週の目標を入力してください"
-          style="
-            min-height: 100px;
-            resize: vertical;
-            width: 100%;
-            background: var(--color-bg-card);
-            color: var(--color-text-primary);
-            border: 1px solid rgb(255 255 255 / 0.1);
-            border-radius: 6px;
-            padding: 8px 10px;
-            font-family: &quot;DM Sans&quot;, sans-serif;
-            font-size: 1rem;
-          "
-        ></textarea>
-        <div class="modal-actions" style="margin-top: var(--space-16)">
-          <div></div>
-          <div style="display: flex; gap: var(--space-8)">
-            <button
-              type="button"
-              id="btn-goal-modal-cancel"
-              class="btn btn-secondary"
-            >
-              キャンセル
-            </button>
-            <button
-              type="button"
-              id="btn-goal-modal-save"
-              class="btn btn-primary"
-            >
-              保存
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <script>
-      lucide.createIcons();
-    </script>
   </body>
 </html>
