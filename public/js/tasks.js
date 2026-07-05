@@ -1,30 +1,28 @@
-// ===== タイムライン拡張機能：ステータスフィルタータブのイベント処理 =====
+"use strict";
 
-function getTimelineStatusFilter() {
-  return localStorage.getItem("timeline_status_filter") || "all";
+function minutesToHours(minutes) {
+  if (!minutes) return "0.0";
+  return (Math.round((Number(minutes) / 60) * 10) / 10).toFixed(1);
 }
 
-function saveTimelineStatusFilter(statusFilter) {
-  localStorage.setItem("timeline_status_filter", statusFilter);
+const CALENDAR_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
+const CLOCK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>`;
+
+let taskTypeOptions = [];
+let taskCategoryOptions = [];
+
+async function loadTaskTypeOptions() {
+  taskTypeOptions = await api("/api/task-types");
+  const select = document.getElementById("task-type");
+  select.innerHTML = "";
+  taskTypeOptions.forEach((type) => {
+    const option = document.createElement("option");
+    option.value = type.id;
+    option.textContent = type.name;
+    select.appendChild(option);
+  });
 }
 
-<<<<<<< HEAD
-// ステータスフィルタータブのクリックイベントをバインド
-function bindTimelineStatusFilterEvents() {
-  document.querySelectorAll(".timeline-status-filter-tab").forEach((tab) => {
-    tab.addEventListener("click", () => {
-      const selectedFilter = tab.dataset.statusFilter;
-      saveTimelineStatusFilter(selectedFilter);
-
-      // ❌ 古い処理：不要になったため削除しました（renderTimeline内で処理）
-      // document.querySelectorAll(".timeline-status-filter-tab").forEach((t) => {
-      //   t.classList.toggle("active", t === tab);
-      // });
-
-      // ✅ 新しい処理：最新データでタイムラインを再描画
-      if (lastTaskViewData && typeof renderTimeline === "function") {
-        renderTimeline(lastTaskViewData);
-=======
 async function loadTaskCategoryOptions() {
   taskCategoryOptions = await api("/api/task-categories");
   const select = document.getElementById("task-category");
@@ -1831,14 +1829,28 @@ function bindTimelineEvents() {
         openTaskModal(group.id, "未着手", cellDateStr);
       } else if (lastTaskViewData) {
         openAddTaskGroupPicker(lastTaskViewData.groups, cellDateStr);
->>>>>>> develop
       }
     });
   });
 }
 
-// 既存の renderTimeline 関数を拡張
-function renderTimelineEnhanced(data) {
+async function updateTaskPlannedDate(taskId, newDate) {
+  try {
+    const response = await fetch(`/api/tasks/${taskId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ start_planned_date: newDate }),
+    });
+    if (!response.ok) throw new Error("APIの更新に失敗しました");
+    return true;
+  } catch (error) {
+    console.error("エラー:", error);
+    alert("日付の移動に失敗しました。");
+    return false;
+  }
+}
+
+function renderTimeline(data) {
   const { groups, tasks } = data;
 
   const today = new Date();
@@ -1890,73 +1902,29 @@ function renderTimelineEnhanced(data) {
         </div>`,
   );
 
-<<<<<<< HEAD
-  const hideCompleted =
-    document.getElementById("timeline-hide-completed")?.checked ?? false;
-
-  // 表示モード（���べて/予定/実績）をタブに反映
-=======
   // 表示モード（すべて/予定/実績）をタブに反映
->>>>>>> develop
   const displayMode = getTimelineDisplayMode();
   document.querySelectorAll(".timeline-mode-tab").forEach((tab) => {
     tab.classList.toggle("active", tab.dataset.mode === displayMode);
   });
 
-<<<<<<< HEAD
-  // 【新規追加】ステータスフィルター対応
-  const statusFilter = getTimelineStatusFilter();
-  document.querySelectorAll(".timeline-status-filter-tab").forEach((tab) => {
-    tab.classList.toggle("active", tab.dataset.statusFilter === statusFilter);
-  });
-
-  const collapsedStatuses = getCollapsedTimelineStatuses();
-=======
   // ステータス絞り込み（すべて/未着手/進行中/完了）をタブに反映
   const statusFilter = getTimelineStatusFilter();
   document.querySelectorAll(".timeline-status-tab").forEach((tab) => {
     tab.classList.toggle("active", tab.dataset.status === statusFilter);
   });
 
->>>>>>> develop
   const collapsedGroups = getCollapsedTimelineGroups();
 
   const TASK_ROW_HEIGHT = displayMode === "all" ? 48 : 26;
 
-<<<<<<< HEAD
-  const statuses = ["未着手", "進行中", "完了"];
-
-  // 【新規追加】ステータスフィルター適用：指定ステータスのみに絞る
-  let targetStatuses = statuses;
-  if (statusFilter !== "all") {
-    targetStatuses = [statusFilter];
-  }
-
-  const groupedByStatus = { 未着手: [], 進行中: [], 完了: [] };
-  groups.forEach((group) => {
-    const status = calcStatus(group.id, tasks);
-    (groupedByStatus[status] || groupedByStatus["未着手"]).push(group);
-=======
   const filteredGroups = groups.filter((group) => {
     if (statusFilter === "all") return true;
     return calcStatus(group.id, tasks) === statusFilter;
->>>>>>> develop
   });
   const sortedGroups = sortGroupsByEarliestPlannedDate(filteredGroups, tasks);
 
-<<<<<<< HEAD
-  targetStatuses.forEach((status) => {
-    const statusGroups = sortGroupsByEarliestPlannedDate(
-      groupedByStatus[status] || [],
-      tasks,
-    );
-    const isStatusCollapsed = collapsedStatuses.includes(status);
-    const statusArrow = isStatusCollapsed ? "▸" : "▾";
-
-    // ステータス大枠見出し行
-=======
   if (sortedGroups.length === 0) {
->>>>>>> develop
     grid.insertAdjacentHTML(
       "beforeend",
       `<div class="timeline-empty-row">該当するタスクがありません</div>`,
@@ -1987,14 +1955,8 @@ function renderTimelineEnhanced(data) {
     // 崩れる原因になっていたため、以降はこの1つの値だけを基準にする。
     const LANE_HEIGHT = displayMode === "all" ? 48 : 24;
 
-<<<<<<< HEAD
-      // 【新規追加】グループ折りたたみ状態の判定（データ属性に String() で統一）
-      const isGroupCollapsed = collapsedGroups.includes(String(group.id));
-      const groupArrow = isGroupCollapsed ? "▸" : "▾";
-=======
     let barsHtml = "";
     let laneCount = 0;
->>>>>>> develop
 
     if (!isGroupCollapsed) {
       // 💡 重なり防止用のレーン管理配列（1タスク＝1レーンで予定・実績をまとめて管理）
@@ -2110,15 +2072,8 @@ function renderTimelineEnhanced(data) {
   if (typeof bindTimelineEvents === "function") {
     bindTimelineEvents();
   }
-
-  // 【新規追加】ステータスフィルタータブのイベントを再バインド
-  bindTimelineStatusFilterEvents();
 }
 
-<<<<<<< HEAD
-// 既存の renderTimeline 関数を上書き
-const renderTimeline = renderTimelineEnhanced;
-=======
 // タイムライン表示モードタブ（すべて/予定/実績）のクリックイベント
 document.querySelectorAll(".timeline-mode-tab").forEach((tab) => {
   tab.addEventListener("click", () => {
@@ -2536,4 +2491,3 @@ async function updateTaskDuration(taskId, startDate, endDate) {
     return false;
   }
 }
->>>>>>> develop

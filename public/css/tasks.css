@@ -811,12 +811,6 @@
   padding: 8px 0;
   margin: 0 !important;
   width: 100% !important;
-<<<<<<< HEAD
-  gap: 24px;
-  flex-wrap: wrap;
-}
-=======
->>>>>>> develop
 
   /* 💡 view-tabsの下に追従。topの正確な値はJS(syncTimelineStickyOffsets)が実測して上書きする */
   position: sticky !important;
@@ -904,36 +898,6 @@
   border-radius: 2px;
 }
 
-/* ===== タイムラインビュー：ステータスフィルタータブ ===== */
-.timeline-status-filter {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.timeline-status-filter-tab {
-  background: none;
-  border: none;
-  color: #aaa;
-  cursor: pointer;
-  padding: 4px 8px;
-  font-size: 12px;
-  position: relative;
-  transition: color 0.2s ease;
-  border-radius: 4px;
-}
-
-.timeline-status-filter-tab:hover {
-  color: #fff !important;
-  background-color: rgb(255 255 255 / 0.08);
-}
-
-.timeline-status-filter-tab.active {
-  color: #fff !important;
-  font-weight: bold;
-  background-color: rgb(255 255 255 / 0.12);
-}
-
 .timeline-grid {
   min-width: 900px;
 }
@@ -957,14 +921,6 @@
   font-size: 0.85rem;
 }
 
-.status-row-toggle {
-  display: inline-block;
-  width: 16px;
-  color: var(--color-text-tertiary);
-  font-size: 0.7rem;
-  margin-right: 8px;
-}
-
 .timeline-row-header {
   padding: 8px 12px;
   font-size: 0.85rem;
@@ -979,14 +935,6 @@
   overflow: hidden; /* 200pxからはみ出た余計な文字を隠す */
   text-overflow: ellipsis; /* はみ出た文字の末尾を自動で「…」にする */
   min-width: 0; /* GridやFlex内で文字の省略を正常に効かせるおまじない */
-}
-
-.timeline-row-header-title {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
 }
 
 /* ===== タイムライン：グループ行の▼トグル（子タスクバーの表示/非表示） ===== */
@@ -1066,10 +1014,13 @@
   min-width: 0;
 }
 
+.timeline-month-label:hover,
+.timeline-month-label:focus-visible {
+  background-color: rgb(255 255 255 / 0.08);
+  outline: none;
+}
+
 .timeline-month-picker {
-<<<<<<< HEAD
-  display: none;
-=======
   position: absolute;
   inset: 0;
   width: 100%;
@@ -1463,5 +1414,4 @@
     align-items: flex-start !important;
     gap: var(--space-8);
   }
->>>>>>> develop
 }
