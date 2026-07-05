@@ -809,17 +809,14 @@
   justify-content: space-between !important;
   align-items: center !important;
   padding: 8px 0;
-  margin-bottom: var(--space-8);
+  margin: 0 !important;
   width: 100% !important;
-}
 
-.timeline-hide-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.85rem;
-  color: var(--color-text-secondary);
-  cursor: pointer;
+  /* 💡 view-tabsの下に追従。topの正確な値はJS(syncTimelineStickyOffsets)が実測して上書きする */
+  position: sticky !important;
+  top: 130px;
+  z-index: 185 !important;
+  background-color: var(--color-bg-base) !important;
 }
 
 /* 💡 追加：ビューパネル（タイムライン等の土台）が親要素の幅を超えないようにする */
@@ -831,13 +828,26 @@
   overflow: hidden !important;
 }
 
-/* 💡 追加または上書き：タイムラインのコンテナ */
+/* 💡 タイムラインだけは例外。overflow:hiddenのままだと、内部の.timeline-toolbarが
+   position:stickyでビューポート基準に追従できなくなる（sticky計算の基準がズレて
+   要素同士が重なって崩れる不具合の原因だった）ため、可視に戻す。
+   幅の制限自体は.timeline-wrapper自身のoverflow-x:autoが担う */
+.view-panel[data-view-panel="timeline"] {
+  overflow: visible !important;
+}
+
+/* 💡 追加または上書き：タイムラインのコンテナ
+   テーブルビュー（.task-table-wrapper）・カンバンビュー（.kanban）と同じく、
+   高さを固定して内側だけでスクロールさせる方式に統一する。
+   （ページ全体スクロール方式は、stickyの基準がページの他要素とズレて
+   崩れる不具合の原因だったため廃止した） */
 .timeline-wrapper {
   border: 1px solid rgb(255 255 255 / 0.06);
   border-radius: 10px;
-  overflow-x: auto !important; /* 👈 これにより、900pxの表はこの枠内だけでスクロールするようになります */
+  overflow: auto !important;
   margin-top: var(--space-16);
   width: 100% !important;
+  height: 65vh !important;
 }
 
 /* 表示切替タブ（すべて/予定/実績）：カレンダービューと同じ見た目に統一 */
@@ -847,7 +857,14 @@
   gap: 16px;
 }
 
-.timeline-mode-tab {
+.timeline-status-selector {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.timeline-mode-tab,
+.timeline-status-tab {
   background: none;
   border: none;
   color: #aaa;
@@ -858,16 +875,19 @@
   transition: color 0.2s ease;
 }
 
-.timeline-mode-tab:hover {
+.timeline-mode-tab:hover,
+.timeline-status-tab:hover {
   color: #fff !important;
 }
 
-.timeline-mode-tab.active {
+.timeline-mode-tab.active,
+.timeline-status-tab.active {
   color: #fff !important;
   font-weight: bold;
 }
 
-.timeline-mode-tab.active::after {
+.timeline-mode-tab.active::after,
+.timeline-status-tab.active::after {
   content: "";
   position: absolute;
   bottom: -4px;
@@ -893,23 +913,12 @@
   border-bottom: none;
 }
 
-/* ===== タイムライン：ステータス大枠見出し行（未着手/進行中/完了） ===== */
-/* テーブルビューの .table-status-header-row と同じ考え方（▾/▸で開閉） */
-.timeline-status-header-row {
-  display: block;
-  padding: 10px 14px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  background-color: var(--color-bg-sidebar);
-  border-bottom: 1px solid rgb(255 255 255 / 0.06);
-  cursor: pointer;
-  -webkit-user-select: none; /* Safari用 */
-  -moz-user-select: none; /* Firefox用 */
-  user-select: none; /* 標準設定 */
-}
-
-.timeline-status-header-row:hover {
-  background-color: var(--color-bg-card);
+/* ===== タイムライン：該当なしメッセージ ===== */
+.timeline-empty-row {
+  padding: 24px 14px;
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: 0.85rem;
 }
 
 .timeline-row-header {
@@ -961,11 +970,17 @@
   overflow: hidden;
 }
 
-.timeline-row-header--axis {
-  background-color: var(--color-bg-sidebar);
-  padding: 4px 4px;
-  min-height: 28px;
-  overflow: hidden;
+/* 💡 年月ナビ＋日付軸の行全体を .timeline-wrapper（内側スクロール枠）の上端に追従させる。
+   テーブルビューの <thead>（.timeline-wrapper基準でtop:0）と同じ、実測不要の確実な方式 */
+.timeline-row--axis {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 180 !important;
+  background-color: var(--color-bg-base) !important;
+}
+
+.timeline-row--axis .timeline-track {
+  background-color: var(--color-bg-base);
 }
 
 .timeline-month-nav {
@@ -1328,32 +1343,15 @@
 }
 
 /* ========================================================
-   💡 タイムラインビュー：無理な固定（sticky）をすべて解除し、元の正常な表示に戻す
+   タイムラインビュー：.timeline-wrapperの高さ・スクロールは上部の定義
+   （height:65vh; overflow:auto;）に統一済み。ここでの追加指定は不要
    ======================================================== */
 [data-view-panel="timeline"].hidden {
   display: none !important;
 }
 
-/* タイムライン表示時は縦の強制制限（枠）を一切作らず、すべて元のJSの自動計算に戻す */
-[data-view-panel="timeline"]:not(.hidden),
-.timeline-wrapper {
-  height: auto !important;
-  overflow-y: visible !important;
-  position: relative !important;
-}
-
-.timeline-wrapper {
-  border: 1px solid rgb(255 255 255 / 0.06);
-  border-radius: 10px;
-  overflow-x: auto !important; /* 横方向（日付）のスクロールのみ元の仕様に戻す */
-  margin-top: var(--space-16);
-}
-
-/* 💡 バグの原因になっていたマルチセレクタを完全に解体し、安全に調整しました */
-.timeline-toolbar {
-  margin: 0 !important;
-}
-
+/* 💡 sticky追従時のtop計算（syncTimelineStickyOffsets）は要素のborder-box高さのみを
+   基準にするため、marginが乗るとズレの原因になる。ここでmarginを0に固定しておく */
 .timeline-row-header--axis {
   margin: 0 !important;
 }
@@ -1387,12 +1385,14 @@
 
 /* スクロールバーのデザイン */
 [data-view-panel="kanban"] .kanban::-webkit-scrollbar,
-[data-view-panel="table"] .task-table-wrapper::-webkit-scrollbar {
+[data-view-panel="table"] .task-table-wrapper::-webkit-scrollbar,
+.timeline-wrapper::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 [data-view-panel="kanban"] .kanban::-webkit-scrollbar-thumb,
-[data-view-panel="table"] .task-table-wrapper::-webkit-scrollbar-thumb {
+[data-view-panel="table"] .task-table-wrapper::-webkit-scrollbar-thumb,
+.timeline-wrapper::-webkit-scrollbar-thumb {
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 3px;
 }
