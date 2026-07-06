@@ -68,6 +68,35 @@ function getWeekStart(date) {
   return monday;
 }
 
+// v2.21.7追加：week/month/year の「開始日・終了日」を任意の基準日（baseDate）から算出する汎用関数。
+// 進捗率の締め日算出（renderCharts）と目標モーダルの期間表示（getCurrentPeriodRange）の
+// 両方から共通で使うことで、期間の境界計算がズレる不具合を防ぐ。
+function getPeriodRange(period, baseDate) {
+  if (period === "week") {
+    const monday = getWeekStart(baseDate);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+    return { start: monday, end: sunday };
+  }
+  if (period === "month") {
+    const year = baseDate.getFullYear();
+    const month = baseDate.getMonth();
+    return {
+      start: new Date(year, month, 1, 0, 0, 0, 0),
+      end: new Date(year, month + 1, 0, 23, 59, 59, 999),
+    };
+  }
+  if (period === "year") {
+    const year = baseDate.getFullYear();
+    return {
+      start: new Date(year, 0, 1, 0, 0, 0, 0),
+      end: new Date(year, 11, 31, 23, 59, 59, 999),
+    };
+  }
+  return null; // "all" は期間なし
+}
+
 function updatePeriodLabel() {
   const label = document.getElementById("period-label");
   let text = "";
@@ -344,20 +373,24 @@ function renderCharts() {
   }
 
   // ② 進捗率
+  // v2.21.7：締め日時（borderDate）の算出方法を修正。
+  // 旧ロジックは「表示中の年月」＋「実際の今日の日にち」という無関係な値を
+  // 組み合わせて締め日を作っていたため、月をまたいで期間を移動しただけで
+  // 締め日が最大1ヶ月分ジャンプし、進捗率・先週比が実際の学習量と無関係に
+  // 大きく変動する不具合があった。
+  // 新ロジック：締め日は「表示中の期間（週/月/年）の終了日時」を基準にし、
+  // その期間がまだ終わっていない（今週/今月/今年を見ている）場合のみ
+  // 「実際の現在時刻」を上限として採用する。
   const realNow = new Date();
-  const todayDate = realNow.getDate();
-  const todayHours = realNow.getHours();
-  const todayMinutes = realNow.getMinutes();
 
-  const borderDate = new Date(
-    viewDate.getFullYear(),
-    viewDate.getMonth(),
-    todayDate,
-    todayHours,
-    todayMinutes,
-    0,
-    0,
-  );
+  const currentPeriodEnd =
+    currentPeriod !== "all"
+      ? getPeriodRange(currentPeriod, viewDate).end
+      : null;
+  const borderDate =
+    currentPeriodEnd && currentPeriodEnd.getTime() < realNow.getTime()
+      ? currentPeriodEnd
+      : realNow;
 
   const totalAllTasks = tasks.length;
 
@@ -382,31 +415,20 @@ function renderCharts() {
   let prevProgressRate = 0;
 
   if (currentPeriod !== "all") {
-    let prevBorderDate = new Date(borderDate);
-
+    // 表示中の期間の「1つ前の期間」の基準日を作り、その期間の終了日時を締め日とする
+    const prevBaseDate = new Date(viewDate);
     if (currentPeriod === "week") {
-      prevBorderDate.setDate(borderDate.getDate() - 7);
+      prevBaseDate.setDate(viewDate.getDate() - 7);
     } else if (currentPeriod === "month") {
-      prevBorderDate = new Date(
-        borderDate.getFullYear(),
-        borderDate.getMonth() - 1,
-        todayDate,
-        todayHours,
-        todayMinutes,
-        0,
-        0,
-      );
+      prevBaseDate.setMonth(viewDate.getMonth() - 1);
     } else if (currentPeriod === "year") {
-      prevBorderDate = new Date(
-        borderDate.getFullYear() - 1,
-        borderDate.getMonth(),
-        todayDate,
-        todayHours,
-        todayMinutes,
-        0,
-        0,
-      );
+      prevBaseDate.setFullYear(viewDate.getFullYear() - 1);
     }
+
+    const prevPeriodEnd = getPeriodRange(currentPeriod, prevBaseDate).end;
+    // 前期間の終了日時が万一未来になるケース（通常は起こらない）に備え、今を上限にする
+    const prevBorderDate =
+      prevPeriodEnd.getTime() < realNow.getTime() ? prevPeriodEnd : realNow;
 
     const prevCompletedTasks = tasks.filter((t) => {
       if (t.status !== "完了") return false;
@@ -883,33 +905,10 @@ function ymdDash(d) {
 }
 
 // viewDateを基準に現在表示中の期間の開始日・終了日を返す
+// v2.21.7：算出ロジック本体は getPeriodRange(period, baseDate) に切り出し、
+// ここでは viewDate を基準日として渡す薄いラッパーにした（他箇所からの呼び出し方は変更なし）
 function getCurrentPeriodRange(period) {
-  if (period === "week") {
-    const dayOfWeek = viewDate.getDay();
-    const monday = new Date(viewDate);
-    monday.setDate(viewDate.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
-    monday.setHours(0, 0, 0, 0);
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-    sunday.setHours(23, 59, 59, 999);
-    return { start: monday, end: sunday };
-  }
-  if (period === "month") {
-    const year = viewDate.getFullYear();
-    const month = viewDate.getMonth();
-    return {
-      start: new Date(year, month, 1, 0, 0, 0, 0),
-      end: new Date(year, month + 1, 0, 23, 59, 59, 999),
-    };
-  }
-  if (period === "year") {
-    const year = viewDate.getFullYear();
-    return {
-      start: new Date(year, 0, 1, 0, 0, 0, 0),
-      end: new Date(year, 11, 31, 23, 59, 59, 999),
-    };
-  }
-  return null; // "all" は期間なし
+  return getPeriodRange(period, viewDate);
 }
 
 // トグルに連動してサブテキストと設定ボタンを更新する（増殖バグ修正＆目標テキスト表示版）

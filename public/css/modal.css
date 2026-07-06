@@ -444,6 +444,44 @@
   gap: var(--space-8);
 }
 
+/* ===== 書籍モーダル：右サイドパネル化（v2.21.8追加） =====
+   中央配置のダイアログではなく、画面右端に沿ってスライドインする
+   サイドパネル形式に変更。閉じる操作（✕・キャンセル・オーバーレイ
+   クリック）は既存のイベントバインドをそのまま流用できるよう、
+   構造は変えずスタイルのみで実現する。 */
+
+#book-modal {
+  justify-content: flex-end !important;
+  align-items: stretch !important;
+}
+
+#book-modal .modal-content {
+  width: 420px;
+  max-width: 92vw;
+  height: 100%;
+  max-height: 100vh;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: -12px 0 32px -8px rgba(0, 0, 0, 0.55);
+  animation: bookModalSlideIn 0.22s ease-out;
+}
+
+@keyframes bookModalSlideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 768px) {
+  #book-modal .modal-content {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
 /* ===== グループ選択モーダル：ヘッダー・ボタン配置 ===== */
 
 #group-picker-modal .modal-header {
