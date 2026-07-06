@@ -762,26 +762,15 @@
   filter: brightness(1.15);
 }
 
-/* 予定バー（デフォルト：半透明ホワイト系） */
+/* 予定バー：色はJS側で科目カテゴリごとの色（getCategoryChartColor）を計算し、
+   インラインstyleで指定する（重なった際に何の科目か判別しやすくするため） */
 .calendar-task-bar--planned {
-  background-color: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #fff;
+  border: 1px solid transparent;
 }
 
-.calendar-task-bar--planned:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-/* 実績バー（アンバー系） */
+/* 実績バー：予定バーより塗りを濃くすることで「実際にやった」感を出す（色自体はJS側のインラインで指定） */
 .calendar-task-bar--actual {
-  background-color: rgba(245, 158, 11, 0.2);
-  border: 1px solid rgba(245, 158, 11, 0.45);
-  color: #fcd34d;
-}
-
-.calendar-task-bar--actual:hover {
-  background-color: rgba(245, 158, 11, 0.32);
+  border: 1px solid transparent;
 }
 
 .calendar-chip-title {
@@ -1106,19 +1095,18 @@
   white-space: nowrap;
 }
 
-/* 予定バー（紫系） */
+/* 予定バー：色はJS側で科目カテゴリごとの色（getCategoryChartColor）を計算し、
+   インラインstyleで指定する（重なった際に何の科目か判別しやすくするため）。
+   ここでは形状（高さ・文字サイズ・枠線の太さ）のみを定義する */
 .timeline-bar--planned {
-  background-color: rgb(139 92 246 / 0.25);
-  color: #c4b5fd;
+  border: 1px solid transparent;
   font-size: 0.7rem;
   height: 20px;
 }
 
-/* 実績バー（アンバー系） */
+/* 実績バー：予定バーより塗りを濃くすることで「実際にやった」感を出す（色自体はJS側のインラインで指定） */
 .timeline-bar--actual {
-  background-color: rgba(245, 158, 11, 0.25);
-  border: 1px solid rgba(245, 158, 11, 0.45);
-  color: #fcd34d;
+  border: 1px solid transparent;
   font-size: 0.65rem;
   height: 18px;
 }

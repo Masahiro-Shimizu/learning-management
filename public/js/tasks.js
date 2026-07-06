@@ -1385,6 +1385,7 @@ function renderCalendar(data) {
       const taskBaseTop = currentTop;
 
       const categoryBadgeHtml = createCategoryBadgeHtml(task.category_name);
+      const categoryColor = getCategoryChartColor(task.category_name);
       const steps = stepsByTaskId[task.id] || [];
       const stepBadge =
         steps.length > 0
@@ -1417,6 +1418,9 @@ function renderCalendar(data) {
               display: flex;
               align-items: center;
               gap: 6px;
+              background-color: ${hexToRgba(categoryColor, 0.28)};
+              border: 1px solid ${hexToRgba(categoryColor, 0.55)};
+              color: ${categoryColor};
             ">
               ${categoryBadgeHtml}
               <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">${task.title}</span>
@@ -1482,8 +1486,11 @@ function renderCalendar(data) {
                     display: flex;
                     align-items: center;
                     gap: 4px;
+                    background-color: ${hexToRgba(categoryColor, 0.55)};
+                    border: 1px solid ${hexToRgba(categoryColor, 0.85)};
+                    color: #fff;
                   ">
-                    <span style="font-size: 10px; opacity: 0.75; flex-shrink: 0;">実</span>
+                    <span style="font-size: 10px; opacity: 0.85; flex-shrink: 0;">実</span>
                     <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">${task.title}</span>
                   </div>
                 `,
@@ -2011,9 +2018,10 @@ function renderTimeline(data) {
         lanes[targetLane] = rangeRight;
 
         const laneTop = targetLane * LANE_HEIGHT + 4;
+        const categoryColor = getCategoryChartColor(task.category_name);
 
         if (showPlanned) {
-          barsHtml += `<div class="timeline-bar timeline-bar--planned" data-task-id="${task.id}" style="left: ${plannedPos.leftPercent}%; width: ${plannedPos.widthPercent}%; top: ${laneTop}px;">
+          barsHtml += `<div class="timeline-bar timeline-bar--planned" data-task-id="${task.id}" style="left: ${plannedPos.leftPercent}%; width: ${plannedPos.widthPercent}%; top: ${laneTop}px; background-color: ${hexToRgba(categoryColor, 0.28)}; border-color: ${hexToRgba(categoryColor, 0.55)}; color: ${categoryColor};">
                   <span class="timeline-bar-title">${task.title}</span>
                 </div>`;
         }
@@ -2021,7 +2029,7 @@ function renderTimeline(data) {
         if (showActual) {
           // 「すべて」モードでは予定バーの22px下、単独表示モードではレーンの先頭に配置
           const actualTop = displayMode === "actual" ? laneTop : laneTop + 22;
-          barsHtml += `<div class="timeline-bar timeline-bar--actual" data-task-id="${task.id}" style="left: ${actualPos.leftPercent}%; width: ${actualPos.widthPercent}%; top: ${actualTop}px;">
+          barsHtml += `<div class="timeline-bar timeline-bar--actual" data-task-id="${task.id}" style="left: ${actualPos.leftPercent}%; width: ${actualPos.widthPercent}%; top: ${actualTop}px; background-color: ${hexToRgba(categoryColor, 0.55)}; border-color: ${hexToRgba(categoryColor, 0.85)}; color: #fff;">
                   <span class="timeline-bar-title">${task.title}</span>
                 </div>`;
         }

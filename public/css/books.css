@@ -94,15 +94,20 @@
 }
 
 /* ===== 書籍マスタ専用 カンバン・レイアウト ===== */
+/* 🔴 v2.21.6：横並び3列（未読/読書中/読了）→ 縦積みに変更。
+   各ステータスのセクションを上から順に表示し、その中で書籍カードを
+   横並び（幅が足りなければ2列以降に折り返し）で表示する */
 #book-kanban {
   display: flex !important;
-  gap: var(--space-16, 16px) !important;
-  align-items: flex-start !important;
+  flex-direction: column !important;
+  gap: var(--space-24, 24px) !important;
+  align-items: stretch !important;
   width: 100% !important;
 }
 
 #book-kanban .kanban-column {
-  flex: 1 !important;
+  flex: none !important;
+  width: 100% !important;
   min-width: 0 !important;
   background-color: var(--color-bg-card, rgb(255 255 255 / 0.02)) !important;
   border-radius: 12px !important;
@@ -121,9 +126,10 @@
   border-radius: 6px;
 }
 
+/* 🔴 v2.21.6：縦積み（flex-direction: column）→ グリッドで横並び＆自動折り返しに変更 */
 #book-kanban .kanban-cards {
-  display: flex !important;
-  flex-direction: column !important;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
   gap: 12px !important;
   min-height: 50px !important; /* 余白を広げすぎないサイズ */
   width: 100% !important;
@@ -138,7 +144,6 @@
   border: 1px solid rgba(255, 255, 255, 0.15) !important;
   border-radius: 12px !important;
   padding: 16px !important;
-  margin-bottom: 12px !important;
   width: 100% !important;
   min-height: 120px !important;
   box-sizing: border-box !important;
@@ -197,9 +202,10 @@
    =================================================== */
 
 /* 1. カンバンの枠組みと開閉時の余白を最適化（300pxのバグを完全上書き） */
+/* 🔴 v2.21.6：こちらも上のグリッド定義と揃える（後勝ちでflex-columnに戻らないよう統一） */
 #book-kanban .kanban-cards {
-  display: flex !important;
-  flex-direction: column !important;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
   gap: 12px !important;
   min-height: 50px !important; /* 💡余白を大きくさせない */
   width: 100% !important;
@@ -222,7 +228,6 @@
   border: 1px solid rgba(255, 255, 255, 0.15) !important;
   border-radius: 12px !important;
   padding: 16px !important;
-  margin-bottom: 12px !important;
   width: 100% !important;
   min-height: 120px !important;
   box-sizing: border-box !important;

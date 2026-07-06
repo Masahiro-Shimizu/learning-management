@@ -250,6 +250,15 @@ function initBooks() {
       const author = e.target.dataset.author;
       const coverUrl = e.target.dataset.cover;
       await api("/api/books", "POST", { title, author, cover_url: coverUrl });
+
+      // 🔴 登録完了後、Google Books検索欄・検索結果をクリア
+      document.getElementById("book-search-input").value = "";
+      document.getElementById("book-search-results").innerHTML = "";
+
+      // 🔴 登録完了後、登録済み書籍の絞り込み検索欄もクリア
+      //     （絞り込み中のキーワードのままだと、新規登録した書籍が一覧に表示されないため）
+      document.getElementById("book-filter-input").value = "";
+
       renderBooks();
       alert("登録しました");
     });
