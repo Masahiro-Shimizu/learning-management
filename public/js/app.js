@@ -12,6 +12,11 @@ function showPage() {
   const pageId = location.hash.substring(1) || "page-dashboard";
   const targetPage = document.getElementById(pageId);
 
+  // --- 追加：ページ切り替え時にアイコンを再生成 ---
+  if (typeof lucide !== "undefined") {
+    lucide.createIcons();
+  }
+
   pages.forEach((page) => {
     page.style.display = "none";
   });
