@@ -74,16 +74,14 @@ function createBookCardHtml(book) {
 // 3. 書籍一覧をカンバンに描画する関数
 // ==========================================
 function renderBookList(books, tasks) {
-  // まず画面上に「書籍のカンバン（外枠）」が存在するか確認する
   const kanbanContainer = document.getElementById("book-kanban");
   if (!kanbanContainer) {
     console.warn(
       "書籍のカンバン要素（#book-kanban）が画面上に見つかりません。描画をスキップします。",
     );
-    return; // 要素がなければここで処理を中断する
+    return;
   }
 
-  // カンバンの枠の中から、確実に子要素の列を取得する
   const columns = {
     未読: kanbanContainer.querySelector('.kanban-cards[data-status="未読"]'),
     読書中: kanbanContainer.querySelector(
@@ -92,14 +90,12 @@ function renderBookList(books, tasks) {
     読了: kanbanContainer.querySelector('.kanban-cards[data-status="読了"]'),
   };
 
-  // 各列の中身を一度空っぽにする
   Object.values(columns).forEach((col) => {
     if (col) col.innerHTML = "";
   });
 
   const statusCounts = { 未読: 0, 読書中: 0, 読了: 0 };
 
-  // 書籍カードをそれぞれの列に追加していく
   books.forEach((book) => {
     const status = calcBookStatus(book, tasks);
     statusCounts[status]++;
@@ -109,13 +105,11 @@ function renderBookList(books, tasks) {
     }
   });
 
-  // 件数バッジも、必ずこの書籍カンバンの中にあるものだけを書き換える
   Object.entries(statusCounts).forEach(([status, count]) => {
     const badge = kanbanContainer.querySelector(`[data-count-for="${status}"]`);
     if (badge) badge.textContent = count;
   });
 
-  // カードクリックでモーダルを開くイベントを設定
   kanbanContainer.querySelectorAll(".book-card").forEach((card) => {
     card.addEventListener("click", async () => {
       const bookId = card.dataset.bookId;
@@ -126,19 +120,14 @@ function renderBookList(books, tasks) {
 }
 
 // ==========================================
-// 4. 書籍詳細モーダル（表紙・進捗バー・目次チェックリスト・メモ2項目）
+// 4. 書籍詳細モーダル
 // ==========================================
 
-// モーダルを開き、書籍情報＋紐づく章（子タスク）を反映する
 function openBookModal(book) {
   document.getElementById("book-modal-title").textContent = book.title || "";
   document.getElementById("book-author").value = book.author || "";
   document.getElementById("book-total-chapters").value =
     book.total_chapters ?? "";
-  document.getElementById("book-understood-memo").value =
-    book.understood_memo || "";
-  document.getElementById("book-unclear-points").value =
-    book.unclear_points || "";
 
   // 表紙画像
   const coverImg = document.getElementById("book-modal-cover-img");
@@ -153,12 +142,13 @@ function openBookModal(book) {
     coverEmpty.style.display = "flex";
   }
 
-  // 目次（book_idで紐づく子タスク＝章）
+  // 目次
   const bookId = String(book.id);
   const chapterTasks = allTasksForBooks
     .filter((t) => String(t.book_id) === bookId)
     .map((t) => ({ ...t }));
   currentBookModalTasks = chapterTasks;
+
   renderBookChapterList(currentBookModalTasks);
   updateBookModalProgress(currentBookModalTasks);
 
@@ -166,7 +156,7 @@ function openBookModal(book) {
   document.getElementById("book-modal").classList.remove("hidden");
 }
 
-// 目次リストの描画（チェックボックス＝ステータス「完了」との連動）
+// 目次リストの描画（アコーディオン＆メモ欄付き・枠線なし版）
 function renderBookChapterList(tasks) {
   const listEl = document.getElementById("book-chapter-list");
   if (!listEl) return;
@@ -182,16 +172,47 @@ function renderBookChapterList(tasks) {
     li.className = "book-chapter-item";
     li.dataset.taskId = task.id;
 
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.checked = task.status === "完了";
+    // ★ 修正箇所: 枠線や背景色のスタイル設定を削除し、下の余白（間隔）だけ設定
+    li.style.marginBottom = "12px";
+
+    // アコーディオンのHTML構造を作成（メモ欄の上の点線なども削除しシンプルにしました）
+    li.innerHTML = `
+      <div class="chapter-header" style="display: flex; align-items: center; gap: 8px;">
+        <button type="button" class="chapter-toggle-btn" style="background: none; border: none; color: #aaa; cursor: pointer; width: 24px; height: 24px; font-size: 12px; display: flex; align-items: center; justify-content: center; padding: 0;">▶</button>
+        <input type="checkbox" class="chapter-check" ${task.status === "完了" ? "checked" : ""}>
+        <span class="book-chapter-title chapter-title" style="flex: 1; cursor: pointer;">${task.title}</span>
+      </div>
+      
+      <div class="chapter-details" style="display: none; padding-left: 32px; margin-top: 8px;">
+        <div style="margin-bottom: 8px;">
+          <label style="font-size: 12px; color: #aaa; display: block; margin-bottom: 4px;">理解したこと</label>
+          <textarea class="understood-input" rows="2" style="width: 100%; background: rgba(0,0,0,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; padding: 6px; resize: vertical;">${task.understood_memo || ""}</textarea>
+        </div>
+        <div style="margin-bottom: 8px;">
+          <label style="font-size: 12px; color: #aaa; display: block; margin-bottom: 4px;">不明だったこと</label>
+          <textarea class="unclear-input" rows="2" style="width: 100%; background: rgba(0,0,0,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; padding: 6px; resize: vertical;">${task.unclear_points || ""}</textarea>
+        </div>
+        <button type="button" class="btn btn-primary btn-save-chapter" style="font-size: 12px; padding: 4px 10px;">章のメモを保存</button>
+      </div>
+    `;
+
+    // ===== ① 開閉（アコーディオン）イベント =====
+    const toggleBtn = li.querySelector(".chapter-toggle-btn");
+    const details = li.querySelector(".chapter-details");
+    toggleBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isHidden = details.style.display === "none";
+      details.style.display = isHidden ? "block" : "none";
+      toggleBtn.textContent = isHidden ? "▼" : "▶";
+    });
+
+    // ===== ② 既存のチェック状態更新 ＆ タイトルクリックイベント =====
+    const checkbox = li.querySelector(".chapter-check");
     checkbox.addEventListener("change", () =>
       handleBookChapterToggle(task.id, checkbox.checked),
     );
 
-    const title = document.createElement("span");
-    title.className = "book-chapter-title";
-    title.textContent = task.title;
+    const title = li.querySelector(".chapter-title");
     title.addEventListener("click", () => {
       if (typeof openTaskEditModal === "function") {
         closeBookModal();
@@ -199,13 +220,35 @@ function renderBookChapterList(tasks) {
       }
     });
 
-    li.appendChild(checkbox);
-    li.appendChild(title);
+    // ===== ③ 各章（タスク）のメモ保存イベント =====
+    const saveBtn = li.querySelector(".btn-save-chapter");
+    saveBtn.addEventListener("click", async () => {
+      const understoodVal = li.querySelector(".understood-input").value;
+      const unclearVal = li.querySelector(".unclear-input").value;
+
+      try {
+        await api(`/api/tasks/${task.id}`, "PUT", {
+          understood_memo: understoodVal,
+          unclear_points: unclearVal,
+        });
+
+        const cached = currentBookModalTasks.find((t) => t.id === task.id);
+        if (cached) {
+          cached.understood_memo = understoodVal;
+          cached.unclear_points = unclearVal;
+        }
+        alert("章のメモを保存しました！");
+      } catch (err) {
+        console.error(err);
+        alert("保存に失敗しました");
+      }
+    });
+
     listEl.appendChild(li);
   });
 }
 
-// チェック操作でタスクのステータスを更新（完了⇔未着手）
+// チェック操作でタスクのステータスを更新
 async function handleBookChapterToggle(taskId, checked) {
   const newStatus = checked ? "完了" : "未着手";
   try {
@@ -215,18 +258,16 @@ async function handleBookChapterToggle(taskId, checked) {
     if (cached) cached.status = newStatus;
     updateBookModalProgress(currentBookModalTasks);
 
-    // 一覧側（allTasksForBooks）にも反映し、モーダル外の進捗表示との整合を保つ
     const globalTask = allTasksForBooks.find((t) => t.id === taskId);
     if (globalTask) globalTask.status = newStatus;
   } catch (err) {
     console.error("章の状態更新に失敗しました:", err);
     alert("更新に失敗しました");
-    // 失敗時はチェック状態を元に戻す
     renderBookChapterList(currentBookModalTasks);
   }
 }
 
-// 目次の完了数から進捗バーを更新
+// 進捗バー更新
 function updateBookModalProgress(tasks) {
   const fill = document.getElementById("book-modal-progress-fill");
   const label = document.getElementById("book-modal-progress-label");
@@ -248,20 +289,17 @@ function closeBookModal() {
   currentBookModalTasks = [];
 }
 
-// ⭕️ タスクデータの取得処理を復活させ、renderBookListへ2つの引数を正しく渡すよう修正
 async function renderBooks() {
   allBooksList = await api("/api/books");
-  allTasksForBooks = await api("/api/tasks"); // 復活
-  renderBookList(allBooksList, allTasksForBooks); // 修正
+  allTasksForBooks = await api("/api/tasks");
+  renderBookList(allBooksList, allTasksForBooks);
 }
 
 function initBooks() {
-  // ⭕️ 100ミリ秒だけ待ってからデータを取得・描画することで、確実に対象のHTMLをキャッチさせます
   setTimeout(() => {
     renderBooks();
   }, 100);
 
-  // モーダルを閉じる（✕・キャンセル・オーバーレイクリック）
   document
     .getElementById("btn-book-close-x")
     .addEventListener("click", closeBookModal);
@@ -272,7 +310,7 @@ function initBooks() {
     if (e.target.id === "book-modal") closeBookModal();
   });
 
-  // 保存
+  // 書籍（全体）の保存処理
   document
     .getElementById("btn-book-save")
     .addEventListener("click", async () => {
@@ -283,16 +321,11 @@ function initBooks() {
       ).value;
       const total_chapters =
         totalChaptersValue === "" ? null : Number(totalChaptersValue);
-      const understood_memo =
-        document.getElementById("book-understood-memo").value || null;
-      const unclear_points =
-        document.getElementById("book-unclear-points").value || null;
 
+      // 古いメモ機能は削除したため、authorとtotal_chaptersのみ更新する
       await api(`/api/books/${bookId}`, "PUT", {
         author,
         total_chapters,
-        understood_memo,
-        unclear_points,
       });
       closeBookModal();
       renderBooks();
@@ -319,7 +352,6 @@ function initBooks() {
           b.title.toLowerCase().includes(keyword) ||
           (b.author && b.author.toLowerCase().includes(keyword)),
       );
-      // ⭕️ 第2引数（allTasksForBooks）を確実に渡すよう修正
       renderBookList(filtered, allTasksForBooks);
     });
 
@@ -337,7 +369,6 @@ function initBooks() {
       const resultsEl = document.getElementById("book-search-results");
       resultsEl.innerHTML = "";
 
-      // data.items が存在しない場合の処理
       if (!data.items) {
         resultsEl.innerHTML = "<p>検索結果がありません</p>";
         return;
@@ -372,7 +403,6 @@ function initBooks() {
       const coverUrl = e.target.dataset.cover;
       await api("/api/books", "POST", { title, author, cover_url: coverUrl });
 
-      // 登録完了後、検索欄・検索結果・絞り込み欄をすべてクリアして全件状態に戻す（v2.21.5）
       document.getElementById("book-search-input").value = "";
       document.getElementById("book-search-results").innerHTML = "";
       document.getElementById("book-filter-input").value = "";
@@ -380,7 +410,8 @@ function initBooks() {
       renderBooks();
       alert("登録しました");
     });
-  // ===== カンバンの列（未読・読書中・読了）のクリック開閉機能（修正版） =====
+
+  // カンバンの開閉機能
   document.querySelectorAll("#book-kanban .kanban-header").forEach((header) => {
     header.style.cursor = "pointer";
     header.style.userSelect = "none";
@@ -390,10 +421,7 @@ function initBooks() {
       const cardsContainer = column.querySelector(".kanban-cards");
 
       if (cardsContainer) {
-        // .collapsed クラスがあれば消し、なければ付ける（トグル処理）
         cardsContainer.classList.toggle("collapsed");
-
-        // 閉じているときはヘッダーを少し薄くする
         if (cardsContainer.classList.contains("collapsed")) {
           header.style.opacity = "0.5";
         } else {

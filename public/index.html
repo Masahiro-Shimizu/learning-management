@@ -1000,7 +1000,7 @@
     <div id="book-modal" class="modal hidden">
       <div class="modal-content">
         <div class="modal-header">
-          <h3>書籍を編集</h3>
+          <h3>書籍詳細</h3>
           <button
             type="button"
             id="btn-book-close-x"
@@ -1041,12 +1041,6 @@
           <label>目次</label>
           <ul id="book-chapter-list" class="book-chapter-list"></ul>
         </div>
-
-        <label for="book-understood-memo">理解したこと</label>
-        <textarea id="book-understood-memo"></textarea>
-
-        <label for="book-unclear-points">不明点</label>
-        <textarea id="book-unclear-points"></textarea>
 
         <div class="modal-actions">
           <button type="button" id="btn-book-delete" class="btn btn-danger">
@@ -1156,5 +1150,8 @@
         </div>
       </div>
     </div>
+    <script>
+      lucide.createIcons();
+    </script>
   </body>
 </html>

@@ -8,7 +8,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
+  z-index: 1000; /* app.js が .tasks-header 等のページ見出しに z-index:999 !important を
+  動的付与するため、モーダルは常にそれより手前になるよう引き上げた（v2.21.10） */
 }
 
 .modal-content {
@@ -530,25 +531,18 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  max-height: 180px;
+  gap: 8px; /* アコーディオンの間隔を少し広げる */
+  max-height: 350px; /* メモ欄が開くことを考慮して高さを広げる */
   overflow-y: auto;
-  border: 1px solid rgb(255 255 255 / 0.06);
-  border-radius: 8px;
-  padding: 6px;
+  /* 全体の枠線と内側余白を削除してフラットにしました */
 }
 
 .book-chapter-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 6px;
-  border-radius: 6px;
-  transition: background-color 0.15s;
+  display: block; /* ⭕ flexからblockに変更し、メモ欄がちゃんと下に開くようにする */
 }
 
 .book-chapter-item:hover {
-  background-color: rgb(255 255 255 / 0.05);
+  background-color: transparent; /* フラットデザインに合わせてホバー時の背景色もオフ */
 }
 
 .book-chapter-item input[type="checkbox"] {
