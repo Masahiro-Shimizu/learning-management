@@ -173,24 +173,29 @@
 
 .mandala-grid-wrapper {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* 🔴 変更: 1fr -> minmax(0, 1fr) にして列が勝手に広がるのを防ぐ */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   grid-template-rows: repeat(3, 1fr);
   gap: 6px;
   max-width: 900px;
   /* 🔴 Issue #50対応：ページ幅いっぱいの中で中央寄せにする */
   margin-left: auto;
   margin-right: auto;
+  width: 100%; /* 🔴 追加: 横伸び・縮み防止 */
 }
 
 .mandala-block {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* 🔴 変更: 3×3マスが常に均等幅(1:1:1)になるように強制 */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   grid-template-rows: repeat(3, 1fr);
   gap: 3px;
   background: rgb(255 255 255 / 0.03);
   border-radius: 8px;
   padding: 3px;
   border: 1px solid rgb(255 255 255 / 0.06);
+  min-width: 0; /* 🔴 追加: ブロック自体の横伸び防止 */
+  max-width: 100%; /* 🔴 追加 */
 }
 
 .mandala-block--center-block {
@@ -205,6 +210,9 @@
   display: flex;
   flex-direction: column;
   min-height: 108px;
+  min-width: 0; /* 🔴 追加: セルのはみ出し防止 */
+  max-width: 100%; /* 🔴 追加 */
+  overflow: hidden; /* 🔴 追加: 枠線を越えるオーバーフローを遮断 */
 }
 
 /* 達成トグルボタン */
@@ -338,6 +346,9 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0; /* 🔴 追加 */
+  width: 100%; /* 🔴 追加 */
+  box-sizing: border-box; /* 🔴 追加 */
 }
 
 .mandala-cell-task-list {
@@ -347,6 +358,8 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0; /* 🔴 追加 */
+  width: 100%; /* 🔴 追加 */
 }
 
 .mandala-cell-task-item {
@@ -359,6 +372,9 @@
   padding: 1px 2px;
   border-radius: 3px;
   transition: background-color 0.15s;
+  min-width: 0; /* 🔴 追加 */
+  width: 100%; /* 🔴 追加 */
+  box-sizing: border-box; /* 🔴 追加 */
 }
 
 .mandala-cell-task-item:hover {
@@ -386,6 +402,7 @@
 
 .mandala-cell-task-title {
   flex: 1;
+  min-width: 0; /* 🔴 追加: 【最重要】これがないと ellipsis が効かずマスを広げてしまう */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

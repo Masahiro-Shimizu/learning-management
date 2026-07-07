@@ -7,8 +7,10 @@ let pendingCells = {}; // { "r,c": { content?, is_completed? } }
 
 // 子タスク選択モーダル用の状態
 let allTasksForPicker = [];
+let allGroupsForPicker = []; // 親タスク（グループ）一覧
 let pickerTargetCellId = null;
 let pickerSelectedTaskIds = new Set();
+let pickerSelectedGroupId = "all"; // 選択中の親タスクID
 
 const TASK_STATUS_DOT_CLASS_MANDALA = {
   未着手: "todo",
@@ -18,16 +20,13 @@ const TASK_STATUS_DOT_CLASS_MANDALA = {
 
 // ===== マンダラ座標ヘルパー =====
 
-// ===== 1. セルの種類判定を正しく修正 =====
 function getCellType(r, c) {
   if (r === 4 && c === 4) return "center";
 
-  // 中央ブロック（縦3〜5、横3〜5）の周囲8マスをサブテーマとして判定
   if (r >= 3 && r <= 5 && c >= 3 && c <= 5) {
     return "sub-center";
   }
 
-  // 外側ブロックの各中心マスもサブテーマとして判定
   if (r % 3 === 1 && c % 3 === 1) {
     return "sub-center";
   }
@@ -40,26 +39,22 @@ function cellId(r, c) {
 }
 
 function getSubThemeNumber(r, c) {
-  // 中央ブロックと外側ブロックのどちらの座標からでも、正しい番号（1〜8）を返せるように定義
   const mandalaPairs = [
-    { center: "3:3", outer: "1:1" }, // サブテーマ1
-    { center: "3:4", outer: "1:4" }, // サブテーマ2
-    { center: "3:5", outer: "1:7" }, // サブテーマ3
-    { center: "4:3", outer: "4:1" }, // サブテーマ4
-    { center: "4:5", outer: "4:7" }, // サブテーマ5
-    { center: "5:3", outer: "7:1" }, // サブテーマ6
-    { center: "5:4", outer: "7:4" }, // サブテーマ7
-    { center: "5:5", outer: "7:7" }, // サブテーマ8
+    { center: "3:3", outer: "1:1" },
+    { center: "3:4", outer: "1:4" },
+    { center: "3:5", outer: "1:7" },
+    { center: "4:3", outer: "4:1" },
+    { center: "4:5", outer: "4:7" },
+    { center: "5:3", outer: "7:1" },
+    { center: "5:4", outer: "7:4" },
+    { center: "5:5", outer: "7:7" },
   ];
 
   const currentKey = `${r}:${c}`;
-
-  // ペアから該当するオブジェクトのインデックスを探す
   const idx = mandalaPairs.findIndex(
     (p) => p.center === currentKey || p.outer === currentKey,
   );
 
-  // 見つかった場合は 1〜8、見つからない場合は安全のために空文字や1を返す
   return idx !== -1 ? idx + 1 : 1;
 }
 
@@ -124,7 +119,6 @@ function renderMandalaChart(mandala) {
   const chartTitle = document.getElementById("mandala-chart-title");
   if (chartTitle) chartTitle.textContent = mandala.title;
 
-  // cells を 9×9 の2次元配列に変換
   const grid = Array.from({ length: 9 }, () =>
     Array.from({ length: 9 }, () => ({
       content: "",
@@ -146,7 +140,6 @@ function renderMandalaChart(mandala) {
   if (!wrapper) return;
   wrapper.innerHTML = "";
 
-  // 3×3のブロックを9個生成
   for (let blockRow = 0; blockRow < 3; blockRow++) {
     for (let blockCol = 0; blockCol < 3; blockCol++) {
       const block = document.createElement("div");
@@ -177,7 +170,6 @@ function renderMandalaChart(mandala) {
             cellDiv.classList.add("mandala-cell--completed");
           }
 
-          // 達成トグルボタン（中心セル以外）
           if (type !== "center") {
             const toggleBtn = document.createElement("button");
             toggleBtn.type = "button";
@@ -213,7 +205,6 @@ function renderMandalaChart(mandala) {
 
           cellDiv.appendChild(textarea);
 
-          // タスク紐づけエリア（中心セル以外）
           if (type !== "center") {
             const taskArea = document.createElement("div");
             taskArea.className = "mandala-cell-tasks";
@@ -289,7 +280,6 @@ function renderCellTaskArea(taskArea, cellData) {
 
 async function removeCellTask(cellId, taskId) {
   try {
-    // 🔴 古い api() から、正しい fetch() 通信（DELETEメソッド）に修正しました
     const response = await fetch(
       `/api/mandalas/cells/${cellId}/tasks/${taskId}`,
       {
@@ -301,8 +291,9 @@ async function removeCellTask(cellId, taskId) {
       throw new Error("サーバー側の削除に失敗しました");
     }
 
-    // 以下の画面のUI更新処理はそのまま維持します
-    const cell = currentMandala.cells.find((c) => c.id === cellId);
+    const cell = currentMandala.cells.find(
+      (c) => String(c.id) === String(cellId),
+    );
     if (cell) {
       cell.tasks = (cell.tasks || []).filter((t) => t.id !== taskId);
     }
@@ -319,25 +310,47 @@ async function removeCellTask(cellId, taskId) {
   }
 }
 
-// ===== 子タスク選択モーダル処理（重複なし決定版） =====
+// ===== 子タスク選択モーダル処理（グループ絞り込み機能搭載） =====
 
 async function openTaskPickerModal(cellId) {
   pickerTargetCellId = cellId;
+  pickerSelectedGroupId = "all";
 
   const modal = document.getElementById("mandala-task-picker-modal");
   if (!modal) return;
 
   try {
-    const resTasks = await fetch("/api/tasks");
-    allTasksForPicker = await resTasks.json();
+    const [resTasks, resGroups, resLinked] = await Promise.all([
+      fetch("/api/tasks"),
+      fetch("/api/groups"),
+      fetch(`/api/mandalas/cells/${cellId}/tasks`),
+    ]);
 
-    const resLinked = await fetch(`/api/mandalas/cells/${cellId}/tasks`);
+    allTasksForPicker = await resTasks.json();
+    allGroupsForPicker = await resGroups.json();
+
+    // 万が一のtask_id形式に対応
     const linkedTasks = await resLinked.json();
-    pickerSelectedTaskIds = new Set(linkedTasks.map((t) => t.id));
+    pickerSelectedTaskIds = new Set(linkedTasks.map((t) => t.id || t.task_id));
+
+    // 親タスクのセレクトボックスを生成
+    const groupSelect = document.getElementById("mandala-task-picker-group");
+    if (groupSelect) {
+      groupSelect.innerHTML = `<option value="all">📁 すべての親タスクを表示</option>`;
+      allGroupsForPicker.forEach((g) => {
+        const opt = document.createElement("option");
+        opt.value = g.id;
+        opt.textContent = `📁 ${g.title}`;
+        groupSelect.appendChild(opt);
+      });
+      groupSelect.value = "all";
+    }
+
+    const searchInput = document.getElementById("mandala-task-picker-search");
+    if (searchInput) searchInput.value = "";
 
     renderTaskPickerList("");
 
-    document.getElementById("mandala-task-picker-search").value = "";
     modal.classList.remove("hidden");
   } catch (err) {
     console.error("モーダルのデータ取得に失敗しました:", err);
@@ -352,9 +365,8 @@ async function saveTaskPickerSelection() {
       `/api/mandalas/cells/${pickerTargetCellId}/tasks`,
     );
     const linkedTasks = await resLinked.json();
-    const originalIds = new Set(linkedTasks.map((t) => t.id));
+    const originalIds = new Set(linkedTasks.map((t) => t.id || t.task_id));
 
-    // 🟢【修正】丸カッコ ( ) から、正しい配列カッコ [ ] に修正しました
     const toAdd = [...pickerSelectedTaskIds].filter(
       (id) => !originalIds.has(id),
     );
@@ -378,15 +390,16 @@ async function saveTaskPickerSelection() {
       });
     }
 
-    // 最新の結果を取得してUIを更新
-    const resUpdated = await fetch(
-      `/api/mandalas/cells/${pickerTargetCellId}/tasks`,
+    // 🔴【最重要修正】画面UIの更新を、取得済みの完全なデータを使って強制的に行う
+    const cell = currentMandala.cells.find(
+      (c) => String(c.id) === String(pickerTargetCellId),
     );
-    const updatedTasks = await resUpdated.json();
-
-    const cell = currentMandala.cells.find((c) => c.id === pickerTargetCellId);
     if (cell) {
-      cell.tasks = updatedTasks;
+      const updatedTasksObjects = allTasksForPicker.filter((t) =>
+        pickerSelectedTaskIds.has(t.id),
+      );
+      cell.tasks = updatedTasksObjects;
+
       const cellDiv = document.querySelector(
         `.mandala-cell[data-cell-id="${pickerTargetCellId}"]`,
       );
@@ -408,7 +421,6 @@ function renderTaskPickerList(keyword) {
   if (!listEl) return;
   listEl.innerHTML = "";
 
-  // 外枠コンテナの縦伸び・Grid設定を強制リセット
   listEl.style.setProperty("display", "flex", "important");
   listEl.style.setProperty("flex-direction", "column", "important");
   listEl.style.setProperty("gap", "6px", "important");
@@ -417,9 +429,15 @@ function renderTaskPickerList(keyword) {
   listEl.style.setProperty("grid-template-rows", "none", "important");
 
   const lowerKeyword = keyword.trim().toLowerCase();
-  const filtered = allTasksForPicker.filter((t) =>
-    t.title.toLowerCase().includes(lowerKeyword),
-  );
+
+  // キーワードとグループで絞り込み
+  const filtered = allTasksForPicker.filter((t) => {
+    const matchKeyword = t.title.toLowerCase().includes(lowerKeyword);
+    const matchGroup =
+      pickerSelectedGroupId === "all" ||
+      String(t.group_id) === String(pickerSelectedGroupId);
+    return matchKeyword && matchGroup;
+  });
 
   const groupMap = new Map();
   filtered.forEach((t) => {
@@ -441,7 +459,6 @@ function renderTaskPickerList(keyword) {
       const row = document.createElement("label");
       row.className = "custom-task-picker-row";
 
-      // インラインスタイルで1行ずつのリストカードデザインを再定義
       row.style.setProperty("display", "flex", "important");
       row.style.setProperty("align-items", "center", "important");
       row.style.setProperty("gap", "12px", "important");
@@ -551,55 +568,45 @@ function updateProgressBarFromDOM(done, total) {
 
 // ===== セル入力ハンドラ =====
 
-// 修正後：この内容に丸ごと書き換えてください
-// ===== 2. 双方向同期ロジックの決定版 =====
 function onCellInput(e) {
   const r = parseInt(e.target.dataset.row);
   const c = parseInt(e.target.dataset.col);
   const value = e.target.value;
 
-  // 自分の入力を保存待ちにセット
   if (!pendingCells[`${r},${c}`]) pendingCells[`${r},${c}`] = {};
   pendingCells[`${r},${c}`].content = value;
 
-  // 中央の周囲8マス と 外側の中心8マス の正確なペア定義
   const mandalaPairs = [
-    { center: "3:3", outer: "1:1" }, // サブテーマ1 (左上)
-    { center: "3:4", outer: "1:4" }, // サブテーマ2 (上)
-    { center: "3:5", outer: "1:7" }, // サブテーマ3 (右上)
-    { center: "4:3", outer: "4:1" }, // サブテーマ4 (左)
-    { center: "4:5", outer: "4:7" }, // サブテーマ5 (右)
-    { center: "5:3", outer: "7:1" }, // サブテーマ6 (左下)
-    { center: "5:4", outer: "7:4" }, // サブテーマ7 (下)
-    { center: "5:5", outer: "7:7" }, // サブテーマ8 (右下)
+    { center: "3:3", outer: "1:1" },
+    { center: "3:4", outer: "1:4" },
+    { center: "3:5", outer: "1:7" },
+    { center: "4:3", outer: "4:1" },
+    { center: "4:5", outer: "4:7" },
+    { center: "5:3", outer: "7:1" },
+    { center: "5:4", outer: "7:4" },
+    { center: "5:5", outer: "7:7" },
   ];
 
   const currentKey = `${r}:${c}`;
-
-  // 入力された座標がペアに含まれているかチェック
   const foundPair = mandalaPairs.find(
     (p) => p.center === currentKey || p.outer === currentKey,
   );
 
   if (foundPair) {
-    // 相手側の座標を特定 (自分がcenterならouter、自分がouterならcenter)
     const targetKey =
       foundPair.center === currentKey ? foundPair.outer : foundPair.center;
     const [targetR, targetC] = targetKey.split(":").map(Number);
 
-    // 相手側のテキストエリアをリアルタイム同期
     const targetEl = document.getElementById(cellId(targetR, targetC));
     if (targetEl && targetEl.value !== value) {
       targetEl.value = value;
 
-      // 相手側の変更も自動保存の対象にする
       if (!pendingCells[`${targetR},${targetC}`])
         pendingCells[`${targetR},${targetC}`] = {};
       pendingCells[`${targetR},${targetC}`].content = value;
     }
   }
 
-  // 自動保存タイマーを起動 (1秒後にバックエンドへ送信)
   setSaveStatus("saving");
   clearTimeout(saveTimer);
   saveTimer = setTimeout(autoSave, 1000);
@@ -674,6 +681,28 @@ async function loadMandala(id) {
     await autoSave();
   }
   currentMandala = await api(`/api/mandalas/${id}`);
+
+  // 🔴 【最重要修正】サーバーがタスクを返さない問題をフロントエンドでカバー！
+  if (currentMandala && currentMandala.cells) {
+    await Promise.all(
+      currentMandala.cells.map(async (cell) => {
+        // 中心セル以外のみタスクを取得
+        if (getCellType(cell.row_index, cell.col_index) !== "center") {
+          try {
+            const res = await fetch(`/api/mandalas/cells/${cell.id}/tasks`);
+            if (res.ok) {
+              cell.tasks = await res.json();
+            } else {
+              cell.tasks = [];
+            }
+          } catch (e) {
+            cell.tasks = [];
+          }
+        }
+      }),
+    );
+  }
+
   renderMandalaList();
   renderMandalaChart(currentMandala);
 }
@@ -744,6 +773,17 @@ async function initMandala() {
   if (pickerSearchInput) {
     pickerSearchInput.addEventListener("input", (e) => {
       renderTaskPickerList(e.target.value);
+    });
+  }
+
+  const pickerGroupSelect = document.getElementById(
+    "mandala-task-picker-group",
+  );
+  if (pickerGroupSelect) {
+    pickerGroupSelect.addEventListener("change", (e) => {
+      pickerSelectedGroupId = e.target.value;
+      const searchInput = document.getElementById("mandala-task-picker-search");
+      renderTaskPickerList(searchInput ? searchInput.value : "");
     });
   }
 }

@@ -84,13 +84,11 @@
       </nav>
 
       <main>
-        <!-- ===== ダッシュボード ===== -->
         <section id="page-dashboard">
           <div class="dashboard-header">
             <div>
               <h1 class="fs-2 text-white fw-bold mb-0">ダッシュボード</h1>
 
-              <!-- 【変更】ボタンを横並びにするため、d-flexなどのスタイルを適用したコンテナに変更 -->
               <div
                 style="
                   display: flex;
@@ -160,9 +158,7 @@
             </div>
           </div>
 
-          <!-- サマリーカード（v2.9.0：モックアップ準拠のアイコン・見た目に更新） -->
           <div class="dashboard-summary">
-            <!-- ① 期間の学習時間（週/月/年トグル連動） -->
             <div class="summary-card">
               <div class="summary-card-header">
                 <p class="summary-card-label" id="period-study-label">
@@ -187,7 +183,6 @@
               <p class="summary-card-sub" id="period-study-sub">集計中...</p>
             </div>
 
-            <!-- ② 進捗率（全タスクベース） -->
             <div class="summary-card">
               <div class="summary-card-header">
                 <div class="summary-card-label" id="progress-card-title">
@@ -212,7 +207,6 @@
               <p class="summary-card-sub" id="progress-sub">集計中...</p>
             </div>
 
-            <!-- ③ 期間内 進行件数 / 全件数 -->
             <div class="summary-card">
               <div class="summary-card-header">
                 <p class="summary-card-label">進行中タスク</p>
@@ -235,7 +229,6 @@
               <p class="summary-card-sub" id="done-sub">集計中...</p>
             </div>
 
-            <!-- ④ 読了書籍数 -->
             <div class="summary-card">
               <div class="summary-card-header">
                 <p class="summary-card-label">読了書籍</p>
@@ -329,7 +322,6 @@
           </div>
         </section>
 
-        <!-- ===== タスク一覧 ===== -->
         <section id="page-tasks">
           <div class="tasks-header">
             <div>
@@ -355,7 +347,6 @@
             </button>
           </div>
 
-          <!-- カンバンビュー -->
           <div class="view-panel hidden" data-view-panel="kanban">
             <div class="kanban">
               <div class="kanban-column">
@@ -424,7 +415,6 @@
             </div>
           </div>
 
-          <!-- テーブルビュー -->
           <div class="view-panel hidden" data-view-panel="table">
             <div class="task-table-wrapper">
               <table class="task-table">
@@ -440,14 +430,11 @@
                     <th>ステップ</th>
                   </tr>
                 </thead>
-                <tbody id="task-table-body">
-                  <!-- 💡 既存のタスク行が JS でここに動的に挿入されます -->
-                </tbody>
+                <tbody id="task-table-body"></tbody>
               </table>
             </div>
           </div>
 
-          <!-- カレンダービュー -->
           <div class="view-panel hidden" data-view-panel="calendar">
             <div class="calendar-header">
               <button
@@ -472,7 +459,6 @@
                 ＞
               </button>
 
-              <!-- 右側：スッキリ整理された表示切り替えタブ -->
               <div class="calendar-display-selector">
                 <button type="button" class="calendar-mode-tab" data-mode="all">
                   すべて
@@ -497,10 +483,8 @@
             <div class="calendar-grid" id="calendar-grid"></div>
           </div>
 
-          <!-- タイムラインビュー -->
           <div class="view-panel hidden" data-view-panel="timeline">
             <div class="timeline-toolbar">
-              <!-- 表示モード切替タブ（すべて/予定/実績） -->
               <div class="timeline-display-selector">
                 <button type="button" class="timeline-mode-tab" data-mode="all">
                   すべて
@@ -521,7 +505,6 @@
                 </button>
               </div>
 
-              <!-- ステータスフィルタータブ（未着手/進行中/完了/すべて） -->
               <div class="timeline-status-filter">
                 <button
                   type="button"
@@ -559,7 +542,6 @@
           </div>
         </section>
 
-        <!-- ===== 書籍マスタ ===== -->
         <section id="page-books">
           <h2>書籍マスタ</h2>
           <div class="book-search">
@@ -645,7 +627,6 @@
           </div>
         </section>
 
-        <!-- ===== マンダラチャート ===== -->
         <section id="page-mandala">
           <div class="mandala-header">
             <div>
@@ -701,7 +682,6 @@
           </div>
         </section>
 
-        <!-- ===== リザルト ===== -->
         <section id="page-results">
           <div class="results-page-header">
             <div>
@@ -711,7 +691,6 @@
               </p>
             </div>
 
-            <!-- 【文字変更】ダッシュボードと100%同じ「週・月・年・全」の文言に統一します -->
             <div class="results-filter-tabs">
               <button
                 type="button"
@@ -747,11 +726,9 @@
           <div id="results-page-body"></div>
         </section>
 
-        <!-- ===== 設定 ===== -->
         <section id="page-settings">
           <h2>設定</h2>
 
-          <!-- 🔴 横並びにするためのコンテナを追加 -->
           <div
             class="settings-container"
             style="
@@ -761,7 +738,6 @@
               margin-top: var(--space-24);
             "
           >
-            <!-- タスク種別（既存ブロック。margin-topを打ち消すstyleを追加して高さを揃えます） -->
             <div
               class="settings-block"
               style="margin-top: 0; flex: 1; min-width: 320px"
@@ -785,7 +761,6 @@
               <ul id="task-type-list" class="settings-list"></ul>
             </div>
 
-            <!-- 🔴 カテゴリ種別（新規追加ブロック） -->
             <div
               class="settings-block"
               style="margin-top: 0; flex: 1; min-width: 320px"
@@ -813,7 +788,6 @@
       </main>
     </div>
 
-    <!-- ===== 親タスクモーダル ===== -->
     <div id="group-modal" class="modal hidden">
       <div class="modal-content">
         <div class="modal-header">
@@ -867,9 +841,7 @@
       </div>
     </div>
 
-    <!-- ===== 子タスクモーダル ===== -->
     <div id="task-modal" class="modal hidden">
-      <!-- スタイルを直接指定して内側だけをスクロールできるように調整 -->
       <div
         class="modal-content"
         style="
@@ -879,7 +851,6 @@
           overflow: hidden;
         "
       >
-        <!-- モーダルヘッダー -->
         <div class="modal-header" style="flex-shrink: 0">
           <h3>タスクを登録</h3>
           <button
@@ -892,7 +863,6 @@
           </button>
         </div>
 
-        <!-- スクロール可能なコンテナエリア（フォームとステップを包む） -->
         <div
           class="modal-scroll-area"
           style="flex: 1; overflow-y: auto; padding-right: 4px"
@@ -997,7 +967,6 @@
           </div>
         </div>
 
-        <!-- 復活させたフッターボタン（最下部に常に固定されます） -->
         <div
           class="modal-footer"
           style="
@@ -1028,7 +997,6 @@
       </div>
     </div>
 
-    <!-- ===== 書籍モーダル（v2.21.8：右サイドパネル化／v2.21.9：詳細表示を拡張） ===== -->
     <div id="book-modal" class="modal hidden">
       <div class="modal-content">
         <div class="modal-header">
@@ -1043,7 +1011,6 @@
           </button>
         </div>
 
-        <!-- 表紙＋タイトル・著者・進捗バー -->
         <div class="book-modal-top">
           <div class="book-modal-cover">
             <img id="book-modal-cover-img" alt="表紙" style="display: none" />
@@ -1070,7 +1037,6 @@
         <label for="book-total-chapters">全章数</label>
         <input type="number" id="book-total-chapters" />
 
-        <!-- 目次（book_idで紐づく子タスク＝章のチェックリスト） -->
         <div class="book-modal-chapters">
           <label>目次</label>
           <ul id="book-chapter-list" class="book-chapter-list"></ul>
@@ -1098,7 +1064,6 @@
       </div>
     </div>
 
-    <!-- ===== グループ選択モーダル ===== -->
     <div id="group-picker-modal" class="modal hidden">
       <div class="modal-content" style="max-width: 400px">
         <div class="modal-header">
@@ -1113,6 +1078,82 @@
           </button>
         </div>
         <ul id="group-picker-list" class="settings-list"></ul>
+      </div>
+    </div>
+
+    <div id="mandala-task-picker-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>タスクを選択</h3>
+          <button
+            type="button"
+            id="btn-mandala-task-picker-close"
+            class="btn-modal-close"
+            aria-label="閉じる"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div
+          class="mandala-task-picker-search-row"
+          style="
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px;
+          "
+        >
+          <select
+            id="mandala-task-picker-group"
+            style="
+              width: 100%;
+              padding: 8px 12px;
+              border-radius: 6px;
+              border: 1px solid rgba(255, 255, 255, 0.1);
+              background-color: var(--color-bg-card);
+              color: var(--color-text-primary);
+              font-family: &quot;DM Sans&quot;, sans-serif;
+              font-size: 0.85rem;
+              cursor: pointer;
+            "
+          >
+            <option value="all">📁 すべての親タスクを表示</option>
+          </select>
+          <input
+            type="text"
+            id="mandala-task-picker-search"
+            placeholder="タスク名でさらに検索..."
+            style="width: 100%; box-sizing: border-box"
+          />
+        </div>
+
+        <div
+          id="mandala-task-picker-list"
+          class="mandala-task-picker-list"
+        ></div>
+
+        <div class="modal-actions" style="margin-top: 16px">
+          <div
+            class="task-actions-right"
+            style="margin-left: auto; display: flex; gap: 8px"
+          >
+            <button
+              type="button"
+              id="btn-mandala-task-picker-cancel"
+              class="btn btn-secondary"
+            >
+              キャンセル
+            </button>
+            <button
+              type="button"
+              id="btn-mandala-task-picker-save"
+              class="btn btn-primary"
+            >
+              選択を保存
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </body>
