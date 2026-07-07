@@ -42,13 +42,23 @@ router.post("/", async (req, res, next) => {
       cover_url = null,
       memo = null,
       total_chapters = null,
+      understood_memo = null,
+      unclear_points = null,
     } = req.body;
     if (!title || !author)
       return res.status(400).json({ error: "title と author は必須です" });
 
     const [result] = await db.query(
-      "INSERT INTO books (title, author, cover_url, memo, total_chapters) VALUES (?, ?, ?, ?, ?)",
-      [title, author, cover_url, memo, total_chapters],
+      "INSERT INTO books (title, author, cover_url, memo, total_chapters, understood_memo, unclear_points) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [
+        title,
+        author,
+        cover_url,
+        memo,
+        total_chapters,
+        understood_memo,
+        unclear_points,
+      ],
     );
     const [rows] = await db.query("SELECT * FROM books WHERE id = ?", [
       result.insertId,
@@ -67,6 +77,8 @@ router.put("/:id", async (req, res, next) => {
       "cover_url",
       "memo",
       "total_chapters",
+      "understood_memo",
+      "unclear_points",
     ];
     const fields = [];
     const values = [];

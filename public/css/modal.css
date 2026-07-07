@@ -444,6 +444,146 @@
   gap: var(--space-8);
 }
 
+/* ===== 書籍モーダル：詳細表示の拡張（表紙・進捗バー・目次・メモ2分割）v2.21.9追加 ===== */
+
+.book-modal-top {
+  display: flex;
+  gap: var(--space-16);
+  margin-bottom: var(--space-8);
+}
+
+.book-modal-cover {
+  width: 84px;
+  height: 116px;
+  border-radius: 6px;
+  background-color: rgb(255 255 255 / 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.book-modal-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.book-modal-cover .no-cover {
+  font-size: 0.7rem;
+  color: var(--color-text-tertiary);
+}
+
+.book-modal-top-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.book-modal-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+  line-height: 1.35;
+}
+
+.book-modal-progress-wrap {
+  margin-top: auto;
+}
+
+.book-modal-progress-bar {
+  height: 6px;
+  border-radius: 6px;
+  background-color: rgb(255 255 255 / 0.08);
+  overflow: hidden;
+}
+
+.book-modal-progress-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(
+    135deg,
+    var(--color-accent-primary, #6366f1) 0%,
+    #f5a623 130%
+  );
+  transition: width 0.3s ease;
+}
+
+.book-modal-progress-label {
+  font-size: 0.72rem;
+  color: var(--color-text-tertiary);
+  margin-top: 4px;
+}
+
+.book-modal-chapters {
+  margin-top: var(--space-8);
+}
+
+.book-chapter-list {
+  list-style: none;
+  margin: var(--space-8) 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-radius: 8px;
+  padding: 6px;
+}
+
+.book-chapter-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: background-color 0.15s;
+}
+
+.book-chapter-item:hover {
+  background-color: rgb(255 255 255 / 0.05);
+}
+
+.book-chapter-item input[type="checkbox"] {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.book-chapter-title {
+  flex: 1;
+  font-size: 0.82rem;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.book-chapter-title:hover {
+  text-decoration: underline;
+}
+
+.book-chapter-empty {
+  font-size: 0.78rem;
+  color: var(--color-text-tertiary);
+  padding: var(--space-8) 4px;
+}
+
+#book-understood-memo,
+#book-unclear-points {
+  min-height: 60px;
+  resize: vertical;
+}
+
 /* ===== 書籍モーダル：右サイドパネル化（v2.21.8追加） =====
    中央配置のダイアログではなく、画面右端に沿ってスライドインする
    サイドパネル形式に変更。閉じる操作（✕・キャンセル・オーバーレイ
@@ -453,10 +593,11 @@
 #book-modal {
   justify-content: flex-end !important;
   align-items: stretch !important;
+  z-index: 1000 !important;
 }
 
 #book-modal .modal-content {
-  width: 420px;
+  width: 800px;
   max-width: 92vw;
   height: 100%;
   max-height: 100vh;

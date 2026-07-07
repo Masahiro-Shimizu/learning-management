@@ -1,5 +1,6 @@
 let allBooksList = [];
 let allTasksForBooks = [];
+let currentBookModalTasks = []; // 開いている書籍モーダルの章（子タスク）一覧のキャッシュ
 
 // ==========================================
 // 1. 自動算出：未読／読書中／読了の判定
@@ -119,19 +120,132 @@ function renderBookList(books, tasks) {
     card.addEventListener("click", async () => {
       const bookId = card.dataset.bookId;
       const book = await api(`/api/books/${bookId}`);
-      document.getElementById("book-modal-title").textContent = book.title;
-      document.getElementById("book-modal-author").textContent = book.author;
-      document.getElementById("book-memo").value = book.memo || "";
-      document.getElementById("book-total-chapters").value =
-        book.total_chapters ?? "";
-      document.getElementById("book-modal").dataset.bookId = bookId;
-      document.getElementById("book-modal").classList.remove("hidden");
+      openBookModal(book);
     });
   });
 }
 
+// ==========================================
+// 4. 書籍詳細モーダル（表紙・進捗バー・目次チェックリスト・メモ2項目）
+// ==========================================
+
+// モーダルを開き、書籍情報＋紐づく章（子タスク）を反映する
+function openBookModal(book) {
+  document.getElementById("book-modal-title").textContent = book.title || "";
+  document.getElementById("book-author").value = book.author || "";
+  document.getElementById("book-total-chapters").value =
+    book.total_chapters ?? "";
+  document.getElementById("book-understood-memo").value =
+    book.understood_memo || "";
+  document.getElementById("book-unclear-points").value =
+    book.unclear_points || "";
+
+  // 表紙画像
+  const coverImg = document.getElementById("book-modal-cover-img");
+  const coverEmpty = document.getElementById("book-modal-cover-empty");
+  if (book.cover_url && book.cover_url !== "undefined") {
+    coverImg.src = book.cover_url;
+    coverImg.style.display = "block";
+    coverEmpty.style.display = "none";
+  } else {
+    coverImg.removeAttribute("src");
+    coverImg.style.display = "none";
+    coverEmpty.style.display = "flex";
+  }
+
+  // 目次（book_idで紐づく子タスク＝章）
+  const bookId = String(book.id);
+  const chapterTasks = allTasksForBooks
+    .filter((t) => String(t.book_id) === bookId)
+    .map((t) => ({ ...t }));
+  currentBookModalTasks = chapterTasks;
+  renderBookChapterList(currentBookModalTasks);
+  updateBookModalProgress(currentBookModalTasks);
+
+  document.getElementById("book-modal").dataset.bookId = bookId;
+  document.getElementById("book-modal").classList.remove("hidden");
+}
+
+// 目次リストの描画（チェックボックス＝ステータス「完了」との連動）
+function renderBookChapterList(tasks) {
+  const listEl = document.getElementById("book-chapter-list");
+  if (!listEl) return;
+  listEl.innerHTML = "";
+
+  if (tasks.length === 0) {
+    listEl.innerHTML = `<li class="book-chapter-empty">この書籍に紐づくタスクがありません</li>`;
+    return;
+  }
+
+  tasks.forEach((task) => {
+    const li = document.createElement("li");
+    li.className = "book-chapter-item";
+    li.dataset.taskId = task.id;
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = task.status === "完了";
+    checkbox.addEventListener("change", () =>
+      handleBookChapterToggle(task.id, checkbox.checked),
+    );
+
+    const title = document.createElement("span");
+    title.className = "book-chapter-title";
+    title.textContent = task.title;
+    title.addEventListener("click", () => {
+      if (typeof openTaskEditModal === "function") {
+        closeBookModal();
+        openTaskEditModal(task.id);
+      }
+    });
+
+    li.appendChild(checkbox);
+    li.appendChild(title);
+    listEl.appendChild(li);
+  });
+}
+
+// チェック操作でタスクのステータスを更新（完了⇔未着手）
+async function handleBookChapterToggle(taskId, checked) {
+  const newStatus = checked ? "完了" : "未着手";
+  try {
+    await api(`/api/tasks/${taskId}`, "PUT", { status: newStatus });
+
+    const cached = currentBookModalTasks.find((t) => t.id === taskId);
+    if (cached) cached.status = newStatus;
+    updateBookModalProgress(currentBookModalTasks);
+
+    // 一覧側（allTasksForBooks）にも反映し、モーダル外の進捗表示との整合を保つ
+    const globalTask = allTasksForBooks.find((t) => t.id === taskId);
+    if (globalTask) globalTask.status = newStatus;
+  } catch (err) {
+    console.error("章の状態更新に失敗しました:", err);
+    alert("更新に失敗しました");
+    // 失敗時はチェック状態を元に戻す
+    renderBookChapterList(currentBookModalTasks);
+  }
+}
+
+// 目次の完了数から進捗バーを更新
+function updateBookModalProgress(tasks) {
+  const fill = document.getElementById("book-modal-progress-fill");
+  const label = document.getElementById("book-modal-progress-label");
+  const total = tasks.length;
+  const done = tasks.filter((t) => t.status === "完了").length;
+  const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  if (fill) fill.style.width = `${percent}%`;
+  if (label) {
+    label.textContent =
+      total > 0
+        ? `進捗 ${done} / ${total}（${percent}%）`
+        : "紐づくタスクがまだありません";
+  }
+}
+
 function closeBookModal() {
   document.getElementById("book-modal").classList.add("hidden");
+  currentBookModalTasks = [];
 }
 
 // ⭕️ タスクデータの取得処理を復活させ、renderBookListへ2つの引数を正しく渡すよう修正
@@ -146,9 +260,6 @@ function initBooks() {
   setTimeout(() => {
     renderBooks();
   }, 100);
-
-  // モーダルを閉じる（✕・キャンセル・オーバーレイクリック）
-  document.getElementById("btn-book-close-x");
 
   // モーダルを閉じる（✕・キャンセル・オーバーレイクリック）
   document
@@ -166,13 +277,23 @@ function initBooks() {
     .getElementById("btn-book-save")
     .addEventListener("click", async () => {
       const bookId = document.getElementById("book-modal").dataset.bookId;
-      const memo = document.getElementById("book-memo").value || null;
+      const author = document.getElementById("book-author").value || null;
       const totalChaptersValue = document.getElementById(
         "book-total-chapters",
       ).value;
       const total_chapters =
         totalChaptersValue === "" ? null : Number(totalChaptersValue);
-      await api(`/api/books/${bookId}`, "PUT", { memo, total_chapters });
+      const understood_memo =
+        document.getElementById("book-understood-memo").value || null;
+      const unclear_points =
+        document.getElementById("book-unclear-points").value || null;
+
+      await api(`/api/books/${bookId}`, "PUT", {
+        author,
+        total_chapters,
+        understood_memo,
+        unclear_points,
+      });
       closeBookModal();
       renderBooks();
     });
@@ -251,12 +372,9 @@ function initBooks() {
       const coverUrl = e.target.dataset.cover;
       await api("/api/books", "POST", { title, author, cover_url: coverUrl });
 
-      // 🔴 登録完了後、Google Books検索欄・検索結果をクリア
+      // 登録完了後、検索欄・検索結果・絞り込み欄をすべてクリアして全件状態に戻す（v2.21.5）
       document.getElementById("book-search-input").value = "";
       document.getElementById("book-search-results").innerHTML = "";
-
-      // 🔴 登録完了後、登録済み書籍の絞り込み検索欄もクリア
-      //     （絞り込み中のキーワードのままだと、新規登録した書籍が一覧に表示されないため）
       document.getElementById("book-filter-input").value = "";
 
       renderBooks();

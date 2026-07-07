@@ -137,3 +137,12 @@ CREATE TABLE IF NOT EXISTS result_reviews (
   PRIMARY KEY (id),
   UNIQUE KEY uq_result_reviews_period (period_type, start_date, end_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =========================================
+-- books（書籍マスタ）：メモ欄を「理解したこと」「不明点」に分割 v2.21.9追加
+-- 既存の memo カラムはデータ保全のため残置するが、書籍詳細モーダルの
+-- UIからは参照しなくなる（理解したこと／不明点の2項目に置き換え）。
+-- =========================================
+ALTER TABLE books
+  ADD COLUMN understood_memo TEXT AFTER memo,
+  ADD COLUMN unclear_points  TEXT AFTER understood_memo;
