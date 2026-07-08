@@ -2143,7 +2143,6 @@ document.querySelectorAll(".timeline-status-filter-tab").forEach((tab) => {
 });
 
 // ===== ビュー全体の描画・切り替え =====
-
 let currentView = localStorage.getItem("taskView") ?? "kanban";
 let lastTaskViewData = null;
 
