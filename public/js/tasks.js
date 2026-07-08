@@ -1960,8 +1960,8 @@ function renderTimeline(data) {
 
   // ステータス絞り込み（すべて/未着手/進行中/完了）をタブに反映
   const statusFilter = getTimelineStatusFilter();
-  document.querySelectorAll(".timeline-status-tab").forEach((tab) => {
-    tab.classList.toggle("active", tab.dataset.status === statusFilter);
+  document.querySelectorAll(".timeline-status-filter-tab").forEach((tab) => {
+    tab.classList.toggle("active", tab.dataset.statusFilter === statusFilter);
   });
 
   const collapsedGroups = getCollapsedTimelineGroups();
@@ -2135,9 +2135,9 @@ document.querySelectorAll(".timeline-mode-tab").forEach((tab) => {
 });
 
 // タイムラインステータス絞り込みタブ（すべて/未着手/進行中/完了）のクリックイベント
-document.querySelectorAll(".timeline-status-tab").forEach((tab) => {
+document.querySelectorAll(".timeline-status-filter-tab").forEach((tab) => {
   tab.addEventListener("click", () => {
-    localStorage.setItem("timeline_status_filter", tab.dataset.status);
+    localStorage.setItem("timeline_status_filter", tab.dataset.statusFilter);
     if (lastTaskViewData) renderTimeline(lastTaskViewData);
   });
 });

@@ -851,14 +851,14 @@
    崩れる不具合の原因だったため廃止した）
    ここでの58vhはJS(syncTaskViewHeights)が効くまでのフォールバック値で、
    実際の高さはヘッダー・タブ・ツールバーの実測サイズをもとにJS側でpx指定される。 */
-.timeline-wrapper {
+/* .timeline-wrapper {
   border: 1px solid rgb(255 255 255 / 0.06);
   border-radius: 10px;
   overflow: auto !important;
   margin-top: var(--space-16);
   width: 100% !important;
   height: 58vh !important;
-}
+} */
 
 /* 表示切替タブ（すべて/予定/実績）：カレンダービューと同じ見た目に統一 */
 .timeline-display-selector {
@@ -867,16 +867,21 @@
   gap: 16px;
 }
 
-.timeline-status-selector {
+.timeline-mode-selector,
+.timeline-status-filter {
   display: flex;
   align-items: center;
   gap: 16px;
 }
 
 .timeline-mode-tab,
-.timeline-status-tab {
-  background: none;
-  border: none;
+.timeline-status-filter-tab {
+  appearance: none;
+  -webkit-appearance: none;
+  background: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
   color: #aaa;
   cursor: pointer;
   padding: 4px 0;
@@ -886,18 +891,18 @@
 }
 
 .timeline-mode-tab:hover,
-.timeline-status-tab:hover {
+.timeline-status-filter-tab:hover {
   color: #fff !important;
 }
 
 .timeline-mode-tab.active,
-.timeline-status-tab.active {
+.timeline-status-filter-tab.active {
   color: #fff !important;
   font-weight: bold;
 }
 
 .timeline-mode-tab.active::after,
-.timeline-status-tab.active::after {
+.timeline-status-filter-tab.active::after {
   content: "";
   position: absolute;
   bottom: -4px;
