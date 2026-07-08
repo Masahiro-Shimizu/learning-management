@@ -437,7 +437,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: var(--space-8);
+  margin-top: auto; /* 内容が短い場合でもボタン行をパネル最下部に固定する（v2.21.11） */
+  padding-top: var(--space-16);
+  flex-shrink: 0;
 }
 
 #book-modal .modal-actions .task-actions-right {

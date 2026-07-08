@@ -1385,7 +1385,6 @@ function renderCalendar(data) {
       const taskBaseTop = currentTop;
 
       const categoryBadgeHtml = createCategoryBadgeHtml(task.category_name);
-      const categoryColor = getCategoryChartColor(task.category_name);
       const steps = stepsByTaskId[task.id] || [];
       const stepBadge =
         steps.length > 0
@@ -1418,9 +1417,6 @@ function renderCalendar(data) {
               display: flex;
               align-items: center;
               gap: 6px;
-              background-color: ${hexToRgba(categoryColor, 0.28)};
-              border: 1px solid ${hexToRgba(categoryColor, 0.55)};
-              color: ${categoryColor};
             ">
               ${categoryBadgeHtml}
               <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">${task.title}</span>
@@ -1486,11 +1482,8 @@ function renderCalendar(data) {
                     display: flex;
                     align-items: center;
                     gap: 4px;
-                    background-color: ${hexToRgba(categoryColor, 0.55)};
-                    border: 1px solid ${hexToRgba(categoryColor, 0.85)};
-                    color: #fff;
                   ">
-                    <span style="font-size: 10px; opacity: 0.85; flex-shrink: 0;">実</span>
+                    <span style="font-size: 10px; opacity: 0.75; flex-shrink: 0;">実</span>
                     <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">${task.title}</span>
                   </div>
                 `,
@@ -1633,7 +1626,57 @@ function syncTimelineStickyOffsets() {
   toolbar.style.setProperty("top", `${toolbarTop}px`, "important");
 }
 
+// ===== ビューコンテナの高さをヘッダー実測値から動的算出（v2.21.11追加） =====
+// カンバン（.kanban）・テーブル（.task-table-wrapper）・タイムライン（.timeline-wrapper）は
+// これまでvh固定値（68vh/70vh/65vh）で高さ指定していたが、上に乗る
+// .tasks-header・.view-tabs（・タイムラインは.timeline-toolbarも追加）の高さを
+// 一切差し引いていなかったため、ウィンドウの高さによっては画面の可視範囲を
+// はみ出し、各ビューの下端が見切れて見える不具合があった。
+// これらヘッダー類の実測高さ（getBoundingClientRect）を window.innerHeight から
+// 差し引いた残りの高さを、各ビューのコンテナに直接pxで指定することで解消する。
+function syncTaskViewHeights() {
+  const header = document.querySelector(".tasks-header");
+  const viewTabs = document.querySelector(".view-tabs");
+  if (!header || !viewTabs) return;
+
+  const headerHeight = header.getBoundingClientRect().height;
+  const viewTabsHeight = viewTabs.getBoundingClientRect().height;
+  const BOTTOM_MARGIN = 32; // #page-tasksの下部余白・スクロールバー等を考慮した安全マージン
+  const MIN_HEIGHT = 300; // 極端に低いウィンドウでも最低限の表示領域を確保する
+
+  const availablePx = Math.max(
+    MIN_HEIGHT,
+    window.innerHeight - headerHeight - viewTabsHeight - BOTTOM_MARGIN,
+  );
+
+  const kanban = document.querySelector('[data-view-panel="kanban"] .kanban');
+  if (kanban) {
+    kanban.style.setProperty("height", `${availablePx}px`, "important");
+  }
+
+  const tableWrapper = document.querySelector(
+    '[data-view-panel="table"] .task-table-wrapper',
+  );
+  if (tableWrapper) {
+    tableWrapper.style.setProperty("height", `${availablePx}px`, "important");
+  }
+
+  // タイムラインは .timeline-toolbar の分だけさらに差し引く
+  const timelineWrapper = document.querySelector(".timeline-wrapper");
+  if (timelineWrapper) {
+    const toolbar = document.querySelector(".timeline-toolbar");
+    const toolbarHeight = toolbar ? toolbar.getBoundingClientRect().height : 0;
+    const timelineHeight = Math.max(MIN_HEIGHT, availablePx - toolbarHeight);
+    timelineWrapper.style.setProperty(
+      "height",
+      `${timelineHeight}px`,
+      "important",
+    );
+  }
+}
+
 window.addEventListener("resize", () => {
+  syncTaskViewHeights();
   if (currentView === "timeline" && lastTaskViewData) {
     syncTimelineStickyOffsets();
   }
@@ -2018,10 +2061,9 @@ function renderTimeline(data) {
         lanes[targetLane] = rangeRight;
 
         const laneTop = targetLane * LANE_HEIGHT + 4;
-        const categoryColor = getCategoryChartColor(task.category_name);
 
         if (showPlanned) {
-          barsHtml += `<div class="timeline-bar timeline-bar--planned" data-task-id="${task.id}" style="left: ${plannedPos.leftPercent}%; width: ${plannedPos.widthPercent}%; top: ${laneTop}px; background-color: ${hexToRgba(categoryColor, 0.28)}; border-color: ${hexToRgba(categoryColor, 0.55)}; color: ${categoryColor};">
+          barsHtml += `<div class="timeline-bar timeline-bar--planned" data-task-id="${task.id}" style="left: ${plannedPos.leftPercent}%; width: ${plannedPos.widthPercent}%; top: ${laneTop}px;">
                   <span class="timeline-bar-title">${task.title}</span>
                 </div>`;
         }
@@ -2029,7 +2071,7 @@ function renderTimeline(data) {
         if (showActual) {
           // 「すべて」モードでは予定バーの22px下、単独表示モードではレーンの先頭に配置
           const actualTop = displayMode === "actual" ? laneTop : laneTop + 22;
-          barsHtml += `<div class="timeline-bar timeline-bar--actual" data-task-id="${task.id}" style="left: ${actualPos.leftPercent}%; width: ${actualPos.widthPercent}%; top: ${actualTop}px; background-color: ${hexToRgba(categoryColor, 0.55)}; border-color: ${hexToRgba(categoryColor, 0.85)}; color: #fff;">
+          barsHtml += `<div class="timeline-bar timeline-bar--actual" data-task-id="${task.id}" style="left: ${actualPos.leftPercent}%; width: ${actualPos.widthPercent}%; top: ${actualTop}px;">
                   <span class="timeline-bar-title">${task.title}</span>
                 </div>`;
         }
@@ -2066,6 +2108,8 @@ function renderTimeline(data) {
 
   // 追従ヘッダー（ツールバー・日付軸）の位置を実測して同期
   setTimeout(syncTimelineStickyOffsets, 0);
+  // タイムラインのツールバー分の高さが変わるため、コンテナ高さも合わせて再計算する
+  setTimeout(syncTaskViewHeights, 0);
 
   // 月選択ラベルの更新とイベント再バインド
   const monthLabel = document.getElementById("timeline-month-label");
@@ -2155,6 +2199,8 @@ async function renderTaskViews() {
   renderTable(data);
   renderCalendar(data);
   renderTimeline(data);
+  // 全ビューの描画後に、実測されたヘッダー高さをもとにコンテナの高さを算出する
+  syncTaskViewHeights();
 }
 
 function switchView(view) {
@@ -2166,6 +2212,11 @@ function switchView(view) {
   document.querySelectorAll(".view-panel").forEach((panel) => {
     panel.classList.toggle("hidden", panel.dataset.viewPanel !== view);
   });
+  // ビュー切り替え時にもウィンドウサイズの変化を反映させておく
+  syncTaskViewHeights();
+  if (view === "timeline" && lastTaskViewData) {
+    syncTimelineStickyOffsets();
+  }
 }
 
 switchView(currentView);
