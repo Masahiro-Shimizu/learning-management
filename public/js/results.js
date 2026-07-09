@@ -569,7 +569,7 @@ function generatePastPeriods() {
   }
 
   // 2. 直近3ヶ月分を毎月1日〜末日で厳密に算出
-  for (let m = 1; m <= 3; m++) {
+  for (let m = 1; m <= 12; m++) {
     const d = new Date(today.getFullYear(), today.getMonth() - m, 1);
     const startDate = new Date(d.getFullYear(), d.getMonth(), 1);
     const endDate = new Date(d.getFullYear(), d.getMonth() + 1, 0);
