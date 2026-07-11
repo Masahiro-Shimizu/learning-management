@@ -1,51 +1,27 @@
 
-/* ==========================================
-   タスク一覧画面 全体レイアウト＆ヘッダー
-========================================= */
+/* ========================================================
+   タスク一覧画面：ヘッダー＆ビュー統合設定
+======================================================== */
 
-/* 1. ページ全体をFlexbox化して縦に並べる */
+/* 1. 全体レイアウト */
 #page-tasks {
   display: flex;
   flex-direction: column;
-  height: 100vh; /* 画面の高さいっぱい */
+  height: 100vh;
   overflow: hidden;
 }
 
-.tasks-header {
-  flex-shrink: 0;
-  position: sticky;
-  top: 0;
-  z-index: 200;
-  background-color: var(--color-bg-base);
-  
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  
-  /* 💡 ここがポイント！パディングを0にしつつ、marginをマイナスにして左に食い込ませる */
-  padding-left: 0 !important; 
-  margin-left: -8px !important; /* 👈 これで物理的に左へ移動します */
-  padding-right: var(--space-16);
-  
-  padding-top: var(--space-32);
-  padding-bottom: var(--space-16);
-}
-
-/* タイトルエリア（header-left）も調整 */
-.header-left {
+/* 親mainの余白をリセットして、子要素で余白を管理する（一番崩れにくい！） */
+#page-tasks main {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-  /* 念のため余白を打ち消す */
-  padding-left: 8px !important; /* マイナス分を相殺して文字を隠さないようにする */
+  min-height: 0;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 
-/* タスク一覧画面だけ、mainコンテナの左余白を詰める */
-#page-tasks main {
-  padding-left: 8px !important; /* 16px から 8px にして左に寄せる */
-}
-
-//* タスク画面のヘッダーを左端まで引き出す設定 */
+/* 2. ヘッダーをピタッと左寄せにする */
 #page-tasks .tasks-header {
   flex-shrink: 0;
   position: sticky;
@@ -53,41 +29,50 @@
   z-index: 200;
   background-color: var(--color-bg-base);
   
-  /* 💡 犯人である main の padding (16px) を相殺して左端に寄せる */
-  margin-left: -16px !important; 
-  margin-right: -16px !important;
-  
-  /* 左端に寄せた分、内側の余白を足してデザインを整える */
-  padding-left: 32px !important; 
-  padding-right: 32px !important;
-  padding-top: var(--space-32);
-  padding-bottom: var(--space-16);
-  
   display: flex !important;
   justify-content: space-between !important;
   align-items: flex-start !important;
+  
+  /* 左に24pxの余白を作り、他画面と揃える */
+  padding: 32px 24px 16px 24px !important;
+  margin: 0 !important; /* マイナスマージンは不要 */
 }
 
-/* ついでにタブも同じ幅に揃える（ここも重要！） */
+/* 左側のタイトルとサブタイトルを縦並びに */
+#page-tasks .header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* 3. ビュー切り替えタブも同様に左寄せ */
 #page-tasks .view-tabs {
-  margin-left: -16px !important;
-  margin-right: -16px !important;
-  padding-left: 32px !important;
-  padding-right: 32px !important;
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid rgb(255 255 255 / 0.08);
+  margin: 0 !important;
+  padding: 0 24px 4px 24px !important; /* ヘッダーと同じ余白にする */
+  
+  position: sticky !important;
+  top: 105px !important; /* ヘッダーの高さに合わせて調整 */
+  z-index: 190 !important;
+  background-color: var(--color-bg-base) !important;
 }
-/* サブテキストの調整 */
-.tasks-sub {
-  font-size: 0.85rem;
-  color: var(--color-text-tertiary);
-  margin-top: 0; /* flex-direction:column にしたのでmarginをリセット */
-}
-/* 💡 右側のボタン群（+タスクを追加など）がきれいに横並びになるように整理 */
-.tasks-header > div:last-child {
+
+/* 右側のボタン群 */
+#page-tasks .tasks-header > div:last-child {
   display: flex;
   gap: var(--space-8);
   align-items: center;
-  flex-wrap: wrap; /* 画面が狭い時にボタンが潰れないようにする */
+  flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+/* サブテキスト */
+.tasks-sub {
+  font-size: 0.85rem;
+  color: var(--color-text-tertiary);
+  margin: 0;
 }
 
 /* 3. コンテンツエリア（カンバンやテーブルが入る場所） */
