@@ -373,38 +373,21 @@ function renderCharts() {
   }
 
   // ② 進捗率
-  // v2.21.7：締め日時（borderDate）の算出方法を修正。
-  // 旧ロジックは「表示中の年月」＋「実際の今日の日にち」という無関係な値を
-  // 組み合わせて締め日を作っていたため、月をまたいで期間を移動しただけで
-  // 締め日が最大1ヶ月分ジャンプし、進捗率・先週比が実際の学習量と無関係に
-  // 大きく変動する不具合があった。
-  // 新ロジック：締め日は「表示中の期間（週/月/年）の終了日時」を基準にし、
-  // その期間がまだ終わっていない（今週/今月/今年を見ている）場合のみ
-  // 「実際の現在時刻」を上限として採用する。
-  const realNow = new Date();
-
-  const currentPeriodEnd =
-    currentPeriod !== "all"
-      ? getPeriodRange(currentPeriod, viewDate).end
-      : null;
-  const borderDate =
-    currentPeriodEnd && currentPeriodEnd.getTime() < realNow.getTime()
-      ? currentPeriodEnd
-      : realNow;
-
-  const totalAllTasks = tasks.length;
-
-  const currentCompletedTasks = tasks.filter((t) => {
-    if (t.status !== "完了") return false;
-    const targetDateStr = t.end_date || t.updated_at || t.created_at;
-    if (!targetDateStr) return false;
-    if (currentPeriod === "all") return true;
-    return new Date(targetDateStr).getTime() <= borderDate.getTime();
-  }).length;
+  // v2.21.13：母数を「全タスク」から「期間内タスクのみ」に変更。
+  // 従来（v2.21.7）は締め日時（borderDate）までに完了した全タスクの割合、
+  // つまり全体に対する累積進捗を表していたが、下部の「進捗率推移」グラフ
+  // （v2.21.12）と考え方がズレて画面内で数字が一致しないことがあった。
+  // 進捗率推移グラフと同じ考え方に統一し、週/月/年トグル時は
+  // 「その期間に属するタスクのうち完了しているものの割合」を表示する。
+  // 「全期間」表示時は filteredTasks が全タスクと一致するため、
+  // 従来通り全体に対する進捗率と同じ値になる（挙動は変わらない）。
+  const periodCompletedCount = filteredTasks.filter(
+    (t) => t.status === "完了",
+  ).length;
 
   const currentProgressRate =
-    totalAllTasks > 0
-      ? Math.round((currentCompletedTasks / totalAllTasks) * 100)
+    filteredTasks.length > 0
+      ? Math.round((periodCompletedCount / filteredTasks.length) * 100)
       : 0;
 
   const progressRateEl = document.getElementById("progress-rate");
@@ -415,7 +398,9 @@ function renderCharts() {
   let prevProgressRate = 0;
 
   if (currentPeriod !== "all") {
-    // 表示中の期間の「1つ前の期間」の基準日を作り、その期間の終了日時を締め日とする
+    // 表示中の期間の「1つ前の期間」の日付範囲を算出し、
+    // filteredTasks と同じ判定条件（完了なら end_date、それ以外は予定日）で
+    // 前期間に属するタスクを抽出する
     const prevBaseDate = new Date(viewDate);
     if (currentPeriod === "week") {
       prevBaseDate.setDate(viewDate.getDate() - 7);
@@ -425,21 +410,25 @@ function renderCharts() {
       prevBaseDate.setFullYear(viewDate.getFullYear() - 1);
     }
 
-    const prevPeriodEnd = getPeriodRange(currentPeriod, prevBaseDate).end;
-    // 前期間の終了日時が万一未来になるケース（通常は起こらない）に備え、今を上限にする
-    const prevBorderDate =
-      prevPeriodEnd.getTime() < realNow.getTime() ? prevPeriodEnd : realNow;
+    const prevRange = getPeriodRange(currentPeriod, prevBaseDate);
 
-    const prevCompletedTasks = tasks.filter((t) => {
-      if (t.status !== "完了") return false;
-      const targetDateStr = t.end_date || t.updated_at || t.created_at;
+    const prevPeriodTasks = tasks.filter((t) => {
+      const targetDateStr =
+        t.status === "完了"
+          ? t.end_date
+          : t.end_planned_date || t.start_planned_date;
       if (!targetDateStr) return false;
-      return new Date(targetDateStr).getTime() <= prevBorderDate.getTime();
-    }).length;
+      const d = new Date(targetDateStr);
+      return d >= prevRange.start && d <= prevRange.end;
+    });
+
+    const prevCompletedCount = prevPeriodTasks.filter(
+      (t) => t.status === "完了",
+    ).length;
 
     prevProgressRate =
-      totalAllTasks > 0
-        ? Math.round((prevCompletedTasks / totalAllTasks) * 100)
+      prevPeriodTasks.length > 0
+        ? Math.round((prevCompletedCount / prevPeriodTasks.length) * 100)
         : 0;
   }
 
@@ -819,22 +808,33 @@ function renderCharts() {
       }
     }
   }
+
+  // v2.21.12: 進捗率推移は「その期間に該当するタスクのうち、その日までに完了/予定済みの割合」に変更。
+  // 従来は母数が常に「全タスク」（allTasks / totalAllTasks）だったため、週や月の初日でも
+  // 既に全体の進捗率（例：69%）がそのままグラフの開始値になってしまい、
+  // 「その期間の進捗が0%からどう積み上がったか」が見えない状態だった。
+  // 母数を「その期間に属するタスクのみ」（filteredTasks）に変更することで、
+  // 期間の開始時点は0%からスタートし、期間内で完了が進むごとに上昇する見た目になる。
+  // 「全期間」トグル時は filteredTasks === tasks（全件）となるため、
+  // 従来通りの全体累積進捗と同じ結果になる（挙動は変わらない）。
+  const periodTaskCount = filteredTasks.length;
+
   const plannedProgressData = progressLabelDates.map((labelDate) => {
-    if (totalAllTasks === 0) return 0;
-    const count = allTasks.filter((t) => {
+    if (periodTaskCount === 0) return 0;
+    const count = filteredTasks.filter((t) => {
       if (!t.end_planned_date) return false;
       return new Date(t.end_planned_date) <= labelDate;
     }).length;
-    return Math.round((count / totalAllTasks) * 100);
+    return Math.round((count / periodTaskCount) * 100);
   });
 
   const actualProgressData = progressLabelDates.map((labelDate) => {
-    if (totalAllTasks === 0) return 0;
-    const count = allTasks.filter((t) => {
+    if (periodTaskCount === 0) return 0;
+    const count = filteredTasks.filter((t) => {
       if (t.status !== "完了" || !t.end_date) return false;
       return new Date(t.end_date) <= labelDate;
     }).length;
-    return Math.round((count / totalAllTasks) * 100);
+    return Math.round((count / periodTaskCount) * 100);
   });
 
   chartProgress = new Chart(document.getElementById("chart-progress"), {
@@ -911,7 +911,7 @@ function getCurrentPeriodRange(period) {
   return getPeriodRange(period, viewDate);
 }
 
-// トグルに連動してサブテキストと設定ボタンを更新する（増殖バグ修正＆目標テキスト表示版）
+// トグルに連動してサブテキストと設定ボタンを更新する（構文エラー修正版）
 async function loadAndShowCurrentPeriodGoal(period) {
   const subEl = document.querySelector(".dashboard-sub");
   const btnEl = document.getElementById("btn-open-goal-modal");
@@ -928,8 +928,6 @@ async function loadAndShowCurrentPeriodGoal(period) {
   // 2. week / month / year の場合は設定ボタンを表示状態に戻す
   if (btnEl) {
     btnEl.style.display = "inline-block";
-
-    // 【増殖防止】ボタンのテキストだけを書き換える（HTML要素自体は増やさない）
     const btnLabels = {
       week: "🎯 今週の目標を設定",
       month: "🎯 今月の目標を設定",
@@ -938,7 +936,7 @@ async function loadAndShowCurrentPeriodGoal(period) {
     btnEl.textContent = btnLabels[period] || "🎯 目標を設定";
   }
 
-  // 3. 【追加】APIから現在の期間の目標データを取得して画面に反映させる
+  // 3. 選択されている期間の日付範囲を取得してAPIからレビュー（目標）データを取得
   const goalLabels = {
     week: "今週の目標",
     month: "今月の目標",
@@ -946,20 +944,31 @@ async function loadAndShowCurrentPeriodGoal(period) {
   };
 
   try {
-    // 現在の期間（week/month/year）をパラメータにしてAPIから目標を取得
-    const res = await api(`/api/goals?period=${period}`);
+    const range = getCurrentPeriodRange(period);
+    if (!range) {
+      subEl.textContent =
+        DASHBOARD_DEFAULT_SUB_TEXTS[period] || "コツコツ積み上げています。";
+      return;
+    }
 
-    if (res && res.text) {
-      // 目標が保存されている場合は「今週の目標: テスト」のように表示
-      subEl.textContent = `🎯 ${goalLabels[period]}: ${res.text}`;
+    const startDateStr = ymdDash(range.start);
+    const endDateStr = ymdDash(range.end);
+
+    const res = await api(
+      `/api/result-reviews?period_type=${period}&start_date=${startDateStr}&end_date=${endDateStr}`,
+    );
+
+    const savedGoal = res && (res.goal || (Array.isArray(res) && res[0]?.goal));
+
+    if (savedGoal) {
+      // インラインスタイルを直接指定して、確実に「オレンジ色」と「太字」を強制します
+      subEl.innerHTML = `<strong style="color: #ffc107; font-weight: bold; margin-right: 8px;">${goalLabels[period]}</strong><span>${savedGoal}</span>`;
     } else {
-      // まだ目標がない場合はデフォルトのサブテキストを表示
       subEl.textContent =
         DASHBOARD_DEFAULT_SUB_TEXTS[period] || "コツコツ積み上げています。";
     }
   } catch (e) {
-    console.error("目標データの取得に失敗しました:", e);
-    // エラー時のフォールバック
+    console.error("目標（レビュー）データの取得に失敗しました:", e);
     subEl.textContent =
       DASHBOARD_DEFAULT_SUB_TEXTS[period] || "コツコツ積み上げています。";
   }
@@ -1010,75 +1019,6 @@ function closeGoalModal() {
   document.getElementById("goal-modal").classList.add("hidden");
 }
 
-// トグルに連動してサブテキストと設定ボタンを更新する（構文エラー修正版）
-async function loadAndShowCurrentPeriodGoal(period) {
-  const subEl = document.querySelector(".dashboard-sub");
-  const btnEl = document.getElementById("btn-open-goal-modal");
-  if (!subEl) return;
-
-  // 1. 全期間（all）が選択された場合の処理
-  if (period === "all") {
-    subEl.textContent =
-      DASHBOARD_DEFAULT_SUB_TEXTS.all || "コツコツ積み上げています。";
-    if (btnEl) btnEl.style.display = "none";
-    return;
-  }
-
-  // 2. week / month / year の場合は設定ボタンを表示状態に戻す
-  if (btnEl) {
-    btnEl.style.display = "inline-block";
-    const btnLabels = {
-      week: "🎯 今週の目標を設定",
-      month: "🎯 今月の目標を設定",
-      year: "🎯 今年の目標を設定",
-    };
-    btnEl.textContent = btnLabels[period] || "🎯 目標を設定";
-  }
-
-  // 3. 選択されている期間の日付範囲を取得してAPIからレビュー（目標）データを取得
-  const goalLabels = {
-    week: "今週の目標",
-    month: "今月の目標",
-    year: "今年の目標",
-  };
-
-  try {
-    const range = getCurrentPeriodRange(period);
-    if (!range) {
-      subEl.textContent =
-        DASHBOARD_DEFAULT_SUB_TEXTS[period] || "コツコツ積み上げています。";
-      return;
-    }
-
-    const startDateStr = ymdDash(range.start);
-    const endDateStr = ymdDash(range.end);
-
-    // APIは全件返すためクライアント側でフィルタする（クエリパラメータは無視される）
-    const reviews = await api("/api/result-reviews");
-    const matchingReview = Array.isArray(reviews)
-      ? reviews.find(
-          (r) =>
-            r.period_type === period &&
-            ymdDash(r.start_date) === startDateStr &&
-            ymdDash(r.end_date) === endDateStr,
-        )
-      : null;
-
-    const savedGoal = matchingReview?.goal;
-
-    if (savedGoal) {
-      // インラインスタイルを直接指定して、確実に「オレンジ色」と「太字」を強制します
-      subEl.innerHTML = `<strong style="color: #ffc107; font-weight: bold; margin-right: 8px;">${goalLabels[period]}</strong><span>${savedGoal}</span>`;
-    } else {
-      subEl.textContent =
-        DASHBOARD_DEFAULT_SUB_TEXTS[period] || "コツコツ積み上げています。";
-    }
-  } catch (e) {
-    console.error("目標（レビュー）データの取得に失敗しました:", e);
-    subEl.textContent =
-      DASHBOARD_DEFAULT_SUB_TEXTS[period] || "コツコツ積み上げています。";
-  }
-}
 async function initDashboard() {
   const tasks = await api("/api/tasks");
   const books = await api("/api/books");
@@ -1128,89 +1068,15 @@ async function initDashboard() {
   document.getElementById("goal-modal")?.addEventListener("click", (e) => {
     if (e.target.id === "goal-modal") closeGoalModal();
   });
-  // 💡 保存ボタンの処理（直接埋め込み版）
-  document.getElementById("btn-goal-modal-save")?.addEventListener("click", async () => {
-    const goalInput = document.getElementById("goal-input-text");
-    const saveBtn = document.getElementById("btn-goal-modal-save");
-    if (!goalInput) return;
-
-    const goalText = goalInput.value.trim();
-    if (!goalText) {
-      alert("目標を入力してください。");
-      return;
-    }
-
-    if (saveBtn) {
-      saveBtn.disabled = true;
-      saveBtn.textContent = "保存中…";
-    }
-
-    try {
-      // 1. 期間と日付の取得
-      const pType = (typeof currentPeriod !== "undefined" && currentPeriod !== "all") ? currentPeriod : "week";
-      const targetDate = typeof viewDate !== "undefined" ? viewDate : new Date();
-      const d = new Date(targetDate.getTime());
-      
-      // 2. 時差ズレのない正確なJSTカレンダーを計算
-      let start, end;
-      if (pType === "month") {
-        start = new Date(d.getFullYear(), d.getMonth(), 1);
-        end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
-      } else if (pType === "year") {
-        start = new Date(d.getFullYear(), 0, 1);
-        end = new Date(d.getFullYear(), 11, 31);
+  document
+    .getElementById("btn-goal-modal-save")
+    ?.addEventListener("click", () => {
+      if (typeof saveGoalFromModal === "function") {
+        saveGoalFromModal();
       } else {
-        const day = d.getDay();
-        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-        start = new Date(d.getFullYear(), d.getMonth(), diff);
-        end = new Date(d.getFullYear(), d.getMonth(), diff + 6);
+        console.warn("saveGoalFromModalがまだ読み込まれていません");
       }
-      
-      const formatStr = (dateObj) => {
-        const y = dateObj.getFullYear();
-        const m = String(dateObj.getMonth() + 1).padStart(2, "0");
-        const dayStr = String(dateObj.getDate()).padStart(2, "0");
-        return `${y}-${m}-${dayStr}`;
-      };
-
-      // 3. APIへ送信
-      const body = { 
-        period_type: pType, 
-        start_date: formatStr(start), 
-        end_date: formatStr(end), 
-        goal: goalText 
-      };
-
-      const response = await fetch("/api/result-reviews", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-
-      if (!response.ok) throw new Error("サーバー通信エラー");
-
-      // 4. 保存成功：モーダルを閉じて入力欄を空にする
-      const goalModal = document.getElementById("goal-modal");
-      if (goalModal) goalModal.classList.add("hidden");
-      goalInput.value = "";
-
-      // 5. 画面の目標テキストを最新のものに更新する
-      if (typeof window.loadAndShowCurrentPeriodGoal === "function") {
-        window.loadAndShowCurrentPeriodGoal(pType);
-      } else if (typeof loadAndShowCurrentPeriodGoal === "function") {
-        loadAndShowCurrentPeriodGoal(pType);
-      }
-
-    } catch (error) {
-      console.error("保存失敗:", error);
-      alert("保存に失敗しました。");
-    } finally {
-      if (saveBtn) {
-        saveBtn.disabled = false;
-        saveBtn.textContent = "保存する";
-      }
-    }
-  });
+    });
 
   // 最初のロード時に現在期間の目標を表示
   loadAndShowCurrentPeriodGoal(currentPeriod);
