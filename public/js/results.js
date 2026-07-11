@@ -568,33 +568,39 @@ function generatePastPeriods() {
     });
   }
 
-  // 2. 直近3ヶ月分を毎月1日〜末日で厳密に算出
-  for (let m = 1; m <= 12; m++) {
+  // 2. 【修正】今月(0)を含めた直近12ヶ月分を毎月1日〜末日で厳密に算出
+  for (let m = 0; m <= 12; m++) {
     const d = new Date(today.getFullYear(), today.getMonth() - m, 1);
     const startDate = new Date(d.getFullYear(), d.getMonth(), 1);
     const endDate = new Date(d.getFullYear(), d.getMonth() + 1, 0);
     endDate.setHours(23, 59, 59, 999);
 
     periods.push({
-      id: `month-page-${d.getFullYear()}-${d.getMonth() + 1}`,
+      // 今月の場合は、特別なIDを付与する
+      id: m === 0 ? "month-page-current" : `month-page-${d.getFullYear()}-${d.getMonth() + 1}`,
       type: "month",
       label: `${d.getFullYear()}年${d.getMonth() + 1}月`,
-      periodLabel: `${m}ヶ月前`,
+      periodLabel: m === 0 ? "今月" : `${m}ヶ月前`, // m=0なら「今月」にする
       startDate,
       endDate,
+      isCurrent: m === 0, // 今月のカードであることを明示
     });
   }
 
-  // 3. 昨年の1年間（1/1〜12/31）を完全追跡して算出
-  const prevYear = today.getFullYear() - 1;
-  periods.push({
-    id: `year-page-${prevYear}`,
-    type: "year",
-    label: `${prevYear}年`,
-    periodLabel: "昨年",
-    startDate: new Date(prevYear, 0, 1),
-    endDate: new Date(prevYear, 11, 31, 23, 59, 59, 999),
-  });
+  // 3. 【修正】今年(0)と昨年(1)の1年間（1/1〜12/31）を算出
+  const currentYear = today.getFullYear();
+  for (let y = 0; y <= 1; y++) {
+    const targetYear = currentYear - y;
+    periods.push({
+      id: y === 0 ? "year-page-current" : `year-page-${targetYear}`,
+      type: "year",
+      label: `${targetYear}年`,
+      periodLabel: y === 0 ? "今年" : "昨年",
+      startDate: new Date(targetYear, 0, 1),
+      endDate: new Date(targetYear, 11, 31, 23, 59, 59, 999),
+      isCurrent: y === 0, // 今年のカードであることを明示
+    });
+  }
 
   return periods;
 }

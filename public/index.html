@@ -87,45 +87,18 @@
         <section id="page-dashboard">
           <div class="dashboard-header">
             <div>
-              <h1 class="fs-2 text-white fw-bold mb-0">ダッシュボード</h1>
-
-              <div
-                style="
-                  display: flex;
-                  align-items: center;
-                  gap: 10px;
-                  margin-top: 4px;
-                "
-              >
+              <h2>ダッシュボード</h2>
+              <div style="display: flex; align-items: center; gap: 10px; margin-top: 4px;">
                 <p class="dashboard-sub" style="margin: 0">
-                  <button
-                    type="button"
-                    id="btn-open-goal-modal"
-                    class="btn btn-secondary"
-                    style="
-                      margin-top: 6px;
-                      font-size: 0.75rem;
-                      padding: 4px 12px;
-                    "
-                  >
-                    🎯 今週の目標を設定
-                  </button>
                   今週もコツコツ積み上げています。
                 </p>
                 <button
-                  id="btn-edit-week-goal"
-                  class="btn"
-                  style="
-                    padding: 2px 8px;
-                    font-size: 0.8rem;
-                    border-radius: 4px;
-                    background: rgba(77, 127, 212, 0.15);
-                    border: 1px solid rgba(77, 127, 212, 0.4);
-                    color: #4d7fd4;
-                    cursor: pointer;
-                  "
+                  type="button"
+                  id="btn-open-goal-modal"
+                  class="btn btn-secondary"
+                  style="font-size: 0.75rem; padding: 4px 12px; flex-shrink: 0;"
                 >
-                  ⚙️ 目標を設定
+                  🎯 今週の目標を設定
                 </button>
               </div>
             </div>
@@ -1147,6 +1120,110 @@
               選択を保存
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+    <div id="goal-modal" class="modal hidden">
+      <div class="modal-content" style="
+        width: 480px; 
+        max-height: 85vh; 
+        display: flex; 
+        flex-direction: column; 
+        background: var(--color-bg-card, #1e1e2e); 
+        border: 1px solid rgba(255, 255, 255, 0.08); 
+        border-radius: var(--radius-lg, 12px);
+        box-shadow: 0 16px 36px rgba(0,0,0,0.4);
+        overflow: hidden;
+      ">
+        
+        <div class="modal-header" style="
+          display: flex; 
+          align-items: center; 
+          justify-content: space-between; 
+          padding: var(--space-16, 16px) var(--space-24, 24px);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        ">
+          <h3 style="
+            font-family: 'Syne', sans-serif; 
+            font-size: 1.15rem; 
+            margin: 0; 
+            color: var(--color-text-primary, #ffffff);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          ">🎯 目標を設定する</h3>
+          <button type="button" id="btn-goal-modal-close-x" class="btn-modal-close" style="
+            background: transparent; 
+            border: none; 
+            color: var(--color-text-tertiary, #a6adc8); 
+            font-size: 1.1rem; 
+            cursor: pointer;
+            padding: 4px;
+          ">✕</button>
+        </div>
+    
+        <div class="modal-body" style="
+          padding: var(--space-24, 24px); 
+          overflow-y: auto;
+          flex-grow: 1;
+        ">
+          <div class="form-group" style="display: flex; flex-direction: column; gap: var(--space-8, 8px);">
+            <label for="goal-input-text" style="
+              font-size: 0.82rem; 
+              color: var(--color-text-secondary, #cdd6f4);
+              font-weight: 500;
+            ">新しい目標内容</label>
+            <textarea
+              id="goal-input-text"
+              rows="5"
+              placeholder="例：今週は〇〇の基礎を完全にマスターする！"
+              style="
+                width: 100%; 
+                padding: 12px; 
+                border-radius: var(--radius-md, 8px); 
+                border: 1px solid rgba(255, 255, 255, 0.1); 
+                background: var(--color-bg-base, #11111b); 
+                color: var(--color-text-primary, #ffffff); 
+                box-sizing: border-box;
+                resize: none;
+                font-family: inherit;
+                font-size: 0.9rem;
+                line-height: 1.5;
+                outline: none;
+                transition: border-color 0.15s ease;
+              "
+              onfocus="this.style.borderColor='var(--color-accent-primary, #6366f1)'"
+              onblur="this.style.borderColor='rgba(255, 255, 255, 0.1)'"
+            ></textarea>
+          </div>
+        </div>
+    
+        <div class="modal-footer" style="
+          display: flex; 
+          justify-content: flex-end; 
+          gap: 12px; 
+          padding: var(--space-16, 16px) var(--space-24, 24px);
+          background: rgba(0, 0, 0, 0.15);
+          border-top: 1px solid rgba(255, 255, 255, 0.06);
+          margin-top: auto;
+        ">
+          <button type="button" id="btn-goal-modal-cancel" class="btn btn-secondary" style="
+            padding: 8px 16px;
+            border-radius: var(--radius-md, 6px);
+            font-size: 0.88rem;
+            cursor: pointer;
+          ">
+            キャンセル
+          </button>
+          <button type="button" id="btn-goal-modal-save" class="btn btn-primary" style="
+            padding: 8px 20px;
+            border-radius: var(--radius-md, 6px);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+          ">
+            保存する
+          </button>
         </div>
       </div>
     </div>

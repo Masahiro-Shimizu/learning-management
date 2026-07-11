@@ -1053,11 +1053,18 @@ async function loadAndShowCurrentPeriodGoal(period) {
     const startDateStr = ymdDash(range.start);
     const endDateStr = ymdDash(range.end);
 
-    const res = await api(
-      `/api/result-reviews?period_type=${period}&start_date=${startDateStr}&end_date=${endDateStr}`,
-    );
+    // APIは全件返すためクライアント側でフィルタする（クエリパラメータは無視される）
+    const reviews = await api("/api/result-reviews");
+    const matchingReview = Array.isArray(reviews)
+      ? reviews.find(
+          (r) =>
+            r.period_type === period &&
+            ymdDash(r.start_date) === startDateStr &&
+            ymdDash(r.end_date) === endDateStr,
+        )
+      : null;
 
-    const savedGoal = res && (res.goal || (Array.isArray(res) && res[0]?.goal));
+    const savedGoal = matchingReview?.goal;
 
     if (savedGoal) {
       // インラインスタイルを直接指定して、確実に「オレンジ色」と「太字」を強制します
@@ -1121,15 +1128,89 @@ async function initDashboard() {
   document.getElementById("goal-modal")?.addEventListener("click", (e) => {
     if (e.target.id === "goal-modal") closeGoalModal();
   });
-  document
-    .getElementById("btn-goal-modal-save")
-    ?.addEventListener("click", () => {
-      if (typeof saveGoalFromModal === "function") {
-        saveGoalFromModal();
+  // 💡 保存ボタンの処理（直接埋め込み版）
+  document.getElementById("btn-goal-modal-save")?.addEventListener("click", async () => {
+    const goalInput = document.getElementById("goal-input-text");
+    const saveBtn = document.getElementById("btn-goal-modal-save");
+    if (!goalInput) return;
+
+    const goalText = goalInput.value.trim();
+    if (!goalText) {
+      alert("目標を入力してください。");
+      return;
+    }
+
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = "保存中…";
+    }
+
+    try {
+      // 1. 期間と日付の取得
+      const pType = (typeof currentPeriod !== "undefined" && currentPeriod !== "all") ? currentPeriod : "week";
+      const targetDate = typeof viewDate !== "undefined" ? viewDate : new Date();
+      const d = new Date(targetDate.getTime());
+      
+      // 2. 時差ズレのない正確なJSTカレンダーを計算
+      let start, end;
+      if (pType === "month") {
+        start = new Date(d.getFullYear(), d.getMonth(), 1);
+        end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+      } else if (pType === "year") {
+        start = new Date(d.getFullYear(), 0, 1);
+        end = new Date(d.getFullYear(), 11, 31);
       } else {
-        console.warn("saveGoalFromModalがまだ読み込まれていません");
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        start = new Date(d.getFullYear(), d.getMonth(), diff);
+        end = new Date(d.getFullYear(), d.getMonth(), diff + 6);
       }
-    });
+      
+      const formatStr = (dateObj) => {
+        const y = dateObj.getFullYear();
+        const m = String(dateObj.getMonth() + 1).padStart(2, "0");
+        const dayStr = String(dateObj.getDate()).padStart(2, "0");
+        return `${y}-${m}-${dayStr}`;
+      };
+
+      // 3. APIへ送信
+      const body = { 
+        period_type: pType, 
+        start_date: formatStr(start), 
+        end_date: formatStr(end), 
+        goal: goalText 
+      };
+
+      const response = await fetch("/api/result-reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      if (!response.ok) throw new Error("サーバー通信エラー");
+
+      // 4. 保存成功：モーダルを閉じて入力欄を空にする
+      const goalModal = document.getElementById("goal-modal");
+      if (goalModal) goalModal.classList.add("hidden");
+      goalInput.value = "";
+
+      // 5. 画面の目標テキストを最新のものに更新する
+      if (typeof window.loadAndShowCurrentPeriodGoal === "function") {
+        window.loadAndShowCurrentPeriodGoal(pType);
+      } else if (typeof loadAndShowCurrentPeriodGoal === "function") {
+        loadAndShowCurrentPeriodGoal(pType);
+      }
+
+    } catch (error) {
+      console.error("保存失敗:", error);
+      alert("保存に失敗しました。");
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "保存する";
+      }
+    }
+  });
 
   // 最初のロード時に現在期間の目標を表示
   loadAndShowCurrentPeriodGoal(currentPeriod);
