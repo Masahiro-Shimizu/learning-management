@@ -82,11 +82,49 @@ html.light {
   --color-text-tertiary: hsl(220 20% 45%);
 }
 
-/* syneフォント */
+/* ========================================================
+   ★ 全画面ヘッダー：タイポグラフィ（文字サイズ・太さ）統一
+======================================================== */
+/* 1. ページタイトル（各画面のトップ見出しをピタッと揃える） */
 h1,
+h2,
+#page-tasks h2,
+#page-library h2,
+#page-notes h2,
+#page-study h2,
+#page-result h2,
+.page-header h1,
+.page-header h2 {
+  font-family: "Syne", sans-serif;
+  font-size: 1.75rem !important; /* 約28pxで統一 */
+  font-weight: 700 !important;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
 nav a {
   font-family: "Syne", sans-serif;
 }
+
+/* 2. サブ説明 / 日付ナビゲーション */
+.tasks-sub,
+.page-header .sub-text,
+.calendar-month-label,
+.timeline-month-label {
+  font-size: 0.85rem !important; /* 約13.6pxで統一 */
+  font-weight: 500 !important;
+  color: var(--color-text-tertiary);
+}
+
+/* 3. ビュー内の小見出し（カンバン列名・テーブル項目名など） */
+.kanban-header-title,
+.task-table th,
+.timeline-row-header {
+  font-size: 0.9rem !important; /* 約14.4pxで統一 */
+  font-weight: 600 !important;
+  color: var(--color-text-secondary);
+}
+/* ======================================================== */
 
 /* ヘッダーを非表示 */
 header {
@@ -258,6 +296,40 @@ main {
 
 .hidden {
   display: none;
+}
+
+/* ========================================================
+   ★ 【大反省版】全画面ヘッダー：タイトル文字サイズ強制統一
+   （style.css の一番下に貼り付けてください）
+======================================================== */
+
+/* 暴発しないよう、ページのトップ見出しだけを丁寧にピンポイント指定 */
+#page-dashboard h1, #page-dashboard h2,
+#page-tasks h1,     #page-tasks h2,
+#page-library h1,   #page-library h2,
+#page-notes h1,     #page-notes h2,
+#page-study h1,     #page-study h2,
+#page-records h1,   #page-records h2,
+#page-result h1,    #page-result h2,
+.page-header h1,    .page-header h2,
+.dashboard-header h1, .dashboard-header h2,
+.tasks-header h1,   .tasks-header h2 {
+  font-family: "Syne", sans-serif !important;
+  font-size: 1.75rem !important; /* 約28px */
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
+  line-height: 1.2 !important;
+}
+
+/* サブ説明 / 日付ナビゲーション */
+.tasks-sub,
+.dashboard-sub,
+.page-header .sub-text,
+.calendar-month-label,
+.timeline-month-label {
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+  color: var(--color-text-tertiary) !important;
 }
 
 @media (max-width: 768px) {

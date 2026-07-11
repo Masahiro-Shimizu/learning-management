@@ -1,3 +1,8 @@
+
+/* ==========================================
+   タスク一覧画面 全体レイアウト＆ヘッダー
+========================================= */
+
 /* 1. ページ全体をFlexbox化して縦に並べる */
 #page-tasks {
   display: flex;
@@ -6,17 +11,86 @@
   overflow: hidden;
 }
 
-/* 2. ヘッダー部分は高さ固定（または内容依存）にして伸縮させない */
 .tasks-header {
-  flex-shrink: 0; /* 縮まない */
+  flex-shrink: 0;
   position: sticky;
   top: 0;
   z-index: 200;
   background-color: var(--color-bg-base);
+  
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  
+  /* 💡 ここがポイント！パディングを0にしつつ、marginをマイナスにして左に食い込ませる */
+  padding-left: 0 !important; 
+  margin-left: -8px !important; /* 👈 これで物理的に左へ移動します */
+  padding-right: var(--space-16);
+  
+  padding-top: var(--space-32);
+  padding-bottom: var(--space-16);
+}
+
+/* タイトルエリア（header-left）も調整 */
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  /* 念のため余白を打ち消す */
+  padding-left: 8px !important; /* マイナス分を相殺して文字を隠さないようにする */
+}
+
+/* タスク一覧画面だけ、mainコンテナの左余白を詰める */
+#page-tasks main {
+  padding-left: 8px !important; /* 16px から 8px にして左に寄せる */
+}
+
+//* タスク画面のヘッダーを左端まで引き出す設定 */
+#page-tasks .tasks-header {
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background-color: var(--color-bg-base);
+  
+  /* 💡 犯人である main の padding (16px) を相殺して左端に寄せる */
+  margin-left: -16px !important; 
+  margin-right: -16px !important;
+  
+  /* 左端に寄せた分、内側の余白を足してデザインを整える */
+  padding-left: 32px !important; 
+  padding-right: 32px !important;
+  padding-top: var(--space-32);
+  padding-bottom: var(--space-16);
+  
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+}
+
+/* ついでにタブも同じ幅に揃える（ここも重要！） */
+#page-tasks .view-tabs {
+  margin-left: -16px !important;
+  margin-right: -16px !important;
+  padding-left: 32px !important;
+  padding-right: 32px !important;
+}
+/* サブテキストの調整 */
+.tasks-sub {
+  font-size: 0.85rem;
+  color: var(--color-text-tertiary);
+  margin-top: 0; /* flex-direction:column にしたのでmarginをリセット */
+}
+/* 💡 右側のボタン群（+タスクを追加など）がきれいに横並びになるように整理 */
+.tasks-header > div:last-child {
+  display: flex;
+  gap: var(--space-8);
+  align-items: center;
+  flex-wrap: wrap; /* 画面が狭い時にボタンが潰れないようにする */
+  justify-content: flex-end;
 }
 
 /* 3. コンテンツエリア（カンバンやテーブルが入る場所） */
-/* クラス名が不明なため、ビューの親要素に適用してください */
 .view-content-wrapper {
   flex: 1; /* 残りの高さをすべて占有 */
   min-height: 0; /* これが重要！中身が突き抜けるのを防ぐ */
@@ -32,6 +106,7 @@
   min-height: 0;
 }
 
+/* 5. タイポグラフィ（style.cssの共通ルールと完全一致） */
 #page-tasks h2 {
   font-family: "Syne", sans-serif;
   font-size: 1.75rem;
@@ -46,6 +121,60 @@
   margin-top: var(--space-8);
 }
 
+/* ==========================================
+   ビュー切り替えタブ（スクロール固定統合版）
+========================================= */
+.view-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid rgb(255 255 255 / 0.08);
+  margin-bottom: var(--space-16);
+  padding-bottom: 4px;
+
+  /* スクロール追従固定 */
+  position: sticky !important;
+  top: 105px !important; /* 👈 86px から 105px くらいに変更（ヘッダーが太くなった分） */
+  z-index: 190 !important;
+  background-color: var(--color-bg-base) !important;
+}
+
+.view-tab {
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.view-tab:hover {
+  color: var(--color-text-secondary);
+}
+
+.view-tab.active {
+  color: var(--color-text-primary);
+  border-bottom-color: #8b5cf6;
+}
+
+.view-panel.hidden {
+  display: none !important;
+}
+
+.view-placeholder {
+  padding: var(--space-32);
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: 0.9rem;
+}
+
+/* ==========================================
+   カンバンビュー
+========================================= */
 .kanban {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -146,6 +275,19 @@
   min-height: 120px;
 }
 
+.kanban-cards:empty::after {
+  content: "タスクなし";
+  display: block;
+  padding: var(--space-24) var(--space-8);
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--color-text-tertiary);
+  opacity: 0.6;
+}
+
+/* ==========================================
+   タスクカード ＆ グループカード共通
+========================================= */
 .task-card {
   background-color: var(--color-bg-sidebar);
   border-radius: 10px;
@@ -168,21 +310,26 @@
 .task-card--book {
   border-left-color: #8b5cf6;
 }
-
 .task-card--article {
   border-left-color: #10b981;
 }
-
 .task-card--video {
   border-left-color: #f59e0b;
 }
-
 .task-card--practice {
   border-left-color: #71717a;
 }
-
 .task-card--default {
   border-left-color: var(--color-text-tertiary);
+}
+.task-card--teal {
+  border-left-color: #14b8a6;
+}
+.task-card--rose {
+  border-left-color: #f43f5e;
+}
+.task-card--lime {
+  border-left-color: #84cc16;
 }
 
 .task-type-badge {
@@ -199,49 +346,30 @@
   background-color: rgb(139 92 246 / 0.2);
   color: #c4b5fd;
 }
-
 .task-type-badge--article {
   background-color: rgb(16 185 129 / 0.2);
   color: #6ee7b7;
 }
-
 .task-type-badge--video {
   background-color: rgb(245 158 11 / 0.2);
   color: #fcd34d;
 }
-
 .task-type-badge--practice {
   background-color: rgb(113 113 122 / 0.25);
   color: #d4d4d8;
 }
-
-.task-card--teal {
-  border-left-color: #14b8a6;
-}
-
-.task-card--rose {
-  border-left-color: #f43f5e;
-}
-
-.task-card--lime {
-  border-left-color: #84cc16;
-}
-
 .task-type-badge--teal {
   background-color: rgb(20 184 166 / 0.2);
   color: #5eead4;
 }
-
 .task-type-badge--rose {
   background-color: rgb(244 63 94 / 0.2);
   color: #fda4af;
 }
-
 .task-type-badge--lime {
   background-color: rgb(132 204 22 / 0.2);
   color: #d9f99d;
 }
-
 .task-type-badge--default {
   background-color: rgb(255 255 255 / 0.08);
   color: var(--color-text-secondary);
@@ -287,11 +415,9 @@
 .group-card--todo {
   border-left-color: var(--color-status-todo);
 }
-
 .group-card--inprogress {
   border-left-color: var(--color-status-inprogress);
 }
-
 .group-card--done {
   border-left-color: var(--color-status-done);
 }
@@ -348,11 +474,9 @@
 .group-card-children:not(.hidden) {
   display: flex;
 }
-
 .group-card-children.hidden {
   display: none;
 }
-
 .group-card-children .task-card:hover {
   transform: none;
 }
@@ -400,60 +524,9 @@
   background-color: rgb(255 255 255 / 0.04);
 }
 
-.kanban-cards:empty::after {
-  content: "タスクなし";
-  display: block;
-  padding: var(--space-24) var(--space-8);
-  text-align: center;
-  font-size: 0.8rem;
-  color: var(--color-text-tertiary);
-  opacity: 0.6;
-}
-
-/* ===== ビュー切り替えタブ ===== */
-
-.view-tabs {
-  display: flex;
-  gap: 4px;
-  border-bottom: 1px solid rgb(255 255 255 / 0.08);
-  margin-bottom: var(--space-16);
-}
-
-.view-tab {
-  padding: 8px 16px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--color-text-tertiary);
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-  transition:
-    color 0.15s,
-    border-color 0.15s;
-}
-
-.view-tab:hover {
-  color: var(--color-text-secondary);
-}
-
-.view-tab.active {
-  color: var(--color-text-primary);
-  border-bottom-color: #8b5cf6;
-}
-
-.view-panel.hidden {
-  display: none;
-}
-
-.view-placeholder {
-  padding: var(--space-32);
-  text-align: center;
-  color: var(--color-text-tertiary);
-  font-size: 0.9rem;
-}
-
-/* ===== テーブルビュー ===== */
+/* ==========================================
+   テーブルビュー
+========================================= */
 
 /* 1. 既存の `.task-table-wrapper` を「高さ固定のスクロール箱」に改造する。
    ここでの62vhはJS(syncTaskViewHeights)が効くまでのフォールバック値で、
@@ -483,9 +556,7 @@
   position: sticky !important;
   top: 0 !important;
   z-index: 100 !important;
-  background-color: var(
-    --color-bg-sidebar
-  ) !important; /* 💡元の色に戻しました */
+  background-color: var(--color-bg-sidebar) !important;
 }
 
 .task-table td {
@@ -498,9 +569,7 @@
   position: sticky !important;
   top: 38px !important;
   z-index: 95 !important;
-  background-color: var(
-    --color-bg-sidebar
-  ) !important; /* 💡元の色に戻しました */
+  background-color: var(--color-bg-sidebar) !important;
 }
 
 /* 3. 親タスク（各教材名など）の行をそのさらに下に固定 */
@@ -514,9 +583,7 @@
   position: sticky !important;
   top: 76px !important;
   z-index: 90 !important;
-  background-color: var(
-    --color-bg-sidebar
-  ) !important; /* 💡元の色に戻しました */
+  background-color: var(--color-bg-sidebar) !important;
   border-bottom: 1px solid rgb(255 255 255 / 0.06);
 }
 
@@ -569,11 +636,9 @@
 .task-table-status-dot--todo {
   background-color: var(--color-status-todo);
 }
-
 .task-table-status-dot--inprogress {
   background-color: var(--color-status-inprogress);
 }
-
 .task-table-status-dot--done {
   background-color: var(--color-status-done);
 }
@@ -593,8 +658,7 @@
   font-size: 0.7rem;
 }
 
-/* ===== 種別バッジ（左寄せ設定） ===== */
-
+/* ===== 種別・カテゴリバッジ（テーブル左寄せ統合版） ===== */
 .task-table tr.task-row td:nth-child(2) {
   text-align: left !important;
 }
@@ -618,48 +682,50 @@
   text-align: left !important;
 }
 
+/* 回り込み（誤爆）を完全に遮断し、テーブルビューのバッジだけに限定して適応 */
 .task-table-badges .task-type-badge,
+.task-table-badges .task-category-badge,
 .task-table-badges .category-badge,
 .task-table-badges span {
-  text-align: left;
-  display: inline-block;
-  width: max-content;
+  text-align: left !important;
+  display: inline-block !important;
+  width: max-content !important;
   padding-left: 6px !important;
   padding-right: 6px !important;
 }
 
-/* ===== カレンダービュー ===== */
-
+/* ==========================================
+   カレンダービュー
+========================================= */
 .calendar-header {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 24px; /* HTML側の指定に合わせて24pxに固定します */
+  gap: 24px;
   margin-bottom: var(--space-16);
   min-height: 38px;
   width: 100%;
-  position: relative; /* 【最重要】右側の切り替えタブを絶対配置(absolute)にするための基準にします */
+  position: relative; /* 右側の切り替えタブを絶対配置にする基準 */
 }
 
 .calendar-month-label {
-  font-size: 16px; /* HTML側の指定に合わせます */
-  font-weight: bold; /* HTML側の指定に合わせます */
-  min-width: 100px; /* HTML側の指定に合わせます */
+  font-size: 16px;
+  font-weight: bold;
+  min-width: 100px;
   text-align: center;
 }
 
-/* 【新規追加】右端の切り替えタブ用ラッパーコンテナ */
+/* 右端の切り替えタブ用ラッパーコンテナ */
 .calendar-display-selector {
   position: absolute;
   right: 0;
   top: 50%;
   transform: translateY(-50%);
   display: flex;
-  gap: 16px; /* 12pxからタブ幅に合わせて16pxへ最適化 */
+  gap: 16px;
   padding-right: 4px;
 }
 
-/* カレンダー表示切り替えタブの基本スタイル */
 .calendar-mode-tab {
   background: none;
   border: none;
@@ -671,26 +737,23 @@
   transition: color 0.2s ease;
 }
 
-/* マウスを乗せた時 */
 .calendar-mode-tab:hover {
   color: #fff !important;
 }
 
-/* 選択されている（アクティブな）タブのデザイン */
 .calendar-mode-tab.active {
   color: #fff !important;
   font-weight: bold;
 }
 
-/* 選択時に下線を引っ張る処理 */
 .calendar-mode-tab.active::after {
   content: "";
   position: absolute;
-  bottom: -4px; /* 下線と文字の間隔を絶妙な距離(-4px)に微調整 */
+  bottom: -4px;
   left: 0;
   width: 100%;
   height: 2px;
-  background-color: #a855f7; /* メインタブと同じ紫色 */
+  background-color: #a855f7;
   border-radius: 2px;
 }
 
@@ -703,7 +766,6 @@
   grid-template-columns: repeat(7, 1fr);
 }
 
-/* 曜日ヘッダー */
 .calendar-weekday {
   padding: 8px 4px;
   text-align: center;
@@ -758,7 +820,7 @@
   font-weight: 500;
 }
 
-/* ===== カレンダーのタスクバー（共通） ===== */
+/* カレンダーのタスクバー（共通） */
 .calendar-task-bar {
   border-radius: 4px;
   font-size: 0.7rem;
@@ -810,8 +872,9 @@
   cursor: default;
 }
 
-/* ===== タイムラインビュー ===== */
-
+/* ==========================================
+   タイムラインビュー
+========================================= */
 .timeline-toolbar {
   display: flex !important;
   justify-content: space-between !important;
@@ -820,37 +883,25 @@
   margin: 0 !important;
   width: 100% !important;
 
-  /* 💡 view-tabsの下に追従。topの正確な値はJS(syncTimelineStickyOffsets)が実測して上書きする */
+  /* view-tabsの下に追従。topの正確な値はJS(syncTimelineStickyOffsets)が実測して上書きする */
   position: sticky !important;
   top: 130px;
   z-index: 185 !important;
   background-color: var(--color-bg-base) !important;
 }
 
-/* 💡 追加：ビューパネル（タイムライン等の土台）が親要素の幅を超えないようにする */
+/* ビューパネルが親要素の幅を超えないように制限 */
 .view-panel {
   width: 100% !important;
-  max-width: calc(
-    100vw - 250px
-  ) !important; /* 👈 画面幅からサイドバーの幅(約250px)を引いたサイズに制限 */
+  max-width: calc(100vw - 250px) !important;
   overflow: hidden !important;
 }
 
-/* 💡 タイムラインだけは例外。overflow:hiddenのままだと、内部の.timeline-toolbarが
-   position:stickyでビューポート基準に追従できなくなる（sticky計算の基準がズレて
-   要素同士が重なって崩れる不具合の原因だった）ため、可視に戻す。
-   幅の制限自体は.timeline-wrapper自身のoverflow-x:autoが担う */
+/* タイムラインだけは例外。overflow:hiddenだと内部の.timeline-toolbarが追従できなくなるため可視に戻す */
 .view-panel[data-view-panel="timeline"] {
   overflow: visible !important;
 }
 
-/* 💡 追加または上書き：タイムラインのコンテナ
-   テーブルビュー（.task-table-wrapper）・カンバンビュー（.kanban）と同じく、
-   高さを固定して内側だけでスクロールさせる方式に統一する。
-   （ページ全体スクロール方式は、stickyの基準がページの他要素とズレて
-   崩れる不具合の原因だったため廃止した）
-   ここでの58vhはJS(syncTaskViewHeights)が効くまでのフォールバック値で、
-   実際の高さはヘッダー・タブ・ツールバーの実測サイズをもとにJS側でpx指定される。 */
 /* .timeline-wrapper {
   border: 1px solid rgb(255 255 255 / 0.06);
   border-radius: 10px;
@@ -860,7 +911,6 @@
   height: 58vh !important;
 } */
 
-/* 表示切替タブ（すべて/予定/実績）：カレンダービューと同じ見た目に統一 */
 .timeline-display-selector {
   display: flex;
   align-items: center;
@@ -919,7 +969,7 @@
 
 .timeline-row {
   display: grid;
-  grid-template-columns: 200px 1fr; /* 💡 140px から 200px に拡張 */
+  grid-template-columns: 200px 1fr;
   border-bottom: 1px solid rgb(255 255 255 / 0.06);
   position: relative !important;
 }
@@ -928,7 +978,6 @@
   border-bottom: none;
 }
 
-/* ===== タイムライン：該当なしメッセージ ===== */
 .timeline-empty-row {
   padding: 24px 14px;
   text-align: center;
@@ -945,14 +994,12 @@
   border-right: 1px solid rgb(255 255 255 / 0.06);
   background-color: var(--color-bg-sidebar);
 
-  /* 💡 ここから下の4行を追加してください */
   white-space: nowrap; /* 絶対に自動改行させず、1行に強制する */
   overflow: hidden; /* 200pxからはみ出た余計な文字を隠す */
   text-overflow: ellipsis; /* はみ出た文字の末尾を自動で「…」にする */
-  min-width: 0; /* GridやFlex内で文字の省略を正常に効かせるおまじない */
+  min-width: 0;
 }
 
-/* ===== タイムライン：グループ行の▼トグル（子タスクバーの表示/非表示） ===== */
 .timeline-group-toggle {
   flex-shrink: 0;
   width: 18px;
@@ -983,10 +1030,10 @@
   padding: 4px 4px;
   min-height: 28px;
   overflow: hidden;
+  margin: 0 !important; /* 💡 sticky追従時のズレ防止 */
 }
 
-/* 💡 年月ナビ＋日付軸の行全体を .timeline-wrapper（内側スクロール枠）の上端に追従させる。
-   テーブルビューの <thead>（.timeline-wrapper基準でtop:0）と同じ、実測不要の確実な方式 */
+/* 年月ナビ＋日付軸の行全体を .timeline-wrapper の上端に追従させる */
 .timeline-row--axis {
   position: sticky !important;
   top: 0 !important;
@@ -1045,10 +1092,7 @@
   border: 0;
 }
 
-/* ========================================================
-   💡 タイムライン内の要素の配置ルールを最適化
-   ======================================================== */
-/* 縦線の基準点となるトラック要素には relative を付与し、static化は完全に解除 */
+/* タイムライン内の要素の配置ルールを最適化 */
 .timeline-track {
   position: relative !important;
 }
@@ -1057,14 +1101,11 @@
   display: grid !important;
   direction: ltr !important;
   flex-direction: row !important;
-
-  /* 💡 【追加】目盛りエリアの横幅を下のトラックと100%完全一致させるためのリセット */
   margin: 0 !important;
   padding: 0 !important;
   border: none !important;
 }
 
-/* 💡 【念のため追加】一番上のトラックの基準位置をリセットする */
 .timeline-row-header--axis + .timeline-track {
   position: relative !important;
   padding: 0 !important;
@@ -1072,9 +1113,7 @@
 }
 
 .timeline-axis-cell {
-  /* border-left: 1px solid rgb(255 255 255 / 0.04); */
-  box-sizing: border-box !important; /* 💡 【超重要】1pxの線をマスの内側に含め、全体の幅が伸びるのを防ぐ */
-
+  box-sizing: border-box !important;
   font-size: 0.65rem;
   color: var(--color-text-tertiary);
   padding: 4px 2px;
@@ -1090,14 +1129,14 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 3px; /* 💡 線の太さを 3px にして存在感を出す */
-  background-color: #f59e0b; /* オレンジ色 */
+  width: 3px;
+  background-color: #f59e0b;
   z-index: 50 !important;
   pointer-events: none;
-  box-shadow: 0 0 4px rgba(245, 158, 11, 0.5); /* 💡 ほんのり光らせて視認性をアップ */
+  box-shadow: 0 0 4px rgba(245, 158, 11, 0.5);
 }
 
-/* ===== タイムラインバー（共通） ===== */
+/* タイムラインバー（共通） */
 .timeline-bar {
   position: absolute;
   border-radius: 6px;
@@ -1106,7 +1145,7 @@
   overflow: hidden;
   white-space: nowrap;
   cursor: pointer;
-  z-index: 10 !important; /* 💡背景の線より手前に出す */
+  z-index: 10 !important;
   transition: filter 0.15s;
 }
 
@@ -1121,7 +1160,6 @@
   white-space: nowrap;
 }
 
-/* 予定バー（紫系） */
 .timeline-bar--planned {
   background-color: rgb(139 92 246 / 0.25);
   color: #c4b5fd;
@@ -1129,7 +1167,6 @@
   height: 20px;
 }
 
-/* 実績バー（アンバー系） */
 .timeline-bar--actual {
   background-color: rgba(245, 158, 11, 0.25);
   border: 1px solid rgba(245, 158, 11, 0.45);
@@ -1138,8 +1175,9 @@
   height: 18px;
 }
 
-/* ===== カテゴリバッジ（言語/技術カテゴリ） ===== */
-
+/* ==========================================
+   カテゴリバッジ ＆ 進捗率バー
+========================================= */
 .task-card-badges {
   display: flex;
   align-items: center;
@@ -1149,13 +1187,6 @@
 
 .task-card-badges .task-type-badge {
   margin-bottom: 0;
-}
-
-.task-table-badges {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
 }
 
 .task-category-badge {
@@ -1171,51 +1202,42 @@
   background-color: rgb(99 102 241 / 0.2);
   color: #a5b4fc;
 }
-
 .task-category-badge--amber {
   background-color: rgb(245 158 11 / 0.2);
   color: #fcd34d;
 }
-
 .task-category-badge--teal {
   background-color: rgb(20 184 166 / 0.2);
   color: #5eead4;
 }
-
 .task-category-badge--rose {
   background-color: rgb(244 63 94 / 0.2);
   color: #fda4af;
 }
-
 .task-category-badge--lime {
   background-color: rgb(132 204 22 / 0.2);
   color: #d9f99d;
 }
-
 .task-category-badge--sky {
   background-color: rgb(14 165 233 / 0.2);
   color: #7dd3fc;
 }
-
 .task-category-badge--violet {
   background-color: rgb(139 92 246 / 0.2);
   color: #c4b5fd;
 }
-
 .task-category-badge--default {
   background-color: rgb(255 255 255 / 0.08);
   color: var(--color-text-secondary);
 }
 
-/* カレンダーチップ内のカテゴリバッジ */
 .calendar-chip .task-category-badge {
   flex-shrink: 0;
   padding: 1px 5px;
   font-size: 0.65rem;
 }
 
-/* ===== 進捗率バー（親グループ：子タスク完了率） ===== */
-
+/* 進捗率バー（親グループ） */
 .group-card-progress {
   display: flex;
   align-items: center;
@@ -1249,7 +1271,7 @@
   white-space: nowrap;
 }
 
-/* テーブルビューの進捗率カラム用（横幅固定の簡易バー） */
+/* テーブルビュー進捗率カラム用 */
 .table-progress {
   display: inline-flex;
   align-items: center;
@@ -1282,8 +1304,7 @@
   white-space: nowrap;
 }
 
-/* ===== ステップ達成率バー（カンバンの子タスクカード） ===== */
-
+/* ステップ達成率バー */
 .task-card-step-progress {
   margin-top: 8px;
   height: 4px;
@@ -1299,7 +1320,9 @@
   border-radius: 4px;
 }
 
-/* ===== モーダルの重なり順の修正 ===== */
+/* ==========================================
+   モーダル ＆ スクロールバー
+========================================= */
 #task-modal,
 #group-modal,
 #group-picker-modal {
@@ -1330,75 +1353,21 @@
   position: relative;
   z-index: 1001;
 }
-/* カンバン・テーブル・カレンダーの切り替えタブを固定 */
-.view-tabs {
-  position: sticky !important;
-  top: 86px !important;
-  z-index: 190 !important;
-  background-color: var(--color-bg-base) !important;
-  margin-bottom: var(--space-16);
-  padding-bottom: 4px;
-}
 
-/* ========================================================
-   各ビュー（カンバン・テーブル）のスクロール範囲を個別に制限
-   ここでの68vh/70vhはJS(syncTaskViewHeights)が効くまでのフォールバック値で、
-   実際の高さはヘッダー・タブの実測サイズをもとにJS側でpx指定される。
-   （syncTaskViewHeightsが inline style + !important で上書きする）
-   ======================================================== */
-
-/* カンバンビュー：カードエリアのみを高さ制限（スクロール化） */
+/* 各ビューのスクロール範囲制限（JS実測前のフォールバック） */
 [data-view-panel="kanban"] .kanban {
   height: 60vh !important;
   overflow-y: auto !important;
   padding-right: 4px;
 }
 
-/* テーブルビュー：本体のみを高さ制限（スクロール化） */
 [data-view-panel="table"] .task-table-wrapper {
   height: 62vh !important;
   overflow-y: auto !important;
 }
 
-/* ========================================================
-   タイムラインビュー：.timeline-wrapperの高さ・スクロールは上部の定義
-   （height:58vh; overflow:auto;）に統一済み。ここでの追加指定は不要
-   ======================================================== */
 [data-view-panel="timeline"].hidden {
   display: none !important;
-}
-
-/* 💡 sticky追従時のtop計算（syncTimelineStickyOffsets）は要素のborder-box高さのみを
-   基準にするため、marginが乗るとズレの原因になる。ここでmarginを0に固定しておく */
-.timeline-row-header--axis {
-  margin: 0 !important;
-}
-
-/* ========================================================
-   テーブルビュー：種別バッジ左寄せ設定
-   ======================================================== */
-.task-table tr.task-row td:nth-child(2) {
-  text-align: left !important;
-}
-
-.task-table-badges {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: flex-start !important;
-  justify-content: center !important;
-  gap: 4px !important;
-  width: 100% !important;
-  margin: 0 !important;
-}
-
-/* 回り込み（誤爆）を完全に遮断し、テーブルビューのバッジだけに限定して適応 */
-.task-table-badges .task-type-badge,
-.task-table-badges .task-category-badge {
-  text-align: left !important;
-  display: inline-block !important;
-  width: max-content !important;
-  padding-left: 6px !important;
-  padding-right: 6px !important;
 }
 
 /* スクロールバーのデザイン */
@@ -1408,11 +1377,43 @@
   width: 6px;
   height: 6px;
 }
+
 [data-view-panel="kanban"] .kanban::-webkit-scrollbar-thumb,
 [data-view-panel="table"] .task-table-wrapper::-webkit-scrollbar-thumb,
 .timeline-wrapper::-webkit-scrollbar-thumb {
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 3px;
+}
+
+/* 1. 親要素(main)のパディングを強制解除して、コントロールを奪う */
+#page-tasks main {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* 2. ヘッダーの文字とボタンを左寄せし、余白を個別に設定 */
+#page-tasks .tasks-header {
+  padding-left: 24px !important; /* 左端をサイドバーの直後に */
+  padding-right: 24px !important;
+  margin-left: 0 !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  text-align: left !important;
+}
+
+/* 3. 中身のコンテンツ（タブ、カンバン、テーブルなど）も左端に合わせる */
+#page-tasks .view-tabs,
+#page-tasks .kanban,
+#page-tasks .task-table-wrapper,
+#page-tasks .view-panel {
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+}
+
+/* 4. （念押し）タイトルとサブテキストを左寄せに固定 */
+#page-tasks .header-left {
+  align-items: flex-start !important;
+  text-align: left !important;
 }
 
 /* メディアクエリ */
