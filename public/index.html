@@ -777,6 +777,40 @@
 
         <label for="group-title">タイトル</label>
         <input type="text" id="group-title" />
+        <div style="border-top: 1px solid rgb(255 255 255 / 0.08); padding-top: var(--space-16); margin-top: var(--space-8);">
+          <div style="font-size: 0.8rem; font-weight: 600; color: #a5b4fc; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+            <span>🎯 マイルストーン計画（目安期間）</span>
+            <span id="group-auto-badge" class="hidden" style="background: rgb(139 92 246 / 0.2); color: #c4b5fd; font-size: 0.7rem; padding: 2px 8px; border-radius: 9999px; border: 1px solid rgb(139 92 246 / 0.4);">
+              🤖 子タスクから自動計算中
+            </span>
+          </div>
+          <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-16);">
+            <div class="field">
+              <label for="group-planned-start" style="display: block; font-size: 0.78rem; color: var(--color-text-tertiary); margin-bottom: 4px;">予定開始日</label>
+              <input type="date" id="group-planned-start" name="planned_start" style="width: 100%;">
+            </div>
+            <div class="field">
+              <label for="group-planned-end" style="display: block; font-size: 0.78rem; color: var(--color-text-tertiary); margin-bottom: 4px;">予定終了日 (期日)</label>
+              <input type="date" id="group-planned-end" name="planned_end" style="width: 100%;">
+            </div>
+          </div>
+        </div>
+        
+        <div style="border-top: 1px solid rgb(255 255 255 / 0.08); padding-top: var(--space-16); margin-top: var(--space-16); margin-bottom: var(--space-24);">
+          <div style="font-size: 0.8rem; font-weight: 600; color: #6ee7b7; margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
+            <span>📈 実績データ（着手・完了日）</span>
+          </div>
+          <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-16);">
+            <div class="field">
+              <label for="group-actual-start" style="display: block; font-size: 0.78rem; color: var(--color-text-tertiary); margin-bottom: 4px;">実績開始日</label>
+              <input type="date" id="group-actual-start" name="actual_start" style="width: 100%;">
+            </div>
+            <div class="field">
+              <label for="group-actual-end" style="display: block; font-size: 0.78rem; color: var(--color-text-tertiary); margin-bottom: 4px;">実績終了日</label>
+              <input type="date" id="group-actual-end" name="actual_end" style="width: 100%;">
+            </div>
+          </div>
+        </div>
         <label for="group-memo">メモ</label>
         <textarea id="group-memo"></textarea>
 

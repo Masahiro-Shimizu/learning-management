@@ -60,10 +60,6 @@ function getTypeInfo(typeName) {
 // ==========================================
 
 // ===== グラフ用カラーパレット（カテゴリ名固定・全ダッシュボードグラフ共通） =====
-// dashboard.js / results.js の両方から参照する。カテゴリ名の文字列ハッシュから
-// 固定的に色を決定することで、同じカテゴリはどのグラフでも常に同じ色になる
-// （配列内の並び順に依存する i % length 方式は、期間や絞り込みでカテゴリの
-// 出現順が変わるため色がグラフ間でズレる原因になっていた）
 const CHART_COLORS = [
   "#4d7fd4",
   "#e6a817",
@@ -76,8 +72,6 @@ const CHART_COLORS = [
 ];
 
 // ===== カテゴリの色（GitHub言語色 + グラフ/バッジ共通） =====
-
-// GitHub Linguist準拠の言語カラー（主要言語のみ。随時追加可）
 const GITHUB_LANGUAGE_COLORS = {
   JavaScript: "#f1e05a",
   TypeScript: "#3178c6",
@@ -111,9 +105,7 @@ function hexToRgba(hex, alpha) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-// カテゴリ名 → 色（hex）。GitHub言語色に一致すればそれを使い、
-// 一致しない独自カテゴリ名は文字列ハッシュでCHART_COLORSから固定的に決定する。
-// グラフ（dashboard.js / results.js）とバッジの両方がこの関数を参照する。
+// カテゴリ名 → 色（hex）
 function getCategoryChartColor(categoryName) {
   const name = categoryName || "(言語不問)";
   if (GITHUB_LANGUAGE_COLORS[name]) {
@@ -312,23 +304,74 @@ function createGroupCardHtml(group, childTasks, stepsByTaskId, status) {
   `;
 }
 
+// 💡 【修正】自動計算ロック機能を組み込んだモーダル展開処理
 function openGroupModal(groupId = "") {
   document.getElementById("group-title").value = "";
   document.getElementById("group-memo").value = "";
+  const colorInput = document.getElementById('group-color');
+  if (colorInput) colorInput.value = '#8b5cf6';
+
   document.getElementById("group-modal").dataset.groupId = groupId;
+  
+  // 新規作成時は日付フィールドを空＆ロック解除
+  setGroupModalDates({}, false);
+
   document.getElementById("btn-group-add-task-wrapper").classList.add("hidden");
   document.getElementById("group-modal").classList.remove("hidden");
   markGroupModalClean();
 }
 
 async function openGroupEditModal(groupId) {
-  const group = await api(`/api/groups/${groupId}`);
+  const groupDb = await api(`/api/groups/${groupId}`);
+  
+  // 既存タスクから自動計算情報を付与
+  const tasks = lastTaskViewData ? lastTaskViewData.tasks : [];
+  const [group] = calculateGroupMilestones([groupDb], tasks);
+
   document.getElementById("group-title").value = group.title;
   document.getElementById("group-memo").value = group.memo || "";
+  const colorInput = document.getElementById('group-color');
+  if (colorInput) colorInput.value = group.color || '#8b5cf6';
+
   document.getElementById("group-modal").dataset.groupId = groupId;
+  
+  // 自動計算データの設定と入力ロック判定
+  setGroupModalDates(group, group.is_auto_calculated);
+
   document.getElementById("btn-group-add-task-wrapper").classList.add("hidden");
   document.getElementById("group-modal").classList.remove("hidden");
   markGroupModalClean();
+}
+
+// 💡 ヘルパー関数: モーダルの日付フィールド設定とロック制御
+function setGroupModalDates(group, isAuto) {
+  const plannedStartInput = document.getElementById('group-planned-start');
+  const plannedEndInput   = document.getElementById('group-planned-end');
+  const actualStartInput  = document.getElementById('group-actual-start');
+  const actualEndInput    = document.getElementById('group-actual-end');
+  const autoBadge         = document.getElementById('group-auto-badge');
+
+  if(plannedStartInput) plannedStartInput.value = group.planned_start ? group.planned_start.slice(0, 10) : '';
+  if(plannedEndInput)   plannedEndInput.value   = group.planned_end   ? group.planned_end.slice(0, 10)   : '';
+  if(actualStartInput)  actualStartInput.value  = group.actual_start  ? group.actual_start.slice(0, 10)  : '';
+  if(actualEndInput)    actualEndInput.value    = group.actual_end    ? group.actual_end.slice(0, 10)    : '';
+
+  [plannedStartInput, plannedEndInput, actualStartInput, actualEndInput].forEach(input => {
+    if (!input) return;
+    input.disabled = isAuto;
+    input.style.opacity = isAuto ? '0.6' : '1.0';
+    input.style.cursor  = isAuto ? 'not-allowed' : 'pointer';
+    input.style.backgroundColor = isAuto ? 'rgba(255, 255, 255, 0.03)' : '';
+  });
+
+  if (autoBadge) {
+    if (isAuto) {
+      autoBadge.classList.remove('hidden');
+      autoBadge.title = `紐づく ${group.child_count || 0} 件の子タスクから自動計算されています`;
+    } else {
+      autoBadge.classList.add('hidden');
+    }
+  }
 }
 
 // ===== ステップ（孫タスク）関連 =====
@@ -404,7 +447,6 @@ function createStepItemHtml(step) {
             <label>終了予定日</label>
             <input type="date" class="step-field-epd" value="${epd}" />
           </div>
-          <!-- 【変更】実績日を2つの入力欄に分割 -->
           <div class="step-detail-field">
             <label>実績開始日</label>
             <input type="date" class="step-field-asd" value="${asd}" />
@@ -603,7 +645,7 @@ document.getElementById("step-list")?.addEventListener("click", async (e) => {
   }
 });
 
-// 新しいステップの追加処理（途切れていた箇所を補完）
+// 新しいステップの追加処理
 document.getElementById("btn-step-add")?.addEventListener("click", async () => {
   const input = document.getElementById("step-new-title");
   if (!input) return;
@@ -619,8 +661,6 @@ document.getElementById("btn-step-add")?.addEventListener("click", async () => {
 });
 
 // ----- ⑤ 「ステップから集計」ボタン（手動） -----
-// ※ index.html のステップセクションに以下ボタンを追加した上でバインド
-//   <button type="button" id="btn-step-aggregate" class="btn btn-secondary">ステップから集計</button>
 document
   .getElementById("btn-step-aggregate")
   ?.addEventListener("click", async () => {
@@ -709,11 +749,15 @@ function bindKanbanEvents() {
 }
 
 async function fetchTaskViewData() {
-  const groups = await api("/api/groups");
+  // 💡 APIから取得（groupsは後で上書きするため let で宣言）
+  let groups = await api("/api/groups");
   const tasks = await api("/api/tasks");
   const books = await api("/api/books");
   const allSteps = await api("/api/steps");
   const stepsByTaskId = groupStepsByTaskId(allSteps);
+
+  // 💡 ここに追加：子タスクから親タスクのマイルストーン期間を自動計算（ロールアップ）！
+  groups = calculateGroupMilestones(groups, tasks);
 
   await loadTaskTypeOptions();
   await loadTaskCategoryOptions();
@@ -1303,8 +1347,7 @@ function renderCalendar(data) {
       999,
     );
 
-    // 【修正完了】この中で displayMode が安全に使用できるようになりました
-    // 【完全解決版】この週の枠（weekStart 〜 weekEnd）に重なるタスクを、モード別に完璧に抽出する
+    // この週の枠（weekStart 〜 weekEnd）に重なるタスクを、モード別に抽出する
     const weekTasks = tasks.filter((task) => {
       if (displayMode === "actual" && !task.start_date) return false;
       if (displayMode === "planned" && !task.start_planned_date) return false;
@@ -1441,7 +1484,6 @@ function renderCalendar(data) {
 
         // 実績期間がこの週（weekStart 〜 weekEnd）に重なっている場合のみ描画する
         if (actualStart <= weekEnd && actualEnd >= weekStart) {
-          // 【バグ修正】実績用の週内開始・終了位置を独立して正確に計算します
           const actStartDiff = Math.max(
             0,
             Math.round((actualStart - weekStart) / (1000 * 60 * 60 * 24)),
@@ -1514,7 +1556,7 @@ function formatDateStr(date) {
   return `${y}-${m}-${d}`;
 }
 
-// 【修正】前月ボタン：月を切り替えたら、その年月をローカルストレージに保存する
+// 前月ボタン
 document.getElementById("btn-calendar-prev")?.addEventListener("click", () => {
   calendarDate.setMonth(calendarDate.getMonth() - 1);
   localStorage.setItem("calendar_selected_year", calendarDate.getFullYear());
@@ -1522,7 +1564,7 @@ document.getElementById("btn-calendar-prev")?.addEventListener("click", () => {
   renderCalendar(lastTaskViewData);
 });
 
-// 【修正】次月ボタン：月を切り替えたら、その年月をローカルストレージに保存する
+// 次月ボタン
 document.getElementById("btn-calendar-next")?.addEventListener("click", () => {
   calendarDate.setMonth(calendarDate.getMonth() + 1);
   localStorage.setItem("calendar_selected_year", calendarDate.getFullYear());
@@ -1530,15 +1572,11 @@ document.getElementById("btn-calendar-next")?.addEventListener("click", () => {
   renderCalendar(lastTaskViewData);
 });
 
-// 【更新】カレンダー表示切り替えタブのクリックイベント
+// カレンダー表示切り替えタブのクリックイベント
 document.querySelectorAll(".calendar-mode-tab").forEach((tab) => {
   tab.addEventListener("click", () => {
     const selectedMode = tab.dataset.mode;
-
-    // ローカルストレージにモードを保存
     localStorage.setItem("calendar_display_mode", selectedMode);
-
-    // 画面全体の表示を最新データで再描画
     if (lastTaskViewData && typeof renderCalendar === "function") {
       renderCalendar(lastTaskViewData);
     }
@@ -1554,11 +1592,6 @@ document.querySelectorAll(".view-tab").forEach((tab) => {
 
 let timelineDate = new Date();
 timelineDate.setDate(1);
-
-// ===== タイムライン：表示モード・折りたたみ状態の永続化 =====
-// - timeline_display_mode: "all" | "planned" | "actual"（カレンダーの表示切替タブと同じ考え方）
-// - collapsedTimelineStatuses: 未着手/進行中/完了の大枠見出しの折りたたみ状態（テーブルビューと同じ考え方）
-// - collapsedTimelineGroups: 各親グループ行の子タスクバー表示/非表示（テーブルビューのグループ行折りたたみと同じ考え方）
 
 function getTimelineDisplayMode() {
   return localStorage.getItem("timeline_display_mode") || "all";
@@ -1611,11 +1644,6 @@ function calcTimelineBarPosition(
   return { leftPercent, widthPercent };
 }
 
-// ツールバーのsticky位置（top）を実測して同期する。
-// ".tasks-header" と ".view-tabs" の実際の高さは環境（フォント等）で変わり得るため、
-// 固定px値を決め打ちせず実測値から算出する。
-// なお日付軸行（.timeline-row--axis）は .timeline-wrapper 自身を基準に top:0 で
-// 追従させており（テーブルビューの<thead>と同じ方式）、こちらは実測不要。
 function syncTimelineStickyOffsets() {
   const viewTabs = document.querySelector(".view-tabs");
   const toolbar = document.querySelector(".timeline-toolbar");
@@ -1626,14 +1654,6 @@ function syncTimelineStickyOffsets() {
   toolbar.style.setProperty("top", `${toolbarTop}px`, "important");
 }
 
-// ===== ビューコンテナの高さをヘッダー実測値から動的算出（v2.21.11追加） =====
-// カンバン（.kanban）・テーブル（.task-table-wrapper）・タイムライン（.timeline-wrapper）は
-// これまでvh固定値（68vh/70vh/65vh）で高さ指定していたが、上に乗る
-// .tasks-header・.view-tabs（・タイムラインは.timeline-toolbarも追加）の高さを
-// 一切差し引いていなかったため、ウィンドウの高さによっては画面の可視範囲を
-// はみ出し、各ビューの下端が見切れて見える不具合があった。
-// これらヘッダー類の実測高さ（getBoundingClientRect）を window.innerHeight から
-// 差し引いた残りの高さを、各ビューのコンテナに直接pxで指定することで解消する。
 function syncTaskViewHeights() {
   const header = document.querySelector(".tasks-header");
   const viewTabs = document.querySelector(".view-tabs");
@@ -1910,14 +1930,12 @@ function renderTimeline(data) {
   const monthStart = new Date(year, month, 1);
   const monthEnd = new Date(year, month, daysInMonth);
 
-  // 💡 タスクバーの計算(leftPercent)と完璧に同期させるため、「- 1（マスの左端基準）」に統一
   const isCurrentMonth =
     today.getFullYear() === year && today.getMonth() === month;
   const todayLeftPercent = isCurrentMonth
     ? ((today.getDate() - 1) / daysInMonth) * 100
     : null;
 
-  // 💡 横スクロールする「.timeline-track」の内部に埋め込むための共通オレンジ線HTML
   const commonTodayLineHtml =
     todayLeftPercent !== null
       ? `<div class="timeline-today-line" style="left: ${todayLeftPercent}%;"></div>`
@@ -1931,7 +1949,6 @@ function renderTimeline(data) {
     (_, i) => `<div class="timeline-axis-cell">${i + 1}</div>`,
   ).join("");
 
-  // 1. 一番上のカレンダー目盛り行の描画（年月ナビ＋日付軸。sticky対象として timeline-row--axis を付与）
   grid.insertAdjacentHTML(
     "beforeend",
     `<div class="timeline-row timeline-row--axis">
@@ -1952,13 +1969,11 @@ function renderTimeline(data) {
         </div>`,
   );
 
-  // 表示モード（すべて/予定/実績）をタブに反映
   const displayMode = getTimelineDisplayMode();
   document.querySelectorAll(".timeline-mode-tab").forEach((tab) => {
     tab.classList.toggle("active", tab.dataset.mode === displayMode);
   });
 
-  // ステータス絞り込み（すべて/未着手/進行中/完了）をタブに反映
   const statusFilter = getTimelineStatusFilter();
   document.querySelectorAll(".timeline-status-filter-tab").forEach((tab) => {
     tab.classList.toggle("active", tab.dataset.statusFilter === statusFilter);
@@ -1999,17 +2014,12 @@ function renderTimeline(data) {
     const isGroupCollapsed = collapsedGroups.includes(String(group.id));
     const groupArrow = isGroupCollapsed ? "▸" : "▾";
 
-    // 1レーンあたりの高さ：「すべて」モードは予定バー(20px)+間隔+実績バー(18px)を
-    // 縦に並べるため48px、「予定」「実績」単独モードはバー1本分なので24pxで済む。
-    // 予定バー・実績バーで別スケールを使うと高さ計算とバー配置がズレて表示が
-    // 崩れる原因になっていたため、以降はこの1つの値だけを基準にする。
     const LANE_HEIGHT = displayMode === "all" ? 48 : 24;
 
     let barsHtml = "";
     let laneCount = 0;
 
     if (!isGroupCollapsed) {
-      // 💡 重なり防止用のレーン管理配列（1タスク＝1レーンで予定・実績をまとめて管理）
       const lanes = [];
 
       childTasks.forEach((task) => {
@@ -2020,7 +2030,6 @@ function renderTimeline(data) {
           monthStart,
           monthEnd,
         );
-        // 実績バーの計算（DBカラムは start_date / end_date。start_actual_date は存在しないため常にnullになっていたバグを修正済み）
         const actualPos = calcTimelineBarPosition(
           task.start_date,
           task.end_date,
@@ -2036,7 +2045,6 @@ function renderTimeline(data) {
 
         if (!showPlanned && !showActual) return;
 
-        // 予定・実績のうち存在する方の横方向の範囲（和集合）でレーンを決める
         const rangeLeft = Math.min(
           showPlanned ? plannedPos.leftPercent : Infinity,
           showActual ? actualPos.leftPercent : Infinity,
@@ -2050,7 +2058,6 @@ function renderTimeline(data) {
             : -Infinity,
         );
 
-        // 💡 【超重要】条件を「>」に変更。これによって、同じ日から同時にスタートするタスクも確実に検知して段を分けます
         let targetLane = 0;
         while (
           lanes[targetLane] !== undefined &&
@@ -2069,7 +2076,6 @@ function renderTimeline(data) {
         }
 
         if (showActual) {
-          // 「すべて」モードでは予定バーの22px下、単独表示モードではレーンの先頭に配置
           const actualTop = displayMode === "actual" ? laneTop : laneTop + 22;
           barsHtml += `<div class="timeline-bar timeline-bar--actual" data-task-id="${task.id}" style="left: ${actualPos.leftPercent}%; width: ${actualPos.widthPercent}%; top: ${actualTop}px;">
                   <span class="timeline-bar-title">${task.title}</span>
@@ -2080,9 +2086,6 @@ function renderTimeline(data) {
       laneCount = lanes.length;
     }
 
-    // 💡 タスクが多段になった分、背景のグレーの枠（トラック）の高さを動的に広げる
-    // （LANE_HEIGHTをバー配置と共通の基準にしたことで、ここでの過小評価によるバーの
-    //   はみ出し・次の行との重なりが発生しないようにしている）
     const finalLaneCount = Math.max(laneCount, 1);
     const trackHeight = isGroupCollapsed
       ? 40
@@ -2090,7 +2093,6 @@ function renderTimeline(data) {
 
     const currentTodayLineHtml = !isGroupCollapsed ? commonTodayLineHtml : "";
 
-    // 2. タスク行の描画
     grid.insertAdjacentHTML(
       "beforeend",
       `<div class="timeline-row">
@@ -2106,12 +2108,9 @@ function renderTimeline(data) {
     );
   });
 
-  // 追従ヘッダー（ツールバー・日付軸）の位置を実測して同期
   setTimeout(syncTimelineStickyOffsets, 0);
-  // タイムラインのツールバー分の高さが変わるため、コンテナ高さも合わせて再計算する
   setTimeout(syncTaskViewHeights, 0);
 
-  // 月選択ラベルの更新とイベント再バインド
   const monthLabel = document.getElementById("timeline-month-label");
   if (monthLabel) {
     monthLabel.textContent = `${year}年${month + 1}月`;
@@ -2126,7 +2125,6 @@ function renderTimeline(data) {
   }
 }
 
-// タイムライン表示モードタブ（すべて/予定/実績）のクリックイベント
 document.querySelectorAll(".timeline-mode-tab").forEach((tab) => {
   tab.addEventListener("click", () => {
     localStorage.setItem("timeline_display_mode", tab.dataset.mode);
@@ -2134,7 +2132,6 @@ document.querySelectorAll(".timeline-mode-tab").forEach((tab) => {
   });
 });
 
-// タイムラインステータス絞り込みタブ（すべて/未着手/進行中/完了）のクリックイベント
 document.querySelectorAll(".timeline-status-filter-tab").forEach((tab) => {
   tab.addEventListener("click", () => {
     localStorage.setItem("timeline_status_filter", tab.dataset.statusFilter);
@@ -2198,7 +2195,6 @@ async function renderTaskViews() {
   renderTable(data);
   renderCalendar(data);
   renderTimeline(data);
-  // 全ビューの描画後に、実測されたヘッダー高さをもとにコンテナの高さを算出する
   syncTaskViewHeights();
 }
 
@@ -2211,7 +2207,6 @@ function switchView(view) {
   document.querySelectorAll(".view-panel").forEach((panel) => {
     panel.classList.toggle("hidden", panel.dataset.viewPanel !== view);
   });
-  // ビュー切り替え時にもウィンドウサイズの変化を反映させておく
   syncTaskViewHeights();
   if (view === "timeline" && lastTaskViewData) {
     syncTimelineStickyOffsets();
@@ -2380,6 +2375,7 @@ document
     renderTaskViews();
   });
 
+// 💡 【修正】親タスク保存処理で「日付」と「カラー」の回収を追加
 document
   .getElementById("btn-group-save")
   ?.addEventListener("click", async () => {
@@ -2389,13 +2385,31 @@ document
       return;
     }
     const memo = document.getElementById("group-memo").value || null;
+    
+    // カラーと日付情報の取得
+    const colorEl = document.getElementById("group-color");
+    const plannedStartEl = document.getElementById('group-planned-start');
+    const plannedEndEl   = document.getElementById('group-planned-end');
+    const actualStartEl  = document.getElementById('group-actual-start');
+    const actualEndEl    = document.getElementById('group-actual-end');
+
+    const payload = { 
+      title, 
+      memo,
+      color: colorEl ? colorEl.value : undefined,
+      planned_start: plannedStartEl && plannedStartEl.value ? plannedStartEl.value : null,
+      planned_end:   plannedEndEl && plannedEndEl.value ? plannedEndEl.value : null,
+      actual_start:  actualStartEl && actualStartEl.value ? actualStartEl.value : null,
+      actual_end:    actualEndEl && actualEndEl.value ? actualEndEl.value : null,
+    };
+
     const groupId = document.getElementById("group-modal").dataset.groupId;
     if (groupId) {
-      await api(`/api/groups/${groupId}`, "PUT", { title, memo });
+      await api(`/api/groups/${groupId}`, "PUT", payload);
       markGroupModalClean();
       document.getElementById("group-modal").classList.add("hidden");
     } else {
-      const newGroup = await api("/api/groups", "POST", { title, memo });
+      const newGroup = await api("/api/groups", "POST", payload);
       document.getElementById("group-modal").dataset.groupId = newGroup.id;
       document
         .getElementById("btn-group-add-task-wrapper")
@@ -2490,10 +2504,17 @@ document
     if (e.target.id === "group-picker-modal") closeGroupPickerModal();
   });
 
-// ===== 親タスクモーダル：未保存確認つき開閉処理 =====
-
+// 💡 【修正】親タスクモーダル：未保存確認の監視項目に日付やカラーを追加
 function getGroupModalSnapshot() {
-  const ids = ["group-title", "group-memo"];
+  const ids = [
+    "group-title", 
+    "group-memo",
+    "group-color",
+    "group-planned-start",
+    "group-planned-end",
+    "group-actual-start",
+    "group-actual-end"
+  ];
   const snapshot = {};
   ids.forEach((id) => {
     const el = document.getElementById(id);
@@ -2526,8 +2547,8 @@ function closeGroupModalWithConfirm() {
 
 document
   .getElementById("btn-group-close-x")
-  .addEventListener("click", closeGroupModalWithConfirm);
-document.getElementById("group-modal").addEventListener("click", (e) => {
+  ?.addEventListener("click", closeGroupModalWithConfirm);
+document.getElementById("group-modal")?.addEventListener("click", (e) => {
   if (e.target.id === "group-modal") closeGroupModalWithConfirm();
 });
 
@@ -2548,4 +2569,66 @@ async function updateTaskDuration(taskId, startDate, endDate) {
     alert("期間の変更に失敗しました。");
     return false;
   }
+}
+
+/**
+ * 💡 子タスクの日付から親タスク（グループ）の期間を自動計算（ロールアップ）する
+ * @param {Array} groups - 親タスク（グループ）の配列
+ * @param {Array} tasks - 全子タスクの配列
+ * @returns {Array} 期間が自動計算・更新されたグループ配列
+ */
+function calculateGroupMilestones(groups, tasks) {
+  return groups.map(group => {
+    // このグループに属する子タスクを抽出
+    const childTasks = tasks.filter(t => String(t.group_id) === String(group.id));
+
+    // 子タスクが1つもない場合は、既存の値を維持（手動設定値）
+    if (childTasks.length === 0) {
+      return {
+        ...group,
+        is_auto_calculated: false,
+        child_count: 0
+      };
+    }
+
+    // 1. 予定開始日：有効な start_planned_date の中で最小
+    const plannedStarts = childTasks
+      .map(t => t.start_planned_date)
+      .filter(Boolean)
+      .sort();
+    const minPlannedStart = plannedStarts.length > 0 ? plannedStarts[0] : null;
+
+    // 2. 予定終了日：有効な end_planned_date の中で最大
+    const plannedEnds = childTasks
+      .map(t => t.end_planned_date)
+      .filter(Boolean)
+      .sort();
+    const maxPlannedEnd = plannedEnds.length > 0 ? plannedEnds[plannedEnds.length - 1] : null;
+
+    // 3. 実績開始日：有効な start_date の中で最小
+    const actualStarts = childTasks
+      .map(t => t.start_date)
+      .filter(Boolean)
+      .sort();
+    const minActualStart = actualStarts.length > 0 ? actualStarts[0] : null;
+
+    // 4. 実績終了日：すべての子タスクが完了済みの場合のみ最大値
+    const isAllCompleted = childTasks.every(t => t.status === '完了');
+    const actualEnds = childTasks
+      .map(t => t.end_date)
+      .filter(Boolean)
+      .sort();
+    const maxActualEnd = (isAllCompleted && actualEnds.length > 0) ? actualEnds[actualEnds.length - 1] : null;
+
+    // 計算結果を親タスクオブジェクトに上書き
+    return {
+      ...group,
+      planned_start: minPlannedStart || group.planned_start || null,
+      planned_end:   maxPlannedEnd   || group.planned_end   || null,
+      actual_start:  minActualStart  || group.actual_start  || null,
+      actual_end:    maxActualEnd    || group.actual_end    || null,
+      is_auto_calculated: true,
+      child_count: childTasks.length
+    };
+  });
 }
