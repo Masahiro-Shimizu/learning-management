@@ -107,6 +107,8 @@ router.put("/:id", async (req, res, next) => {
       "study_time",
       "planned_study_time",
       "memo",
+      "understood_memo",
+      "unclear_points",
     ];
     const fields = [];
     const values = [];
