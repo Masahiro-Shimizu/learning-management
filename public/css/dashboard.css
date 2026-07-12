@@ -313,6 +313,28 @@
   margin-right: 4px;
 }
 
+/* v2.21.14追加：サマリーカード数値のフェードイン＋カウントアップ演出用 */
+.summary-value-anim {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.summary-value-anim--visible {
+  animation: summaryValueFadeIn 0.5s ease forwards;
+}
+
+@keyframes summaryValueFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* レスポンシブ */
 @media (max-width: 768px) {
   .charts-row {

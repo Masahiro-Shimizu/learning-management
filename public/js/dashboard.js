@@ -34,6 +34,58 @@ function minutesToHours(minutes) {
   return Math.round((minutes / 60) * 10) / 10;
 }
 
+// v2.21.14追加：サマリーカードの数値をフェードイン＋カウントアップで表示する
+// endValueは最終的にそのままtextContentへ入る値（"3" や "3.5" など既存の表示フォーマットを崩さないため）
+let summaryAnimCounter = 0;
+function animateSummaryValue(el, endValue, { decimals = 0, duration = 700 } = {}) {
+  if (!el) return;
+  const numericEnd = Number(endValue) || 0;
+  const animId = ++summaryAnimCounter;
+  el.dataset.animId = animId;
+
+  // フェードイン演出を毎回リプレイさせる（クラスを一旦外して強制リフロー→再付与）
+  el.classList.remove("summary-value-anim--visible");
+  void el.offsetWidth;
+  el.classList.add("summary-value-anim--visible");
+
+  const startTime = performance.now();
+
+  function tick(now) {
+    // 短時間に連続でトグルされた場合、古いアニメーションは自動的に中断する
+    if (String(animId) !== el.dataset.animId) return;
+
+    const progress = Math.min((now - startTime) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+
+    if (progress < 1) {
+      const current = numericEnd * eased;
+      el.textContent = decimals > 0 ? current.toFixed(decimals) : Math.round(current);
+      requestAnimationFrame(tick);
+    } else {
+      el.textContent = String(endValue); // 最終値は元の表示フォーマットのまま確定させる
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+// v2.21.15追加：destroy→再生成ではなくupdate()でグラフを差し替え、
+// 値が「古い状態→新しい状態」へ実際に動くアニメーションになるようにする
+// v2.21.16修正：Chart.jsは生成時にoptionsを内部でProxy化して管理しているため、
+// 既存のoptionsに対して手動でChart.helpers.merge()をかけると内部のresolverが
+// 壊れ、「Ignoring resolver passed as options」「t.startsWith is not a function」
+// が発生してしまっていた。optionsの中身（軸設定・凡例など）は毎回同じ内容しか
+// 渡していないため、初回生成時以外はoptionsに一切触らず、data（labels/datasets）
+// の差し替えとupdate()のみを行うようにした。
+function upsertChart(existingChart, canvasEl, config) {
+  if (existingChart) {
+    existingChart.data.labels = config.data.labels;
+    existingChart.data.datasets = config.data.datasets;
+    existingChart.update();
+    return existingChart;
+  }
+  return new Chart(canvasEl, config);
+}
+
 function shiftPeriod(direction) {
   if (currentPeriod === "week") {
     viewDate.setDate(viewDate.getDate() + 7 * direction);
@@ -319,7 +371,9 @@ function renderCharts() {
     0,
   );
   const periodHours = minutesToHours(periodTotalMinutes);
-  document.getElementById("period-study-time").textContent = periodHours;
+  animateSummaryValue(document.getElementById("period-study-time"), periodHours, {
+    decimals: 1,
+  });
 
   let prevFilteredTasks = [];
   if (currentPeriod === "week") {
@@ -392,7 +446,7 @@ function renderCharts() {
 
   const progressRateEl = document.getElementById("progress-rate");
   if (progressRateEl) {
-    progressRateEl.textContent = currentProgressRate;
+    animateSummaryValue(progressRateEl, currentProgressRate);
   }
 
   let prevProgressRate = 0;
@@ -460,7 +514,7 @@ function renderCharts() {
     (t) => t.status === "完了",
   ).length;
   const totalCount = filteredTasks.length;
-  document.getElementById("done-count").textContent = inProgressCount;
+  animateSummaryValue(document.getElementById("done-count"), inProgressCount);
   document.getElementById("done-sub").innerHTML =
     `完了 <span class="sub-highlight">${doneCountInPeriod}</span> / 全 ${totalCount} 件`;
 
@@ -468,22 +522,21 @@ function renderCharts() {
   const readBooks = books.filter(
     (b) => b.total_chapters && Number(b.completed_count) >= b.total_chapters,
   ).length;
-  document.getElementById("books-read-count").textContent = readBooks;
+  animateSummaryValue(document.getElementById("books-read-count"), readBooks);
   document.getElementById("books-read-sub").innerHTML =
     `読了 <span class="sub-highlight">${readBooks}</span> / 全 ${books.length} 冊`;
 
   // ===== グラフ =====
+  // v2.21.15：destroy→再生成をやめ、upsertChart()でdataだけ差し替えてupdate()する。
+  // Chart.jsの値遷移アニメーションが効くようになり、「今の値→次の値」へ実際に
+  // 棒や線が動く見た目になる（destroy/recreateだと毎回ゼロから描画されるだけで、
+  // 値の移動というより毎回"出現"するだけに見えていた）。
 
   const todo = filteredTasks.filter((t) => t.status === "未着手").length;
   const inprogress = filteredTasks.filter((t) => t.status === "進行中").length;
   const done = filteredTasks.filter((t) => t.status === "完了").length;
 
-  if (chartDaily) chartDaily.destroy();
-  if (chartStatus) chartStatus.destroy();
-  if (chartBooks) chartBooks.destroy();
-  if (chartProgress) chartProgress.destroy();
-  if (chartCategoryTime) chartCategoryTime.destroy();
-  if (chartCategoryProgress) chartCategoryProgress.destroy();
+  const CHART_ANIMATION = { duration: 700, easing: "easeOutQuart" };
 
   const dailyHours = dailyData.map(minutesToHours);
   const dailyPlannedHours = dailyPlannedData.map(minutesToHours);
@@ -493,7 +546,7 @@ function renderCharts() {
   gradient.addColorStop(0, "hsl(234 70% 58%)");
   gradient.addColorStop(1, "hsla(234, 70%, 58%, 0.25)");
 
-  chartDaily = new Chart(dailyCanvas, {
+  chartDaily = upsertChart(chartDaily, dailyCanvas, {
     type: "bar",
     data: {
       labels,
@@ -522,6 +575,7 @@ function renderCharts() {
       responsive: true,
       maintainAspectRatio: false,
       aspectRatio: 2.5,
+      animation: CHART_ANIMATION,
       plugins: { legend: { display: false } },
       scales: {
         x: {
@@ -539,7 +593,7 @@ function renderCharts() {
     },
   });
 
-  chartStatus = new Chart(document.getElementById("chart-status"), {
+  chartStatus = upsertChart(chartStatus, document.getElementById("chart-status"), {
     type: "doughnut",
     data: {
       labels: [`未着手 ${todo}`, `進行中 ${inprogress}`, `完了 ${done}`],
@@ -555,6 +609,7 @@ function renderCharts() {
       responsive: true,
       maintainAspectRatio: false,
       cutout: "65%",
+      animation: CHART_ANIMATION,
       plugins: {
         legend: {
           position: "bottom",
@@ -585,7 +640,7 @@ function renderCharts() {
     booksWrapper.style.height = `${Math.max(bookProgress.length * barHeight, 250)}px`;
   }
 
-  chartBooks = new Chart(document.getElementById("chart-books"), {
+  chartBooks = upsertChart(chartBooks, document.getElementById("chart-books"), {
     type: "bar",
     data: {
       labels: bookProgress.map((b) => b.title),
@@ -615,6 +670,7 @@ function renderCharts() {
       indexAxis: "y",
       maintainAspectRatio: false,
       responsive: true,
+      animation: CHART_ANIMATION,
       plugins: { legend: { display: false } },
       scales: {
         x: {
@@ -666,7 +722,8 @@ function renderCharts() {
     getCategoryChartColor(name),
   );
 
-  chartCategoryTime = new Chart(
+  chartCategoryTime = upsertChart(
+    chartCategoryTime,
     document.getElementById("chart-category-time"),
     {
       type: "bar",
@@ -685,6 +742,7 @@ function renderCharts() {
         maintainAspectRatio: false,
         responsive: true,
         aspectRatio: 2.5,
+        animation: CHART_ANIMATION,
         plugins: { legend: { display: false } },
         scales: {
           x: {
@@ -709,7 +767,8 @@ function renderCharts() {
     categoryProgressWrapper.style.height = `${Math.max(categoryNames.length * catBarHeight, 200)}px`;
   }
 
-  chartCategoryProgress = new Chart(
+  chartCategoryProgress = upsertChart(
+    chartCategoryProgress,
     document.getElementById("chart-category-progress"),
     {
       type: "bar",
@@ -729,6 +788,7 @@ function renderCharts() {
         indexAxis: "y",
         maintainAspectRatio: false,
         responsive: true,
+        animation: CHART_ANIMATION,
         plugins: { legend: { display: false } },
         scales: {
           x: {
@@ -837,7 +897,7 @@ function renderCharts() {
     return Math.round((count / periodTaskCount) * 100);
   });
 
-  chartProgress = new Chart(document.getElementById("chart-progress"), {
+  chartProgress = upsertChart(chartProgress, document.getElementById("chart-progress"), {
     type: "line",
     data: {
       labels,
@@ -864,6 +924,7 @@ function renderCharts() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      animation: CHART_ANIMATION,
       plugins: {
         legend: { position: "bottom", labels: { color: "#aaa" } },
       },
@@ -881,10 +942,6 @@ function renderCharts() {
       },
     },
   });
-
-  if (chartDaily) chartDaily.resize();
-  if (chartCategoryTime) chartCategoryTime.resize();
-  if (chartProgress) chartProgress.resize();
 
   // v2.18.0: トグル切替のたびに現在期間の目標をサブテキストに反映
   loadAndShowCurrentPeriodGoal(currentPeriod);
