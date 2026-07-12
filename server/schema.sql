@@ -142,7 +142,20 @@ CREATE TABLE IF NOT EXISTS result_reviews (
 -- books（書籍マスタ）：メモ欄を「理解したこと」「不明点」に分割 v2.21.9追加
 -- 既存の memo カラムはデータ保全のため残置するが、書籍詳細モーダルの
 -- UIからは参照しなくなる（理解したこと／不明点の2項目に置き換え）。
+-- 【注】書籍レベルでの実装は行われず、下記tasksテーブル側（章単位）が
+-- 正式な実装となったため、このbooks側のカラムは現在未使用（v2.21.14）。
 -- =========================================
 ALTER TABLE books
+  ADD COLUMN understood_memo TEXT AFTER memo,
+  ADD COLUMN unclear_points  TEXT AFTER understood_memo;
+
+-- =========================================
+-- tasks（子タスク）：章単位の「理解したこと」「不明点」メモ v2.21.14追加
+-- 書籍詳細モーダルの目次アコーディオンで章（子タスク）ごとに入力する
+-- understood_memo / unclear_points の保存先。従来はこのカラムが存在せず、
+-- かつ server/routes/tasks.js の allowedFields にも含まれていなかったため
+-- 保存されずに失われる不具合があった（allowedFields側は対応済み）。
+-- =========================================
+ALTER TABLE tasks
   ADD COLUMN understood_memo TEXT AFTER memo,
   ADD COLUMN unclear_points  TEXT AFTER understood_memo;
