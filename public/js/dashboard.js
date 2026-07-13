@@ -924,7 +924,33 @@ function renderCharts() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      animation: CHART_ANIMATION,
+      // 🔴 変更：CHART_ANIMATION（下から伸びるY軸アニメーション）ではなく、
+      // 左→右に点を順番に描画していく専用アニメーションに差し替え
+      animations: {
+        x: {
+          type: "number",
+          easing: "linear",
+          duration: 700,
+          from: NaN, // 開始時は各点を「まだ描画しない」状態にする
+          delay(ctx) {
+            if (ctx.type !== "data" || ctx.xStarted) return 0;
+            ctx.xStarted = true;
+            const total = ctx.chart.data.labels.length || 1;
+            return ctx.index * (700 / total); // 点ごとに描画タイミングをずらす＝左から右へ
+          },
+        },
+        y: {
+          type: "number",
+          easing: "linear",
+          duration: 700,
+          from(ctx) {
+            if (ctx.type !== "data" || ctx.yStarted) return;
+            ctx.yStarted = true;
+            // 出現時のY座標を線の位置に合わせておき、ワープして見えないようにする
+            return ctx.chart.scales.y.getPixelForValue(ctx.parsed?.y ?? 0);
+          },
+        },
+      },
       plugins: {
         legend: { position: "bottom", labels: { color: "#aaa" } },
       },
@@ -942,7 +968,6 @@ function renderCharts() {
       },
     },
   });
-
   // v2.18.0: トグル切替のたびに現在期間の目標をサブテキストに反映
   loadAndShowCurrentPeriodGoal(currentPeriod);
 }
