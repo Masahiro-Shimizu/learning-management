@@ -1036,11 +1036,16 @@ async function loadAndShowCurrentPeriodGoal(period) {
     const startDateStr = ymdDash(range.start);
     const endDateStr = ymdDash(range.end);
 
-    const res = await api(
-      `/api/result-reviews?period_type=${period}&start_date=${startDateStr}&end_date=${endDateStr}`,
-    );
-
-    const savedGoal = res && (res.goal || (Array.isArray(res) && res[0]?.goal));
+    const reviews = await api("/api/result-reviews");
+    const matchingReview = Array.isArray(reviews)
+      ? reviews.find(
+         (r) =>
+           r.period_type === period &&
+           ymdDash(r.start_date) === startDateStr &&
+           ymdDash(r.end_date) === endDateStr,
+        )
+      : null;
+    const savedGoal = matchingReview?.goal;
 
     if (savedGoal) {
       // インラインスタイルを直接指定して、確実に「オレンジ色」と「太字」を強制します
@@ -1090,7 +1095,7 @@ function openGoalModal() {
         ymdDash(r.start_date) === startStr &&
         ymdDash(r.end_date) === endStr,
     );
-    const input = document.getElementById("goal-modal-input");
+    const input = document.getElementById("goal-input-text");
     if (input) input.value = existing?.goal || "";
   });
 
@@ -1099,6 +1104,24 @@ function openGoalModal() {
 
 function closeGoalModal() {
   document.getElementById("goal-modal").classList.add("hidden");
+}
+
+// ↓ この関数をここに追加
+async function saveGoalFromModal() {
+  const range = getCurrentPeriodRange(currentPeriod);
+  if (!range) return;
+
+  const goal = document.getElementById("goal-input-text")?.value || null;
+
+  await api("/api/result-reviews", "POST", {
+    period_type: currentPeriod,
+    start_date: ymdDash(range.start),
+    end_date: ymdDash(range.end),
+    goal,
+  });
+
+  closeGoalModal();
+  await loadAndShowCurrentPeriodGoal(currentPeriod);
 }
 
 async function initDashboard() {
@@ -1151,14 +1174,9 @@ async function initDashboard() {
     if (e.target.id === "goal-modal") closeGoalModal();
   });
   document
-    .getElementById("btn-goal-modal-save")
-    ?.addEventListener("click", () => {
-      if (typeof saveGoalFromModal === "function") {
-        saveGoalFromModal();
-      } else {
-        console.warn("saveGoalFromModalがまだ読み込まれていません");
-      }
-    });
+  .getElementById("btn-goal-modal-save")
+  ?.addEventListener("click", saveGoalFromModal);
+
 
   // 最初のロード時に現在期間の目標を表示
   loadAndShowCurrentPeriodGoal(currentPeriod);
