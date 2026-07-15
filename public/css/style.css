@@ -332,6 +332,116 @@ main {
   color: var(--color-text-tertiary) !important;
 }
 
+/* ==========================================================
+   サイドバー 表示/非表示トグル機能
+========================================================== */
+
+/* nav内の「隠す」ボタン */
+.nav-logo {
+  position: relative;
+}
+
+.btn-sidebar-toggle {
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    background-color 0.2s;
+}
+
+.btn-sidebar-toggle:hover {
+  color: var(--color-text-primary);
+  background-color: rgb(255 255 255 / 0.08);
+}
+
+.btn-sidebar-toggle .nav-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* nav・mainのスライドアニメーション */
+nav {
+  transition: transform 0.25s ease;
+}
+
+main {
+  transition: margin-left 0.25s ease;
+}
+
+/* 再表示用の固定ボタン（通常は非表示） */
+.btn-sidebar-show-fixed {
+  display: none;
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 150;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background-color: var(--color-bg-sidebar);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.5);
+  transition:
+    color 0.2s,
+    background-color 0.2s;
+}
+
+.btn-sidebar-show-fixed:hover {
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-card);
+}
+
+.btn-sidebar-show-fixed .nav-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* 折りたたみ状態（bodyにクラス付与） */
+body.sidebar-collapsed nav {
+  transform: translateX(-100%);
+}
+
+body.sidebar-collapsed main {
+  margin-left: 0 !important;
+}
+
+body.sidebar-collapsed .btn-sidebar-show-fixed {
+  display: flex;
+}
+
+/* ==========================================================
+   サイドバー折りたたみ時：各画面ヘッダーが再表示ボタンと
+   重ならないよう、左側に余白を確保する
+========================================================== */
+body.sidebar-collapsed #page-dashboard .dashboard-header,
+body.sidebar-collapsed #page-tasks .tasks-header,
+body.sidebar-collapsed #page-mandala .mandala-header,
+body.sidebar-collapsed #page-results .results-page-header,
+body.sidebar-collapsed #page-books > h2,
+body.sidebar-collapsed #page-settings > h2 {
+  padding-left: 88px !important;
+}
+
+@media (max-width: 768px) {
+  .btn-sidebar-show-fixed {
+    display: none !important;
+  }
+}
+
 @media (max-width: 768px) {
   .container {
     flex-direction: column;

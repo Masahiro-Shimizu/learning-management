@@ -99,6 +99,7 @@ function getPendingResults() {
 }
 
 // 期間内のタスクを絞り込む
+// 変更後
 function filterTasksByPeriod(tasks, startDate, endDate) {
   const start = new Date(startDate);
   start.setHours(0, 0, 0, 0);
@@ -106,10 +107,11 @@ function filterTasksByPeriod(tasks, startDate, endDate) {
   end.setHours(23, 59, 59, 999);
 
   return tasks.filter((t) => {
+    // v2.21.18修正：dashboard.jsと判定基準を統一。ステータスに関わらず
+    // 実績終了日(end_date)があれば最優先する（進行中タスクでもステップの
+    // 実績日ロールアップ（v2.21.17）でend_dateが確定していれば期間判定に使う）
     const targetDateStr =
-      t.status === "完了"
-        ? t.end_date
-        : t.end_planned_date || t.start_planned_date;
+      t.end_date || t.end_planned_date || t.start_planned_date;
     if (!targetDateStr) return false;
     const d = new Date(targetDateStr);
     return d >= start && d <= end;

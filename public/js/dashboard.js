@@ -238,10 +238,12 @@ function renderCharts() {
     );
 
     filteredTasks = tasks.filter((t) => {
+      // 変更後
+      // v2.21.18修正：ステータスに関わらず、実績終了日(end_date)があれば
+      // それを最優先する。進行中タスクでもステップの実績日ロールアップ（v2.21.17）で
+      // end_dateが確定していれば、その日付で期間判定できるようにする
       const targetDateStr =
-        t.status === "完了"
-          ? t.end_date
-          : t.end_planned_date || t.start_planned_date;
+      t.end_date || t.end_planned_date || t.start_planned_date;
       if (!targetDateStr) return false;
       const d = new Date(targetDateStr);
       return d >= monday && d <= sunday;

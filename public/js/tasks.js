@@ -470,17 +470,60 @@ function createStepItemHtml(step) {
   `;
 }
 
+// 変更後
 async function renderStepList(taskId) {
   const stepList = document.getElementById("step-list");
-  if (!stepList) return;
+  if (!stepList) return [];
   stepList.innerHTML = "";
   const steps = await api(`/api/steps/tasks/${taskId}`);
   steps.forEach((step) => {
     stepList.insertAdjacentHTML("beforeend", createStepItemHtml(step));
   });
+  return steps;
+}
+
+// v2.21.17追加：ステップの実績日から子タスクの実績開始日・終了日を自動算出（ロールアップ）
+// グループのcalculateGroupMilestones()と同じ考え方だが、実績終了日は「全ステップ完了」を
+// 待たず、完了有無を問わず最新の実績日を採用する（進行中でも学習実績が日別グラフ等に反映されるようにするため）
+function computeAutoActualDates(steps) {
+  const hasSteps = steps.length > 0;
+  if (!hasSteps) return { hasSteps, autoStartDate: null, autoEndDate: null };
+
+  const starts = steps.map((s) => s.start_date).filter(Boolean).sort();
+  const ends = steps.map((s) => s.end_date).filter(Boolean).sort();
+
+  const autoStartDate = starts.length > 0 ? starts[0] : null;
+  const autoEndDate = ends.length > 0 ? ends[ends.length - 1] : null;
+
+  return { hasSteps, autoStartDate, autoEndDate };
+}
+
+// v2.21.17追加：実績日欄（開始日・終了日）のロック状態とバッジ表示を切り替える
+function setTaskModalActualDateLock(isAuto, autoStartDate, autoEndDate) {
+  const startInput = document.getElementById("task-start-date");
+  const endInput = document.getElementById("task-end-date");
+  const badge = document.getElementById("task-actual-date-auto-badge");
+
+  if (isAuto) {
+    if (startInput) startInput.value = autoStartDate ? formatDateForInput(autoStartDate) : "";
+    if (endInput) endInput.value = autoEndDate ? formatDateForInput(autoEndDate) : "";
+  }
+
+  [startInput, endInput].forEach((input) => {
+    if (!input) return;
+    input.disabled = isAuto;
+    input.style.opacity = isAuto ? "0.6" : "1.0";
+    input.style.cursor = isAuto ? "not-allowed" : "pointer";
+    input.style.backgroundColor = isAuto ? "rgba(255, 255, 255, 0.03)" : "";
+  });
+
+  if (badge) {
+    badge.classList.toggle("hidden", !isAuto);
+  }
 }
 
 // ステップ一覧からmodalの時間入力欄を上書きし、APIも更新する
+// 変更後
 async function syncStepTotalsToTask(taskId) {
   const steps = await api(`/api/steps/tasks/${taskId}`);
 
@@ -493,7 +536,6 @@ async function syncStepTotalsToTask(taskId) {
     0,
   );
 
-  // モーダルの入力欄を更新（分→時間に変換して表示）
   const plannedEl = document.getElementById("task-planned-study-time");
   const actualEl = document.getElementById("task-study-time");
 
@@ -510,11 +552,20 @@ async function syncStepTotalsToTask(taskId) {
         : "";
   }
 
-  // DB更新
-  await api(`/api/tasks/${taskId}`, "PUT", {
+  // v2.21.17追加：実績開始日・終了日の自動算出とロック表示
+  const { hasSteps, autoStartDate, autoEndDate } = computeAutoActualDates(steps);
+  setTaskModalActualDateLock(hasSteps, autoStartDate, autoEndDate);
+
+  const body = {
     planned_study_time: totalPlanned || null,
     study_time: totalActual || null,
-  });
+  };
+  if (hasSteps) {
+    body.start_date = autoStartDate;
+    body.end_date = autoEndDate;
+  }
+
+  await api(`/api/tasks/${taskId}`, "PUT", body);
 }
 
 function showStepSection(show) {
@@ -560,6 +611,7 @@ function updateCardStepBadge(taskId) {
   }
 }
 
+// 変更後
 document.getElementById("step-list")?.addEventListener("change", async (e) => {
   if (e.target.type !== "checkbox") return;
   const li = e.target.closest(".step-item");
@@ -569,6 +621,7 @@ document.getElementById("step-list")?.addEventListener("change", async (e) => {
   li.classList.toggle("completed", isCompleted);
   const taskId = document.getElementById("task-modal").dataset.taskId;
   updateCardStepBadge(taskId);
+  await syncStepTotalsToTask(taskId); // v2.21.17追加：実績日ロールアップの再計算
 });
 
 document.getElementById("step-list")?.addEventListener("click", async (e) => {
@@ -646,6 +699,7 @@ document.getElementById("step-list")?.addEventListener("click", async (e) => {
 });
 
 // 新しいステップの追加処理
+// 変更後
 document.getElementById("btn-step-add")?.addEventListener("click", async () => {
   const input = document.getElementById("step-new-title");
   if (!input) return;
@@ -658,6 +712,7 @@ document.getElementById("btn-step-add")?.addEventListener("click", async () => {
     ?.insertAdjacentHTML("beforeend", createStepItemHtml(newStep));
   input.value = "";
   updateCardStepBadge(taskId);
+  await syncStepTotalsToTask(taskId); // v2.21.17追加：実績日ロールアップの再計算
 });
 
 // ----- ⑤ 「ステップから集計」ボタン（手動） -----
@@ -700,8 +755,13 @@ async function openTaskEditModal(taskId) {
     task.planned_study_time ? minutesToHours(task.planned_study_time) : "";
   document.getElementById("task-memo").value = task.memo || "";
 
+  // 変更後
   showStepSection(true);
-  await renderStepList(taskId);
+  const steps = await renderStepList(taskId);
+
+  // v2.21.17追加：ステップの有無・実績日に応じて実績日欄をロック
+  const { hasSteps, autoStartDate, autoEndDate } = computeAutoActualDates(steps);
+  setTaskModalActualDateLock(hasSteps, autoStartDate, autoEndDate);
 
   const duplicateBtn = document.getElementById("btn-task-duplicate");
   if (duplicateBtn) duplicateBtn.classList.remove("hidden");
@@ -2243,6 +2303,7 @@ function openTaskModal(
     prefill?.end_planned_date ?? plannedDate ?? "";
   document.getElementById("task-start-date").value = "";
   document.getElementById("task-end-date").value = "";
+  setTaskModalActualDateLock(false, null, null); // v2.21.17追加：新規作成時はロック解除
   document.getElementById("task-study-time").value = "";
   document.getElementById("task-planned-study-time").value =
     prefill?.planned_study_time ?? "";

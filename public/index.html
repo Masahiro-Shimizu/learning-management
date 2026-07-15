@@ -39,6 +39,15 @@
             <div class="nav-logo-title">学習管理</div>
             <div class="nav-logo-sub">LEARNING LOG</div>
           </div>
+          <button
+            type="button"
+            id="btn-sidebar-hide"
+            class="btn-sidebar-toggle"
+            aria-label="サイドバーを隠す"
+            title="サイドバーを隠す"
+          >
+            <i data-lucide="panel-left-close" class="nav-icon"></i>
+          </button>
         </div>
         <ul>
           <li>
@@ -82,6 +91,16 @@
           </a>
         </div>
       </nav>
+
+      <button
+        type="button"
+        id="btn-sidebar-show"
+        class="btn-sidebar-show-fixed"
+        aria-label="サイドバーを表示"
+        title="サイドバーを表示"
+      >
+        <i data-lucide="panel-left-open" class="nav-icon"></i>
+      </button>
 
       <main>
         <section id="page-dashboard">
@@ -920,6 +939,17 @@
               <input type="date" id="task-end-planned-date" />
             </div>
 
+            <!-- 変更後 -->
+           <div class="field field-full" style="margin-bottom: -4px;">
+              <span
+                id="task-actual-date-auto-badge"
+                class="hidden"
+                style="background: rgb(139 92 246 / 0.2); color: #c4b5fd; font-size: 0.7rem; padding: 2px 8px; border-radius: 9999px; border: 1px solid rgb(139 92 246 / 0.4); display: inline-block;"
+                title="ステップの実績日から自動計算されています"
+              >
+                🤖 ステップから自動計算中
+              </span>
+            </div>
             <div class="field">
               <label for="task-start-date">開始日（実績）</label>
               <input type="date" id="task-start-date" />

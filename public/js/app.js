@@ -12,6 +12,26 @@ function showPage() {
   const pageId = location.hash.substring(1) || "page-dashboard";
   const targetPage = document.getElementById(pageId);
 
+  // ===== サイドバー 表示/非表示トグル（localStorageで状態保持） =====
+const SIDEBAR_STORAGE_KEY = "sidebarCollapsed";
+
+function applySidebarState(collapsed) {
+  document.body.classList.toggle("sidebar-collapsed", collapsed);
+}
+
+// 初期状態を復元
+applySidebarState(localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true");
+
+document.getElementById("btn-sidebar-hide")?.addEventListener("click", () => {
+  applySidebarState(true);
+  localStorage.setItem(SIDEBAR_STORAGE_KEY, "true");
+});
+
+document.getElementById("btn-sidebar-show")?.addEventListener("click", () => {
+  applySidebarState(false);
+  localStorage.setItem(SIDEBAR_STORAGE_KEY, "false");
+});
+
   // --- 追加：ページ切り替え時にアイコンを再生成 ---
   if (typeof lucide !== "undefined") {
     lucide.createIcons();
