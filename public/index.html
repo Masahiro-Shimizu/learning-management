@@ -923,11 +923,16 @@
               </select>
             </div>
 
-            <div class="field field-full">
-              <label for="task-book-id">紐づく書籍</label>
-              <select id="task-book-id">
-                <option value="">（なし）</option>
-              </select>
+            <div class="field field-full" style="display:flex; align-items:flex-end; gap:8px;">
+              <div style="flex:1;">
+                <label for="task-book-id">紐づく書籍</label>
+                <select id="task-book-id">
+                  <option value="">（なし）</option>
+                </select>
+              </div>
+              <button type="button" id="btn-task-view-book" class="btn btn-secondary hidden" style="white-space:nowrap;">
+                📖 書籍を見る
+              </button>
             </div>
 
             <div class="field">
@@ -972,32 +977,49 @@
               <label for="task-memo">メモ</label>
               <textarea id="task-memo"></textarea>
             </div>
+
+            <div class="field field-full">
+              <label for="task-understood-memo">理解したこと</label>
+              <textarea id="task-understood-memo" rows="2"></textarea>
+            </div>
+
+            <div class="field field-full">
+              <label for="task-unclear-points">不明だったこと</label>
+              <textarea id="task-unclear-points" rows="2"></textarea>
+            </div>
           </div>
 
-          <div class="step-section">
-            <label>ステップ</label>
-            <ul id="step-list"></ul>
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-top: var(--space-16); padding-top: var(--space-16); border-top: 1px solid rgb(255 255 255 / 0.06);">
+            <span style="font-size:0.85rem; color:var(--color-text-secondary);">ステップ（孫タスク）</span>
+            <button type="button" id="btn-open-step-modal" class="btn btn-secondary">
+                📝 ステップを管理
+                <span id="task-step-summary-badge" class="task-step-badge" style="margin-left:6px;">0/0</span>
+              </button>
+          </div>
 
-            <div class="step-add-row">
-              <input
-                type="text"
-                id="step-new-title"
-                placeholder="新しいステップ"
-              />
-              <button type="button" id="btn-step-add" class="btn btn-secondary">
-                追加
-              </button>
-            </div>
-            <div
-              style="display: flex; justify-content: flex-end; margin-top: 6px"
-            >
-              <button
-                type="button"
-                id="btn-step-aggregate"
-                class="btn btn-secondary"
-              >
-                ステップから集計
-              </button>
+          <div id="step-modal" class="modal hidden">
+            <div class="modal-content" style="width:560px; max-height:85vh; display:flex; flex-direction:column;">
+              <div class="modal-header">
+                <h3>ステップ（孫タスク）管理</h3>
+                <button type="button" id="btn-step-modal-close-x" class="btn-modal-close" aria-label="閉じる">✕</button>
+              </div>
+              <div style="flex:1; overflow-y:auto; padding-right:4px;">
+                <div class="step-section">
+                  <ul id="step-list"></ul>
+                  <div class="step-add-row">
+                    <input type="text" id="step-new-title" placeholder="新しいステップ" />
+                    <button type="button" id="btn-step-add" class="btn btn-secondary">追加</button>
+                  </div>
+                  <div style="display:flex; justify-content:flex-end; margin-top:6px;">
+                    <button type="button" id="btn-step-aggregate" class="btn btn-secondary">ステップから集計</button>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-actions" style="margin-top:16px;">
+                <div class="task-actions-right" style="margin-left:auto;">
+                  <button type="button" id="btn-step-modal-close" class="btn btn-secondary">閉じる</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

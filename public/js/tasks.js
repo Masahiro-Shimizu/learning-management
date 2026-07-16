@@ -581,6 +581,10 @@ function updateCardStepBadge(taskId) {
   ).length;
   const text = `${completed}/${total}`;
 
+  // ↓追加：タスクモーダル内の「ステップを管理」ボタンのサマリーバッジも同期
+  const summaryBadge = document.getElementById("task-step-summary-badge");
+  if (summaryBadge) summaryBadge.textContent = text;
+
   const card = document.querySelector(`.task-card[data-task-id="${taskId}"]`);
   if (card) {
     let badge = card.querySelector(".task-step-badge");
@@ -755,6 +759,20 @@ async function openTaskEditModal(taskId) {
     task.planned_study_time ? minutesToHours(task.planned_study_time) : "";
   document.getElementById("task-memo").value = task.memo || "";
 
+  document.getElementById("task-understood-memo").value = task.understood_memo || "";
+  document.getElementById("task-unclear-points").value = task.unclear_points || "";
+
+  const viewBookBtn = document.getElementById("btn-task-view-book");
+  if (viewBookBtn) {
+    if (task.book_id) {
+      viewBookBtn.classList.remove("hidden");
+      viewBookBtn.dataset.bookId = task.book_id;
+    } else {
+      viewBookBtn.classList.add("hidden");
+      viewBookBtn.dataset.bookId = "";
+    }
+  }
+
   // 変更後
   showStepSection(true);
   const steps = await renderStepList(taskId);
@@ -762,6 +780,8 @@ async function openTaskEditModal(taskId) {
   // v2.21.17追加：ステップの有無・実績日に応じて実績日欄をロック
   const { hasSteps, autoStartDate, autoEndDate } = computeAutoActualDates(steps);
   setTaskModalActualDateLock(hasSteps, autoStartDate, autoEndDate);
+
+  updateCardStepBadge(taskId); // ステップ一覧描画直後にサマリーバッジも同期
 
   const duplicateBtn = document.getElementById("btn-task-duplicate");
   if (duplicateBtn) duplicateBtn.classList.remove("hidden");
@@ -2293,8 +2313,20 @@ function openTaskModal(
     prefill?.planned_study_time ?? "";
   document.getElementById("task-memo").value = prefill?.memo ?? "";
 
+  document.getElementById("task-understood-memo").value = prefill?.understood_memo ?? "";
+  document.getElementById("task-unclear-points").value = prefill?.unclear_points ?? "";
+
+  const viewBookBtn = document.getElementById("btn-task-view-book");
+  if (viewBookBtn) {
+    viewBookBtn.classList.add("hidden");
+    viewBookBtn.dataset.bookId = "";
+  }
+
   showStepSection(false);
   document.getElementById("step-list").innerHTML = "";
+
+  const summaryBadge = document.getElementById("task-step-summary-badge");
+  if (summaryBadge) summaryBadge.textContent = "0/0";
 
   const duplicateBtn = document.getElementById("btn-task-duplicate");
   if (duplicateBtn) duplicateBtn.classList.add("hidden");
@@ -2362,6 +2394,8 @@ document
         ? Math.round(parseFloat(plannedStudyTimeInput) * 60)
         : null,
       memo: document.getElementById("task-memo").value || null,
+      understood_memo: document.getElementById("task-understood-memo").value || null, // 追加
+      unclear_points: document.getElementById("task-unclear-points").value || null,   // 追加
     };
 
     if (taskId) {
@@ -2481,6 +2515,8 @@ function getTaskModalSnapshot() {
     "task-planned-study-time",
     "task-study-time",
     "task-memo",
+    "task-understood-memo", // 追加
+    "task-unclear-points",  // 追加
   ];
   const snapshot = {};
   ids.forEach((id) => {
@@ -2677,3 +2713,26 @@ function calculateGroupMilestones(groups, tasks) {
     };
   });
 }
+
+// ===== ステップ管理モーダル（v2.21.19追加：task-modalから分離） =====
+function openStepModal() {
+  document.getElementById("step-modal")?.classList.remove("hidden");
+}
+function closeStepModal() {
+  document.getElementById("step-modal")?.classList.add("hidden");
+}
+document.getElementById("btn-open-step-modal")?.addEventListener("click", openStepModal);
+document.getElementById("btn-step-modal-close-x")?.addEventListener("click", closeStepModal);
+document.getElementById("btn-step-modal-close")?.addEventListener("click", closeStepModal);
+document.getElementById("step-modal")?.addEventListener("click", (e) => {
+  if (e.target.id === "step-modal") closeStepModal();
+});
+
+// タスクモーダル→書籍モーダルへの遷移（v2.21.19追加）
+document.getElementById("btn-task-view-book")?.addEventListener("click", async (e) => {
+  const bookId = e.currentTarget.dataset.bookId;
+  if (!bookId) return;
+  document.getElementById("task-modal").classList.add("hidden");
+  const book = await api(`/api/books/${bookId}`);
+  if (typeof openBookModal === "function") openBookModal(book);
+});
