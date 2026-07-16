@@ -25,7 +25,11 @@
 ▼ 全期間
 <img width="1920" height="1080" alt="Image" src="https://github.com/user-attachments/assets/da68708e-2c7e-4755-ae5b-227660147080" />
 
-▼ タスク一覧
+</details>
+
+<details>
+
+<summary>▼ タスク一覧</summary>
 
 <summary>カンバン</summary>
 ▼ 子タスク非表示
@@ -82,6 +86,8 @@
 
 <img width="1920" height="1080" alt="Image" src="https://github.com/user-attachments/assets/4c41d716-7883-4c81-9d51-6409e603696f" />
 
+</details>
+
 ▼ 書籍マスタ
 
 <img width="1920" height="1080" alt="Image" src="https://github.com/user-attachments/assets/ea1d5b89-d75b-41bd-97c9-6ec63413f830" />
@@ -125,8 +131,6 @@
 <img width="1920" height="1080" alt="Image" src="https://github.com/user-attachments/assets/df26bbd5-0ef7-4527-8e24-a74c19fb68b2" />
 
 <img width="1920" height="1080" alt="Image" src="https://github.com/user-attachments/assets/58b033ba-adf3-4aeb-9660-69aa273f2856" />
-
-</details>
 
 </details>
 
