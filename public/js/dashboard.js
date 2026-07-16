@@ -26,12 +26,70 @@ let viewDate = new Date();
 
 let allTasks = [];
 let allBooks = [];
+let allSteps = []; // v2.21.19追加：学習時間集計のステップ単位化に使用
 
 // 【修正】重複していた CHART_COLORS 定義は一元化したため、ここから削除しました
 // (tasks.js側で定義されたグローバルの CHART_COLORS を自動的に参照します)
 
 function minutesToHours(minutes) {
   return Math.round((minutes / 60) * 10) / 10;
+}
+
+// v2.21.19追加：学習時間集計をステップ単位に分解する。
+// ステップが1件以上あるタスクはステップ個別の実績日・時間を使い、
+// ステップが0件のタスクは従来通りタスク自体のend_date/study_timeを使う（フォールバック）
+function buildTimeEntries(tasks, stepsByTaskId) {
+  const actualEntries = [];
+  const plannedEntries = [];
+
+  tasks.forEach((task) => {
+    const steps = stepsByTaskId[task.id] || [];
+
+    if (steps.length > 0) {
+      steps.forEach((step) => {
+        if (step.study_time && step.end_date) {
+          actualEntries.push({
+            date: step.end_date,
+            minutes: Number(step.study_time) || 0,
+            category_name: task.category_name,
+          });
+        }
+        if (step.planned_study_time && step.end_planned_date) {
+          plannedEntries.push({
+            date: step.end_planned_date,
+            minutes: Number(step.planned_study_time) || 0,
+            category_name: task.category_name,
+          });
+        }
+      });
+    } else {
+      if (task.study_time && task.end_date) {
+        actualEntries.push({
+          date: task.end_date,
+          minutes: Number(task.study_time) || 0,
+          category_name: task.category_name,
+        });
+      }
+      if (task.planned_study_time && task.end_planned_date) {
+        plannedEntries.push({
+          date: task.end_planned_date,
+          minutes: Number(task.planned_study_time) || 0,
+          category_name: task.category_name,
+        });
+      }
+    }
+  });
+
+  return { actualEntries, plannedEntries };
+}
+
+// v2.21.19追加：エントリの日付が期間範囲内かどうかで絞り込む共通ヘルパー
+function filterEntriesByRange(entries, range) {
+  if (!range) return entries; // "全期間"は絞り込みなし
+  return entries.filter((e) => {
+    const d = new Date(e.date);
+    return d >= range.start && d <= range.end;
+  });
 }
 
 // v2.21.14追加：サマリーカードの数値をフェードイン＋カウントアップで表示する
@@ -200,6 +258,11 @@ function renderCharts() {
   const tasks = allTasks;
   const books = allBooks;
 
+  // v2.21.19追加：groupStepsByTaskId()はtasks.jsで定義済みのものを再利用
+  const stepsByTaskId = groupStepsByTaskId(allSteps);
+  const { actualEntries, plannedEntries } = buildTimeEntries(tasks, stepsByTaskId);
+
+
   updatePeriodLabel();
   updateSummaryCardLabel();
 
@@ -221,20 +284,18 @@ function renderCharts() {
 
     labels = ["月", "火", "水", "木", "金", "土", "日"];
 
+    // 変更後
+    // v2.21.19修正：タスク単位ではなくステップ単位（timeEntries）で日別に集計
     dailyData = weekDates.map((weekDate) =>
-      tasks
-        .filter((t) => t.end_date && isSameDay(new Date(t.end_date), weekDate))
-        .reduce((sum, t) => sum + (t.study_time || 0), 0),
+      actualEntries
+        .filter((e) => isSameDay(new Date(e.date), weekDate))
+        .reduce((sum, e) => sum + e.minutes, 0),
     );
 
     dailyPlannedData = weekDates.map((weekDate) =>
-      tasks
-        .filter(
-          (t) =>
-            t.end_planned_date &&
-            isSameDay(new Date(t.end_planned_date), weekDate),
-        )
-        .reduce((sum, t) => sum + (t.planned_study_time || 0), 0),
+      plannedEntries
+        .filter((e) => isSameDay(new Date(e.date), weekDate))
+        .reduce((sum, e) => sum + e.minutes, 0),
     );
 
     filteredTasks = tasks.filter((t) => {
@@ -255,28 +316,26 @@ function renderCharts() {
 
     labels = Array.from({ length: daysInMonth }, (_, i) => `${i + 1}`);
 
+    // 変更後
+    // v2.21.19修正：ステップ単位（timeEntries）で日別に集計
     dailyData = Array.from({ length: daysInMonth }, (_, i) => {
       const date = new Date(year, month, i + 1);
-      return tasks
-        .filter((t) => t.end_date && isSameDay(new Date(t.end_date), date))
-        .reduce((sum, t) => sum + (t.study_time || 0), 0);
+      return actualEntries
+        .filter((e) => isSameDay(new Date(e.date), date))
+        .reduce((sum, e) => sum + e.minutes, 0);
     });
 
     dailyPlannedData = Array.from({ length: daysInMonth }, (_, i) => {
       const date = new Date(year, month, i + 1);
-      return tasks
-        .filter(
-          (t) =>
-            t.end_planned_date && isSameDay(new Date(t.end_planned_date), date),
-        )
-        .reduce((sum, t) => sum + (t.planned_study_time || 0), 0);
+      return plannedEntries
+        .filter((e) => isSameDay(new Date(e.date), date))
+        .reduce((sum, e) => sum + e.minutes, 0);
     });
 
+    // 修正後
     filteredTasks = tasks.filter((t) => {
       const targetDateStr =
-        t.status === "完了"
-          ? t.end_date
-          : t.end_planned_date || t.start_planned_date;
+        t.end_date || t.end_planned_date || t.start_planned_date;
       if (!targetDateStr) return false;
       const d = new Date(targetDateStr);
       return d.getFullYear() === year && d.getMonth() === month;
@@ -298,50 +357,47 @@ function renderCharts() {
       "12月",
     ];
 
+    // 変更後
+    // v2.21.19修正：ステップ単位（timeEntries）で月別に集計
     dailyData = Array.from({ length: 12 }, (_, i) =>
-      tasks
-        .filter((t) => {
-          if (!t.end_date) return false;
-          const d = new Date(t.end_date);
+      actualEntries
+        .filter((e) => {
+          const d = new Date(e.date);
           return d.getFullYear() === year && d.getMonth() === i;
         })
-        .reduce((sum, t) => sum + (t.study_time || 0), 0),
+        .reduce((sum, e) => sum + e.minutes, 0),
     );
 
     dailyPlannedData = Array.from({ length: 12 }, (_, i) =>
-      tasks
-        .filter((t) => {
-          if (!t.end_planned_date) return false;
-          const d = new Date(t.end_planned_date);
+      plannedEntries
+        .filter((e) => {
+          const d = new Date(e.date);
           return d.getFullYear() === year && d.getMonth() === i;
         })
-        .reduce((sum, t) => sum + (t.planned_study_time || 0), 0),
+        .reduce((sum, e) => sum + e.minutes, 0),
     );
 
+    // 修正後
     filteredTasks = tasks.filter((t) => {
       const targetDateStr =
-        t.status === "完了"
-          ? t.end_date
-          : t.end_planned_date || t.start_planned_date;
+        t.end_date || t.end_planned_date || t.start_planned_date;
       if (!targetDateStr) return false;
       const d = new Date(targetDateStr);
       return d.getFullYear() === year;
     });
+  // 変更後
   } else if (currentPeriod === "all") {
-    const years = Array.from(
-      new Set(
-        tasks
-          .map((t) => {
-            const d = t.end_date
-              ? new Date(t.end_date)
-              : t.end_planned_date
-                ? new Date(t.end_planned_date)
-                : null;
-            return d ? d.getFullYear() : null;
-          })
-          .filter((y) => y !== null),
-      ),
-    );
+    // v2.21.19修正：年の一覧・学習時間データをタスクではなくtimeEntries（ステップ単位）から算出
+    const entryYears = new Set();
+    actualEntries.forEach((e) => {
+      const y = new Date(e.date).getFullYear();
+      if (!Number.isNaN(y)) entryYears.add(y);
+    });
+    plannedEntries.forEach((e) => {
+      const y = new Date(e.date).getFullYear();
+      if (!Number.isNaN(y)) entryYears.add(y);
+    });
+    const years = Array.from(entryYears);
     if (years.length === 0) years.push(new Date().getFullYear());
     years.sort((a, b) => a - b);
 
@@ -349,27 +405,45 @@ function renderCharts() {
     filteredTasks = tasks;
 
     dailyData = years.map((year) =>
-      tasks
-        .filter(
-          (t) => t.end_date && new Date(t.end_date).getFullYear() === year,
-        )
-        .reduce((sum, t) => sum + (t.study_time || 0), 0),
+      actualEntries
+        .filter((e) => new Date(e.date).getFullYear() === year)
+        .reduce((sum, e) => sum + e.minutes, 0),
     );
     dailyPlannedData = years.map((year) =>
-      tasks
-        .filter(
-          (t) =>
-            t.end_planned_date &&
-            new Date(t.end_planned_date).getFullYear() === year,
-        )
-        .reduce((sum, t) => sum + (t.planned_study_time || 0), 0),
+      plannedEntries
+        .filter((e) => new Date(e.date).getFullYear() === year)
+        .reduce((sum, e) => sum + e.minutes, 0),
     );
   }
 
+  // 変更後
   // ===== サマリーカード更新 =====
 
-  const periodTotalMinutes = filteredTasks.reduce(
-    (sum, t) => sum + (t.study_time || 0),
+  // v2.21.19追加：前期間（先週/先月/前年）の日付範囲を一度だけ算出し、
+  // 学習時間・進捗率どちらの比較でも共通利用する（従来は2箇所で別々に算出していた）
+  let prevRange = null;
+  if (currentPeriod !== "all") {
+    const prevBaseDate = new Date(viewDate);
+    if (currentPeriod === "week") {
+      prevBaseDate.setDate(viewDate.getDate() - 7);
+    } else if (currentPeriod === "month") {
+      prevBaseDate.setMonth(viewDate.getMonth() - 1);
+    } else if (currentPeriod === "year") {
+      prevBaseDate.setFullYear(viewDate.getFullYear() - 1);
+    }
+    prevRange = getPeriodRange(currentPeriod, prevBaseDate);
+  }
+
+  // 現在の期間の日付範囲（"all"はnull＝絞り込みなし）
+  const currentRange =
+    currentPeriod === "all" ? null : getPeriodRange(currentPeriod, viewDate);
+
+  // v2.21.19修正：学習時間はタスクではなくtimeEntries（ステップ単位）から算出。
+  // タスク単位のままだと、週や月をまたいで作業したタスクの時間が最新ステップの
+  // 日付にまとめて計上され、期間をまたぐ実績が正しく分配されない問題があった
+  const filteredActualEntries = filterEntriesByRange(actualEntries, currentRange);
+  const periodTotalMinutes = filteredActualEntries.reduce(
+    (sum, e) => sum + e.minutes,
     0,
   );
   const periodHours = minutesToHours(periodTotalMinutes);
@@ -377,41 +451,8 @@ function renderCharts() {
     decimals: 1,
   });
 
-  let prevFilteredTasks = [];
-  if (currentPeriod === "week") {
-    const monday = getWeekStart(viewDate);
-    const prevMonday = new Date(monday);
-    prevMonday.setDate(monday.getDate() - 7);
-    const prevSunday = new Date(monday);
-    prevSunday.setDate(monday.getDate() - 1);
-    prevSunday.setHours(23, 59, 59, 999);
-    prevFilteredTasks = tasks.filter((t) => {
-      if (!t.end_date) return false;
-      const d = new Date(t.end_date);
-      return d >= prevMonday && d <= prevSunday;
-    });
-  } else if (currentPeriod === "month") {
-    const year = viewDate.getFullYear();
-    const month = viewDate.getMonth();
-    const prevYear = month === 0 ? year - 1 : year;
-    const prevMonth = month === 0 ? 11 : month - 1;
-    prevFilteredTasks = tasks.filter((t) => {
-      if (!t.end_date) return false;
-      const d = new Date(t.end_date);
-      return d.getFullYear() === prevYear && d.getMonth() === prevMonth;
-    });
-  } else if (currentPeriod === "year") {
-    const prevYear = viewDate.getFullYear() - 1;
-    prevFilteredTasks = tasks.filter((t) => {
-      if (!t.end_date) return false;
-      const d = new Date(t.end_date);
-      return d.getFullYear() === prevYear;
-    });
-  }
-  const prevMinutes = prevFilteredTasks.reduce(
-    (sum, t) => sum + (t.study_time || 0),
-    0,
-  );
+  const prevActualEntries = filterEntriesByRange(actualEntries, prevRange);
+  const prevMinutes = prevActualEntries.reduce((sum, e) => sum + e.minutes, 0);
   const diffHours = minutesToHours(periodTotalMinutes - prevMinutes);
   const diffSign = diffHours > 0 ? "+" : "";
   const periodLabel =
@@ -451,32 +492,19 @@ function renderCharts() {
     animateSummaryValue(progressRateEl, currentProgressRate);
   }
 
-  let prevProgressRate = 0;
+// 変更後
+let prevProgressRate = 0;
 
-  if (currentPeriod !== "all") {
-    // 表示中の期間の「1つ前の期間」の日付範囲を算出し、
-    // filteredTasks と同じ判定条件（完了なら end_date、それ以外は予定日）で
-    // 前期間に属するタスクを抽出する
-    const prevBaseDate = new Date(viewDate);
-    if (currentPeriod === "week") {
-      prevBaseDate.setDate(viewDate.getDate() - 7);
-    } else if (currentPeriod === "month") {
-      prevBaseDate.setMonth(viewDate.getMonth() - 1);
-    } else if (currentPeriod === "year") {
-      prevBaseDate.setFullYear(viewDate.getFullYear() - 1);
-    }
-
-    const prevRange = getPeriodRange(currentPeriod, prevBaseDate);
-
-    const prevPeriodTasks = tasks.filter((t) => {
-      const targetDateStr =
-        t.status === "完了"
-          ? t.end_date
-          : t.end_planned_date || t.start_planned_date;
-      if (!targetDateStr) return false;
-      const d = new Date(targetDateStr);
-      return d >= prevRange.start && d <= prevRange.end;
-    });
+// v2.21.19修正：prevRangeは上のサマリーカードセクションで算出済みのものを再利用
+// 修正後
+if (currentPeriod !== "all" && prevRange) {
+  const prevPeriodTasks = tasks.filter((t) => {
+    const targetDateStr =
+      t.end_date || t.end_planned_date || t.start_planned_date;
+    if (!targetDateStr) return false;
+    const d = new Date(targetDateStr);
+    return d >= prevRange.start && d <= prevRange.end;
+  });
 
     const prevCompletedCount = prevPeriodTasks.filter(
       (t) => t.status === "完了",
@@ -697,30 +725,41 @@ function renderCharts() {
     },
   });
 
-  const categoryMap = new Map();
+  // 変更後
+  // v2.21.19修正：カテゴリ別学習時間はtimeEntries（ステップ単位）、
+  // カテゴリ別進捗率は従来通りfilteredTasks（タスク単位）から別々に算出する。
+  // 時間＝実際に作業した記録の積み上げ、進捗率＝タスクの完了件数の割合であり、
+  // 集計すべき粒度が異なるため
+
+  const categoryTimeMap = new Map();
+  filteredActualEntries.forEach((e) => {
+    const name = e.category_name || "(言語不問)";
+    categoryTimeMap.set(name, (categoryTimeMap.get(name) || 0) + e.minutes);
+  });
+  const categoryTimeNames = Array.from(categoryTimeMap.keys());
+  const categoryTimeData = categoryTimeNames.map((name) =>
+    minutesToHours(categoryTimeMap.get(name)),
+  );
+  const categoryTimeColors = categoryTimeNames.map((name) =>
+    getCategoryChartColor(name),
+  );
+
+  const categoryProgressMap = new Map();
   filteredTasks.forEach((t) => {
     const name = t.category_name || "(言語不問)";
-    if (!categoryMap.has(name)) {
-      categoryMap.set(name, { time: 0, total: 0, done: 0 });
+    if (!categoryProgressMap.has(name)) {
+      categoryProgressMap.set(name, { total: 0, done: 0 });
     }
-    const entry = categoryMap.get(name);
-    entry.time += t.study_time || 0;
+    const entry = categoryProgressMap.get(name);
     entry.total += 1;
     if (t.status === "完了") entry.done += 1;
   });
-
-  const categoryNames = Array.from(categoryMap.keys()).filter(
-    (name) => categoryMap.get(name).total > 0,
-  );
-  const categoryTimeData = categoryNames.map((name) =>
-    minutesToHours(categoryMap.get(name).time),
-  );
-  const categoryProgressData = categoryNames.map((name) => {
-    const entry = categoryMap.get(name);
+  const categoryProgressNames = Array.from(categoryProgressMap.keys());
+  const categoryProgressData = categoryProgressNames.map((name) => {
+    const entry = categoryProgressMap.get(name);
     return entry.total > 0 ? Math.round((entry.done / entry.total) * 100) : 0;
   });
-  // 【修正】配列の並び順ではなく、GitHub色 / 文字列ハッシュ共通関数から一意の色を決定する
-  const categoryColors = categoryNames.map((name) =>
+  const categoryProgressColors = categoryProgressNames.map((name) =>
     getCategoryChartColor(name),
   );
 
@@ -730,13 +769,13 @@ function renderCharts() {
     {
       type: "bar",
       data: {
-        labels: categoryNames.length > 0 ? categoryNames : ["データなし"],
+        labels: categoryTimeNames.length > 0 ? categoryTimeNames : ["データなし"],
         datasets: [
           {
             label: "学習時間（時間）",
             data: categoryTimeData.length > 0 ? categoryTimeData : [],
             backgroundColor:
-              categoryColors.length > 0 ? categoryColors : ["#808080"],
+              categoryTimeColors.length > 0 ? categoryTimeColors : ["#808080"],
           },
         ],
       },
@@ -765,8 +804,8 @@ function renderCharts() {
     "category-wrapper-js",
   );
   if (categoryProgressWrapper) {
-    const catBarHeight = categoryNames.length > 6 ? 32 : 45;
-    categoryProgressWrapper.style.height = `${Math.max(categoryNames.length * catBarHeight, 200)}px`;
+    const catBarHeight = categoryProgressNames.length > 6 ? 32 : 45;
+    categoryProgressWrapper.style.height = `${Math.max(categoryProgressNames.length * catBarHeight, 200)}px`;
   }
 
   chartCategoryProgress = upsertChart(
@@ -775,14 +814,19 @@ function renderCharts() {
     {
       type: "bar",
       data: {
-        labels: categoryNames.length > 0 ? categoryNames : ["データなし"],
+        labels:
+          categoryProgressNames.length > 0
+            ? categoryProgressNames
+            : ["データなし"],
         datasets: [
           {
             label: "進捗率(%)",
             data: categoryProgressData.length > 0 ? categoryProgressData : [],
             backgroundColor:
-              categoryColors.length > 0 ? categoryColors : ["#808080"],
-            barPercentage: categoryNames.length > 6 ? 0.6 : 0.8,
+              categoryProgressColors.length > 0
+                ? categoryProgressColors
+                : ["#808080"],
+            barPercentage: categoryProgressNames.length > 6 ? 0.6 : 0.8,
           },
         ],
       },
@@ -1126,12 +1170,29 @@ async function saveGoalFromModal() {
   await loadAndShowCurrentPeriodGoal(currentPeriod);
 }
 
-async function initDashboard() {
+
+async function refreshDashboard() {
+  await loadDashboardData();
+  renderCharts();
+  loadAndShowCurrentPeriodGoal(currentPeriod);
+}
+
+// 変更後
+// v2.21.20追加：データ取得部分を切り出し、初回表示（initDashboard）・
+// 2回目以降の再訪問（refreshDashboard）の両方から呼べるようにする
+async function loadDashboardData() {
   const tasks = await api("/api/tasks");
   const books = await api("/api/books");
+  const steps = await api("/api/steps");
 
   allTasks = tasks;
   allBooks = books;
+  allSteps = steps;
+}
+
+
+async function initDashboard() {
+  await loadDashboardData();
 
   document.querySelectorAll(".btn-period").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.period === currentPeriod);

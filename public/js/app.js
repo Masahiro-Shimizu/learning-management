@@ -120,9 +120,18 @@ document.getElementById("btn-sidebar-show")?.addEventListener("click", () => {
     }
   }
 
-  if (pageId === "page-dashboard" && !dashboardInitialized) {
-    initDashboard();
-    dashboardInitialized = true;
+  // 変更後
+  if (pageId === "page-dashboard") {
+    if (!dashboardInitialized) {
+      initDashboard();
+      dashboardInitialized = true;
+    } else {
+      // v2.21.20追加：books/resultsページと同様、2回目以降の表示時に
+      // データを再取得して再描画する
+      if (typeof refreshDashboard === "function") {
+        refreshDashboard();
+      }
+    }
   }
 
   if (pageId === "page-settings" && !settingsInitialized) {

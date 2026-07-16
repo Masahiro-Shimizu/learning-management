@@ -2080,7 +2080,10 @@ function renderTimeline(data) {
     let laneCount = 0;
 
     if (!isGroupCollapsed) {
-      const lanes = [];
+      // 🔴 v2.21.17：重なり判定によるレーン使い回し（パッキング）を廃止し、
+      // 開始予定日順（childTasksは既にソート済み）に必ず新しい行を割り当てる方式に変更。
+      // これにより、時系列が進むごとに1段ずつ下にずれる「階段状」の見た目になる。
+      let laneCounter = 0;
 
       childTasks.forEach((task) => {
         const plannedPos = calcTimelineBarPosition(
@@ -2105,27 +2108,8 @@ function renderTimeline(data) {
 
         if (!showPlanned && !showActual) return;
 
-        const rangeLeft = Math.min(
-          showPlanned ? plannedPos.leftPercent : Infinity,
-          showActual ? actualPos.leftPercent : Infinity,
-        );
-        const rangeRight = Math.max(
-          showPlanned
-            ? plannedPos.leftPercent + plannedPos.widthPercent
-            : -Infinity,
-          showActual
-            ? actualPos.leftPercent + actualPos.widthPercent
-            : -Infinity,
-        );
-
-        let targetLane = 0;
-        while (
-          lanes[targetLane] !== undefined &&
-          lanes[targetLane] > rangeLeft
-        ) {
-          targetLane++;
-        }
-        lanes[targetLane] = rangeRight;
+        const targetLane = laneCounter;
+        laneCounter++;
 
         const laneTop = targetLane * LANE_HEIGHT + 4;
 
@@ -2143,7 +2127,7 @@ function renderTimeline(data) {
         }
       });
 
-      laneCount = lanes.length;
+      laneCount = laneCounter;
     }
 
     const finalLaneCount = Math.max(laneCount, 1);
