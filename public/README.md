@@ -10,6 +10,8 @@
 
 <summary>（クリックで展開）</summary>
 
+<details>
+
 <summary>ダッシュボード(週次/月次/年次/全期間)</summary>
 ▼週次
 <img width="1920" height="1080" alt="Image" src="https://github.com/user-attachments/assets/6b772cb6-88ea-4875-9700-de7f374dda74" />
@@ -123,6 +125,8 @@
 <img width="1920" height="1080" alt="Image" src="https://github.com/user-attachments/assets/df26bbd5-0ef7-4527-8e24-a74c19fb68b2" />
 
 <img width="1920" height="1080" alt="Image" src="https://github.com/user-attachments/assets/58b033ba-adf3-4aeb-9660-69aa273f2856" />
+
+</details>
 
 </details>
 
