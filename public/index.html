@@ -998,32 +998,6 @@
                 <span id="task-step-summary-badge" class="task-step-badge" style="margin-left:6px;">0/0</span>
               </button>
           </div>
-
-          <div id="step-modal" class="modal hidden">
-            <div class="modal-content" style="width:560px; max-height:85vh; display:flex; flex-direction:column;">
-              <div class="modal-header">
-                <h3>ステップ（孫タスク）管理</h3>
-                <button type="button" id="btn-step-modal-close-x" class="btn-modal-close" aria-label="閉じる">✕</button>
-              </div>
-              <div style="flex:1; overflow-y:auto; padding-right:4px;">
-                <div class="step-section">
-                  <ul id="step-list"></ul>
-                  <div class="step-add-row">
-                    <input type="text" id="step-new-title" placeholder="新しいステップ" />
-                    <button type="button" id="btn-step-add" class="btn btn-secondary">追加</button>
-                  </div>
-                  <div style="display:flex; justify-content:flex-end; margin-top:6px;">
-                    <button type="button" id="btn-step-aggregate" class="btn btn-secondary">ステップから集計</button>
-                  </div>
-                </div>
-              </div>
-              <div class="modal-actions" style="margin-top:16px;">
-                <div class="task-actions-right" style="margin-left:auto;">
-                  <button type="button" id="btn-step-modal-close" class="btn btn-secondary">閉じる</button>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         <div
@@ -1052,6 +1026,32 @@
           <button type="button" id="btn-task-save" class="btn btn-primary">
             保存
           </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="step-modal" class="modal hidden"><!-- ← ここに移動。task-modalと同じ階層 -->
+      <div class="modal-content" style="width:560px; max-height:85vh; display:flex; flex-direction:column;">
+        <div class="modal-header">
+          <h3>ステップ（孫タスク）管理</h3>
+          <button type="button" id="btn-step-modal-close-x" class="btn-modal-close" aria-label="閉じる">✕</button>
+        </div>
+        <div style="flex:1; overflow-y:auto; padding-right:4px;">
+          <div class="step-section">
+            <ul id="step-list"></ul>
+            <div class="step-add-row">
+              <input type="text" id="step-new-title" placeholder="新しいステップ" />
+              <button type="button" id="btn-step-add" class="btn btn-secondary">追加</button>
+            </div>
+            <div style="display:flex; justify-content:flex-end; margin-top:6px;">
+              <button type="button" id="btn-step-aggregate" class="btn btn-secondary">ステップから集計</button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions" style="margin-top:16px;">
+          <div class="task-actions-right" style="margin-left:auto;">
+            <button type="button" id="btn-step-modal-close" class="btn btn-secondary">閉じる</button>
+          </div>
         </div>
       </div>
     </div>

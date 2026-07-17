@@ -728,6 +728,23 @@ document
     await syncStepTotalsToTask(taskId);
   });
 
+  // ===== ステップ管理モーダル（task-modalから分離） =====
+  function openStepModal() {
+    const taskModal = document.getElementById("task-modal");
+    if (taskModal) taskModal.style.visibility = "hidden"; // 裏のモーダルを非表示
+    document.getElementById("step-modal")?.classList.remove("hidden");
+  }
+  function closeStepModal() {
+    document.getElementById("step-modal")?.classList.add("hidden");
+    const taskModal = document.getElementById("task-modal");
+    if (taskModal) taskModal.style.visibility = ""; // タスクモーダルを再表示
+  }
+document.getElementById("btn-open-step-modal")?.addEventListener("click", openStepModal);
+document.getElementById("btn-step-modal-close-x")?.addEventListener("click", closeStepModal);
+document.getElementById("btn-step-modal-close")?.addEventListener("click", closeStepModal);
+document.getElementById("step-modal")?.addEventListener("click", (e) => {
+  if (e.target.id === "step-modal") closeStepModal();
+});
 // ===== タスクモーダル =====
 
 async function openTaskEditModal(taskId) {

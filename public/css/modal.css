@@ -749,3 +749,39 @@
 .step-item-meta span {
   white-space: nowrap;
 }
+
+/* ===== ステップ管理モーダル：ヘッダー・ボタン配置 ===== */
+
+#step-modal .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-8);
+}
+
+#step-modal .modal-header h3 {
+  margin: 0;
+  font-family: "Syne", sans-serif;
+}
+
+#step-modal .btn-modal-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    background-color 0.2s;
+}
+
+#step-modal .btn-modal-close:hover {
+  color: var(--color-text-primary);
+  background-color: rgb(255 255 255 / 0.08);
+}
