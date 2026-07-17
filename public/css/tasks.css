@@ -745,10 +745,20 @@
 .calendar-grid {
   border: 1px solid rgb(255 255 255 / 0.06);
   border-radius: 10px;
-  overflow: hidden;
   width: 100%;
   display: grid !important;
   grid-template-columns: repeat(7, 1fr);
+}
+
+.calendar-wrapper {
+  border-radius: 10px;
+  overflow-y: auto;
+  overflow-x: hidden; /* 🔴 追加：横方向のクリッピングを明示 */
+}
+
+[data-view-panel="calendar"] .calendar-wrapper {
+  height: 62vh !important;
+  overflow-y: auto !important;
 }
 
 .calendar-weekday {
@@ -760,6 +770,10 @@
   border-bottom: 1px solid rgb(255 255 255 / 0.06);
   border-left: 1px solid rgb(255 255 255 / 0.06);
   box-sizing: border-box;
+  /* 🔴 追加：曜日行をスクロール追従で固定 */
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
 
 .calendar-week-row {
@@ -1358,6 +1372,7 @@
 /* スクロールバーのデザイン */
 [data-view-panel="kanban"] .kanban::-webkit-scrollbar,
 [data-view-panel="table"] .task-table-wrapper::-webkit-scrollbar,
+[data-view-panel="calendar"] .calendar-wrapper::-webkit-scrollbar,
 .timeline-wrapper::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -1365,6 +1380,7 @@
 
 [data-view-panel="kanban"] .kanban::-webkit-scrollbar-thumb,
 [data-view-panel="table"] .task-table-wrapper::-webkit-scrollbar-thumb,
+[data-view-panel="calendar"] .calendar-wrapper::-webkit-scrollbar-thumb,
 .timeline-wrapper::-webkit-scrollbar-thumb {
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 3px;

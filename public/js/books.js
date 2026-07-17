@@ -177,24 +177,27 @@ function renderBookChapterList(tasks) {
 
     // アコーディオンのHTML構造を作成（メモ欄の上の点線なども削除しシンプルにしました）
     li.innerHTML = `
-      <div class="chapter-header" style="display: flex; align-items: center; gap: 8px;">
-        <button type="button" class="chapter-toggle-btn" style="background: none; border: none; color: #aaa; cursor: pointer; width: 24px; height: 24px; font-size: 12px; display: flex; align-items: center; justify-content: center; padding: 0;">▶</button>
-        <input type="checkbox" class="chapter-check" ${task.status === "完了" ? "checked" : ""}>
-        <span class="book-chapter-title chapter-title" style="flex: 1; cursor: pointer;">${task.title}</span>
-      </div>
-      
-      <div class="chapter-details" style="display: none; padding-left: 32px; margin-top: 8px;">
-        <div style="margin-bottom: 8px;">
-          <label style="font-size: 12px; color: #aaa; display: block; margin-bottom: 4px;">理解したこと</label>
-          <textarea class="understood-input" rows="2" style="width: 100%; background: rgba(0,0,0,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; padding: 6px; resize: vertical;">${task.understood_memo || ""}</textarea>
-        </div>
-        <div style="margin-bottom: 8px;">
-          <label style="font-size: 12px; color: #aaa; display: block; margin-bottom: 4px;">不明だったこと</label>
-          <textarea class="unclear-input" rows="2" style="width: 100%; background: rgba(0,0,0,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; padding: 6px; resize: vertical;">${task.unclear_points || ""}</textarea>
-        </div>
-        <button type="button" class="btn btn-primary btn-save-chapter" style="font-size: 12px; padding: 4px 10px;">章のメモを保存</button>
-      </div>
-    `;
+  <div class="chapter-header" style="display: flex; align-items: center; gap: 8px;">
+    <button type="button" class="chapter-toggle-btn" style="background: none; border: none; color: #aaa; cursor: pointer; width: 24px; height: 24px; font-size: 12px; display: flex; align-items: center; justify-content: center; padding: 0;">▶</button>
+    <input type="checkbox" class="chapter-check" ${task.status === "完了" ? "checked" : ""}>
+    <span class="book-chapter-title chapter-title" style="flex: 1; cursor: pointer; text-decoration: underline; text-decoration-color: rgba(255,255,255,0.25);">${task.title}</span>
+    <button type="button" class="chapter-goto-task-btn" title="このタスクを編集" style="background:none;border:none;color:#818cf8;cursor:pointer;display:flex;align-items:center;padding:2px;flex-shrink:0;">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+    </button>
+  </div>
+
+  <div class="chapter-details" style="display: none; padding-left: 32px; margin-top: 8px;">
+    <div style="margin-bottom: 8px;">
+      <label style="font-size: 12px; color: #aaa; display: block; margin-bottom: 4px;">理解したこと</label>
+      <textarea class="understood-input" rows="2" style="width: 100%; background: rgba(0,0,0,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; padding: 6px; resize: vertical;">${task.understood_memo || ""}</textarea>
+    </div>
+    <div style="margin-bottom: 8px;">
+      <label style="font-size: 12px; color: #aaa; display: block; margin-bottom: 4px;">不明だったこと</label>
+      <textarea class="unclear-input" rows="2" style="width: 100%; background: rgba(0,0,0,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; padding: 6px; resize: vertical;">${task.unclear_points || ""}</textarea>
+    </div>
+    <button type="button" class="btn btn-primary btn-save-chapter" style="font-size: 12px; padding: 4px 10px;">章のメモを保存</button>
+  </div>
+`;
 
     // ===== ① 開閉（アコーディオン）イベント =====
     const toggleBtn = li.querySelector(".chapter-toggle-btn");
@@ -219,6 +222,15 @@ function renderBookChapterList(tasks) {
         openTaskEditModal(task.id);
       }
     });
+
+    const gotoBtn = li.querySelector(".chapter-goto-task-btn");
+    gotoBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+     if (typeof openTaskEditModal === "function") {
+      closeBookModal();
+      openTaskEditModal(task.id);
+    }
+  });
 
     // ===== ③ 各章（タスク）のメモ保存イベント =====
     const saveBtn = li.querySelector(".btn-save-chapter");

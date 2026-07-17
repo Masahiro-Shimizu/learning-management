@@ -1761,6 +1761,11 @@ function syncTaskViewHeights() {
     tableWrapper.style.setProperty("height", `${availablePx}px`, "important");
   }
 
+  const calendarWrapper = document.querySelector(".calendar-wrapper");
+  if (calendarWrapper) {
+    calendarWrapper.style.setProperty("height", `${availablePx}px`, "important");
+  }
+
   // タイムラインは .timeline-toolbar の分だけさらに差し引く
   const timelineWrapper = document.querySelector(".timeline-wrapper");
   if (timelineWrapper) {
