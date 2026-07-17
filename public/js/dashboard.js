@@ -155,6 +155,58 @@ function shiftPeriod(direction) {
   renderCharts();
 }
 
+// v2.21.21追加：期間ラベルクリックでネイティブの週/月/年ピッカーを開く
+function dateToIsoWeekString(date) {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const dayNum = d.getDay() || 7;
+  d.setDate(d.getDate() + 4 - dayNum);
+  const yearStart = new Date(d.getFullYear(), 0, 1);
+  const weekNo = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+  return `${d.getFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+}
+
+function isoWeekStringToMonday(value) {
+  const [yearStr, weekStr] = value.split("-W");
+  const year = Number(yearStr);
+  const week = Number(weekStr);
+  if (!year || !week) return null;
+  const simple = new Date(year, 0, 1 + (week - 1) * 7);
+  const dayOfWeek = simple.getDay() || 7;
+  simple.setDate(simple.getDate() - dayOfWeek + 1);
+  return simple;
+}
+
+function openPeriodPicker() {
+  if (currentPeriod === "all") return;
+
+  const weekPicker = document.getElementById("period-week-picker");
+  const monthPicker = document.getElementById("period-month-picker");
+  const yearPicker = document.getElementById("period-year-picker");
+
+  let target = null;
+
+  if (currentPeriod === "week" && weekPicker) {
+    weekPicker.value = dateToIsoWeekString(viewDate);
+    target = weekPicker;
+  } else if (currentPeriod === "month" && monthPicker) {
+    const y = viewDate.getFullYear();
+    const m = String(viewDate.getMonth() + 1).padStart(2, "0");
+    monthPicker.value = `${y}-${m}`;
+    target = monthPicker;
+  } else if (currentPeriod === "year" && yearPicker) {
+    yearPicker.value = `${viewDate.getFullYear()}-01`;
+    target = yearPicker;
+  }
+
+  if (!target) return;
+  if (typeof target.showPicker === "function") {
+    target.showPicker();
+  } else {
+    target.focus();
+    target.click();
+  }
+}
+
 function isCurrentPeriod() {
   const today = new Date();
   if (currentPeriod === "week") {
@@ -1220,6 +1272,47 @@ async function initDashboard() {
   document
     .getElementById("period-next-btn")
     .addEventListener("click", () => shiftPeriod(1));
+
+    document
+  .getElementById("period-label-wrap")
+  ?.addEventListener("click", openPeriodPicker);
+document
+  .getElementById("period-label-wrap")
+  ?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      openPeriodPicker();
+    }
+  });
+
+document
+  .getElementById("period-week-picker")
+  ?.addEventListener("change", (e) => {
+    const monday = isoWeekStringToMonday(e.target.value);
+    if (!monday) return;
+    viewDate = monday;
+    renderCharts();
+  });
+
+document
+  .getElementById("period-month-picker")
+  ?.addEventListener("change", (e) => {
+    const value = e.target.value;
+    if (!value) return;
+    const [y, m] = value.split("-").map(Number);
+    viewDate = new Date(y, m - 1, 1);
+    renderCharts();
+  });
+
+document
+  .getElementById("period-year-picker")
+  ?.addEventListener("change", (e) => {
+    const value = e.target.value;
+    if (!value) return;
+    const [y] = value.split("-").map(Number);
+    viewDate = new Date(y, 0, 1);
+    renderCharts();
+  });
 
   // ========================================================
   // 【修正】すべてのイベントが安全にバインドされるように位置を一番下にまとめました

@@ -1669,6 +1669,34 @@ document.getElementById("btn-calendar-next")?.addEventListener("click", () => {
   renderCalendar(lastTaskViewData);
 });
 
+// v2.21.21追加：カレンダーの年月ラベルクリックでネイティブ月選択ピッカーを開く
+document
+  .getElementById("calendar-month-label-wrap")
+  ?.addEventListener("click", () => {
+    const picker = document.getElementById("calendar-month-picker");
+    if (!picker) return;
+    const y = calendarDate.getFullYear();
+    const m = String(calendarDate.getMonth() + 1).padStart(2, "0");
+    picker.value = `${y}-${m}`;
+    if (typeof picker.showPicker === "function") picker.showPicker();
+    else {
+      picker.focus();
+      picker.click();
+    }
+  });
+
+document
+  .getElementById("calendar-month-picker")
+  ?.addEventListener("change", (e) => {
+    const value = e.target.value;
+    if (!value) return;
+    const [y, m] = value.split("-").map(Number);
+    calendarDate = new Date(y, m - 1, 1);
+    localStorage.setItem("calendar_selected_year", calendarDate.getFullYear());
+    localStorage.setItem("calendar_selected_month", calendarDate.getMonth());
+    renderCalendar(lastTaskViewData);
+  });
+
 // カレンダー表示切り替えタブのクリックイベント
 document.querySelectorAll(".calendar-mode-tab").forEach((tab) => {
   tab.addEventListener("click", () => {

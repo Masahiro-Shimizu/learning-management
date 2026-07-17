@@ -130,22 +130,22 @@
                 <button class="btn btn-period" data-period="year">年</button>
                 <button class="btn btn-period" data-period="all">全</button>
               </div>
+              <!-- 変更後（v2.21.21）：ラベルをネイティブの週/月/年ピッカーに対応させる -->
               <div class="period-nav">
-                <button
-                  id="period-prev-btn"
-                  class="btn-period-nav"
-                  aria-label="前へ"
+                <button id="period-prev-btn" class="btn-period-nav" aria-label="前へ">&lt;</button>
+                <span 
+                  id="period-label-wrap"
+                  class="period-label"
+                  role="button"
+                  tabindex="0"
+                  aria-label="期間を選択"
                 >
-                  &lt;
-                </button>
-                <span id="period-label" class="period-label"></span>
-                <button
-                  id="period-next-btn"
-                  class="btn-period-nav"
-                  aria-label="次へ"
-                >
-                  &gt;
-                </button>
+               <span id="period-label"></span>
+                 <input type="week" id="period-week-picker" class="period-picker-input" aria-hidden="true" />
+                 <input type="month" id="period-month-picker" class="period-picker-input" aria-hidden="true" />
+                 <input type="month" id="period-year-picker" class="period-picker-input" aria-hidden="true" />
+               </span>
+                  <button id="period-next-btn" class="btn-period-nav" aria-label="次へ">&gt;</button>
               </div>
             </div>
           </div>
@@ -436,10 +436,16 @@
                 ＜
               </button>
 
-              <span id="calendar-month-label" class="calendar-month-label">
-                2026年7月
+              <span
+                id="calendar-month-label-wrap"
+                class="calendar-month-label"
+                role="button"
+                tabindex="0"
+                aria-label="年月を選択"
+              >
+              <span id="calendar-month-label">2026年7月</span>
+                <input type="month" id="calendar-month-picker" class="period-picker-input" aria-hidden="true" />
               </span>
-
               <button
                 type="button"
                 id="btn-calendar-next"

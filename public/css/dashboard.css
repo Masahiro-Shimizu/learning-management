@@ -299,6 +299,9 @@
 }
 
 .period-label {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
   min-width: 110px;
   text-align: center;
   color: var(--color-text-primary);
