@@ -72,8 +72,13 @@ document.getElementById("btn-sidebar-show")?.addEventListener("click", () => {
     }
 
     setTimeout(() => {
+      // v2.21.24修正：#page-tasks の .tasks-header と .view-tabs は
+      // tasks.css / tasks.js（syncTaskViewHeights）側で実測値をもとに
+      // sticky位置を正確に管理しているため、ここでの対象から除外する。
+      // 以前はここで .view-tabs の top を固定75pxで強制上書きしており、
+      // ページ再訪問のたびに tasks.js 側の正しい計算結果を踏みつぶして
+      // ヘッダー上の空白・曜日ズレ・追従不良を引き起こしていた。
       const mainHeaders = [
-        ".tasks-header",
         ".mandala-header",
         ".results-page-header",
         "#page-books > h2",
@@ -93,17 +98,17 @@ document.getElementById("btn-sidebar-show")?.addEventListener("click", () => {
         }
       });
 
-      const taskTabs = document.querySelector(".view-tabs");
-      if (taskTabs) {
-        taskTabs.style.setProperty("position", "sticky", "important");
-        taskTabs.style.setProperty("position", "-webkit-sticky", "important");
-        taskTabs.style.setProperty("top", "75px", "important");
-        taskTabs.style.setProperty("z-index", "998", "important");
-        taskTabs.style.setProperty(
-          "background-color",
-          "var(--color-bg-base)",
-          "important",
-        );
+      if (pageId === "page-tasks") {
+        if (typeof syncTaskViewHeights === "function") {
+          syncTaskViewHeights();
+        }
+        if (
+          typeof currentView !== "undefined" &&
+          currentView === "timeline" &&
+          typeof syncTimelineStickyOffsets === "function"
+        ) {
+          syncTimelineStickyOffsets();
+        }
       }
     }, 100);
   }

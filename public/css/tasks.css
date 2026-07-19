@@ -5,10 +5,7 @@
 
 /* 1. 全体レイアウト */
 #page-tasks {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
+  display: block;
 }
 
 /* 親mainの余白をリセットして、子要素で余白を管理する（一番崩れにくい！） */
@@ -54,7 +51,6 @@
   padding: 0 24px 4px 24px !important; /* ヘッダーと同じ余白にする */
   
   position: sticky !important;
-  top: 105px !important; /* ヘッダーの高さに合わせて調整 */
   z-index: 190 !important;
   background-color: var(--color-bg-base) !important;
 }
@@ -86,9 +82,7 @@
 
 /* 4. 各ビューのコンテナ（カンバン/テーブル等） */
 [data-view-panel] {
-  flex: 1;
-  overflow-y: auto; /* ここでスクロールさせる */
-  min-height: 0;
+  overflow: visible;
 }
 
 /* 5. タイポグラフィ（style.cssの共通ルールと完全一致） */
@@ -118,7 +112,6 @@
 
   /* スクロール追従固定 */
   position: sticky !important;
-  top: 105px !important; /* 👈 86px から 105px くらいに変更（ヘッダーが太くなった分） */
   z-index: 190 !important;
   background-color: var(--color-bg-base) !important;
 }
@@ -513,14 +506,11 @@
    テーブルビュー
 ========================================= */
 
-/* 1. 既存の `.task-table-wrapper` を「高さ固定のスクロール箱」に改造する。
-   ここでの62vhはJS(syncTaskViewHeights)が効くまでのフォールバック値で、
-   実際の高さはヘッダー・タブの実測サイズをもとにJS側でpx指定される。 */
 .task-table-wrapper {
   border: 1px solid rgb(255 255 255 / 0.06);
   border-radius: 10px;
-  height: 62vh;
-  overflow-y: auto !important; /* 縦スクロールをこの箱の中に閉じ込める */
+  height: auto;
+  overflow: visible;
   position: relative;
 }
 
@@ -755,13 +745,12 @@
 
 .calendar-wrapper {
   border-radius: 10px;
-  overflow-y: auto;
-  overflow-x: hidden; /* 🔴 追加：横方向のクリッピングを明示 */
+  overflow: visible;
 }
 
 [data-view-panel="calendar"] .calendar-wrapper {
-  height: 62vh !important;
-  overflow-y: auto !important;
+  height: auto !important;
+  overflow: visible !important;
 }
 
 .calendar-weekday {
@@ -879,44 +868,56 @@
 ========================================= */
 .timeline-toolbar {
   display: flex !important;
-  justify-content: space-between !important;
-  align-items: center !important;
+  justify-content: flex-end !important; /* 変更：space-between → flex-end（右寄せに統一） */
+  align-items: flex-start !important;   /* 変更：center → flex-start（縦積みに対応） */
   padding: 8px 0;
   margin: 0 !important;
   width: 100% !important;
 
-  /* view-tabsの下に追従。topの正確な値はJS(syncTimelineStickyOffsets)が実測して上書きする */
   position: sticky !important;
-  top: 130px;
   z-index: 185 !important;
   background-color: var(--color-bg-base) !important;
 }
 
-/* ビューパネルが親要素の幅を超えないように制限 */
 .view-panel {
   width: 100% !important;
   max-width: calc(100vw - 250px) !important;
-  overflow: hidden !important;
-}
-
-/* タイムラインだけは例外。overflow:hiddenだと内部の.timeline-toolbarが追従できなくなるため可視に戻す */
-.view-panel[data-view-panel="timeline"] {
   overflow: visible !important;
 }
 
-/* .timeline-wrapper {
+.timeline-wrapper {
   border: 1px solid rgb(255 255 255 / 0.06);
   border-radius: 10px;
-  overflow: auto !important;
-  margin-top: var(--space-16);
+  overflow: visible;
   width: 100% !important;
-  height: 58vh !important;
-} */
+}
 
 .timeline-display-selector {
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+/* v2.21.23追加：タイムラインの各種コントロールを右側に縦積みでまとめる */
+.timeline-toolbar-groups {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.timeline-control-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.timeline-control-label {
+  font-size: 0.68rem;
+  color: var(--color-text-tertiary);
+  width: 28px;
+  text-align: right;
+  flex-shrink: 0;
 }
 
 .timeline-mode-selector,
@@ -1001,6 +1002,37 @@
   text-overflow: ellipsis; /* はみ出た文字の末尾を自動で「…」にする */
   min-width: 0;
 }
+
+/* v2.21.23追加：グループ名の見切れ対策
+   - タイトル部分（span）自体にも省略記号のルールを明示的に持たせる（親のoverflow設定だけでは省略記号が出ないため）
+   - ▼展開時（--expanded）は折り返して全文表示できるようにする */
+   .timeline-row-header-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .timeline-row-header--expanded {
+    align-items: flex-start;
+    white-space: normal;
+    height: auto;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  
+  .timeline-row-header--expanded .timeline-row-header-title {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    word-break: break-word;
+    line-height: 1.4;
+  }
+  
+  .timeline-row-header--expanded .timeline-group-toggle {
+    margin-top: 2px; /* 複数行になったタイトルとトグルボタンの頭を揃える */
+  }
 
 .timeline-group-toggle {
   flex-shrink: 0;
@@ -1358,14 +1390,13 @@
 
 /* 各ビューのスクロール範囲制限（JS実測前のフォールバック） */
 [data-view-panel="kanban"] .kanban {
-  height: 60vh !important;
-  overflow-y: auto !important;
-  padding-right: 4px;
+  height: auto !important;
+  overflow: visible !important;
 }
 
 [data-view-panel="table"] .task-table-wrapper {
-  height: 62vh !important;
-  overflow-y: auto !important;
+  height: auto !important;
+  overflow: visible !important;
 }
 
 [data-view-panel="timeline"].hidden {
@@ -1419,6 +1450,224 @@
   align-items: flex-start !important;
   text-align: left !important;
 }
+
+/* ==========================================
+   v2.21.22追加：カンバンカード内のステップ(孫タスク)表示
+========================================= */
+.task-card-step-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 4px 0;
+  background: transparent;
+  border: none;
+  border-top: 1px dashed rgb(255 255 255 / 0.08);
+  color: var(--color-text-tertiary);
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.task-card-step-toggle:hover {
+  color: var(--color-text-primary);
+}
+
+.task-card-step-toggle-arrow {
+  font-size: 0.6rem;
+  transition: transform 0.15s;
+}
+
+.task-card-step-mini-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.task-card-step-mini-list.hidden {
+  display: none;
+}
+
+.task-card-step-mini-item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgb(255 255 255 / 0.04);
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+}
+
+.task-card-step-mini-item.completed .task-card-step-mini-title {
+  text-decoration: line-through;
+  color: var(--color-text-tertiary);
+}
+
+.task-card-step-mini-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background-color: var(--color-status-todo);
+}
+
+.task-card-step-mini-item.completed .task-card-step-mini-dot {
+  background-color: var(--color-status-done);
+}
+
+.task-card-step-mini-title {
+  flex: 1;
+  min-width: 60px;
+}
+
+.task-card-step-mini-meta {
+  font-size: 0.66rem;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+
+
+/* ========================================================
+   2. タイムラインの「すべて」ボタンが潰れるクラス名ミスを修正
+======================================================== */
+/* 💡 .timeline-mode-selector を .timeline-display-selector に修正 */
+.timeline-display-selector,
+.timeline-status-filter {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+}
+
+/* ========================================================
+   3. 「🔽 ステップ表示」ボタンのデザインを他のタブと美しく統一
+======================================================== */
+.calendar-step-toggle-btn,
+.timeline-step-toggle-btn {
+  appearance: none;
+  -webkit-appearance: none;
+  background: rgb(255 255 255 / 0.06) !important;
+  border: 1px solid rgb(255 255 255 / 0.12) !important;
+  border-radius: 6px !important;
+  color: var(--color-text-tertiary) !important;
+  cursor: pointer;
+  padding: 4px 10px !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+}
+
+.calendar-step-toggle-btn:hover,
+.timeline-step-toggle-btn:hover {
+  color: var(--color-text-primary) !important;
+  background: rgb(255 255 255 / 0.1) !important;
+  border-color: rgb(255 255 255 / 0.2) !important;
+}
+
+.calendar-step-toggle-btn.active,
+.timeline-step-toggle-btn.active {
+  color: #fff !important;
+  background: rgb(139 92 246 / 0.25) !important;
+  border-color: rgb(139 92 246 / 0.6) !important;
+  font-weight: bold !important;
+}
+
+/* 旧アクティブ時の下線ルールを解除（スマートな枠線スタイルに統一） */
+.calendar-step-toggle-btn.active::after,
+.timeline-step-toggle-btn.active::after {
+  display: none !important;
+}
+
+/* ========================================================
+   孫タスク（ステップ）のカラー・スタイル全景定義
+   （タイムライン・カレンダー・テーブルビュー完全対応）
+======================================================== */
+
+/* 1. カレンダー＆タイムラインのステップバー基本カラー（未着手・デフォルト） */
+.calendar-task-bar--step,
+.timeline-bar--step,
+.timeline-task-bar--step,
+.timeline-step-bar {
+  background-color: rgb(139 92 246 / 0.22) !important; /* 上品なパープル系背景 */
+  border: 1px solid rgb(139 92 246 / 0.5) !important;
+  color: #ddd6fe !important;
+  border-radius: 4px !important;
+  font-size: 0.75rem !important;
+  padding: 2px 8px !important;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
+  transition: all 0.2s ease;
+  display: flex !important;
+  align-items: center;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ホバー時の発光効果（マウスオーバーで見やすく） */
+.calendar-task-bar--step:hover,
+.timeline-bar--step:hover,
+.timeline-task-bar--step:hover,
+.timeline-step-bar:hover {
+  background-color: rgb(139 92 246 / 0.4) !important;
+  border-color: rgb(139 92 246 / 0.8) !important;
+  color: #fff !important;
+  cursor: pointer;
+  z-index: 10;
+}
+
+/* 2. ステータス別の色分け（進行中・完了） */
+/* 進行中のステップ（ブルー系でアクティブ感を演出） */
+.calendar-task-bar--step.in-progress,
+.timeline-bar--step.in-progress,
+.timeline-task-bar--step.in-progress,
+.timeline-step-bar.in-progress,
+.calendar-task-bar--step[data-status="進行中"],
+.timeline-bar--step[data-status="進行中"],
+.timeline-task-bar--step[data-status="進行中"],
+.timeline-step-bar[data-status="進行中"] {
+  background-color: rgb(59 130 246 / 0.25) !important;
+  border-color: rgb(59 130 246 / 0.6) !important;
+  color: #bfdbfe !important;
+}
+
+/* 完了したステップ（エメラルドグリーン系＋少し控えめに） */
+.calendar-task-bar--step.completed,
+.timeline-bar--step.completed,
+.timeline-task-bar--step.completed,
+.timeline-step-bar.completed,
+.calendar-task-bar--step[data-status="完了"],
+.timeline-bar--step[data-status="完了"],
+.timeline-task-bar--step[data-status="完了"],
+.timeline-step-bar[data-status="完了"] {
+  background-color: rgb(16 185 129 / 0.18) !important;
+  border-color: rgb(16 185 129 / 0.4) !important;
+  color: #a7f3d0 !important;
+  opacity: 0.85;
+}
+
+/* 3. テーブルビューにおける孫タスク行の視認性アップ */
+.task-table tr.step-row td {
+  background-color: rgb(139 92 246 / 0.04) !important; /* ほんのりパープルで親と区別 */
+  color: var(--color-text-secondary) !important;
+  border-bottom: 1px solid rgb(255 255 255 / 0.03) !important;
+}
+
+.task-table tr.step-row:hover td {
+  background-color: rgb(139 92 246 / 0.1) !important;
+  color: var(--color-text-primary) !important;
+}
+
+
 
 /* メディアクエリ */
 @media (max-width: 1024px) {

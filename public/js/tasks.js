@@ -175,6 +175,33 @@ function createStepBadgeHtml(steps) {
   return `<span class="task-card-meta-item task-step-badge">${completed}/${steps.length}</span>`;
 }
 
+function createStepMiniItemHtml(step) {
+  const completed = step.is_completed ? "completed" : "";
+  const metaParts = [];
+  if (step.start_planned_date || step.end_planned_date) {
+    const s = step.start_planned_date ? formatDateShort(step.start_planned_date) : "";
+    const e = step.end_planned_date ? formatDateShort(step.end_planned_date) : "";
+    metaParts.push(`📅${s && e ? `${s}〜${e}` : s || e}`);
+  }
+  if (step.start_date || step.end_date) {
+    const s = step.start_date ? formatDateShort(step.start_date) : "";
+    const e = step.end_date ? formatDateShort(step.end_date) : "";
+    metaParts.push(`✅${s && e ? `${s}〜${e}` : s || e}`);
+  }
+  if (step.planned_study_time) metaParts.push(`⏱予定${minutesToHours(step.planned_study_time)}h`);
+  if (step.study_time) metaParts.push(`⏱実績${minutesToHours(step.study_time)}h`);
+  const metaHtml = metaParts.length
+    ? `<span class="task-card-step-mini-meta">${metaParts.join(" ")}</span>`
+    : "";
+  return `
+    <li class="task-card-step-mini-item ${completed}">
+      <span class="task-card-step-mini-dot"></span>
+      <span class="task-card-step-mini-title">${step.title}</span>
+      ${metaHtml}
+    </li>
+  `;
+}
+
 function createTaskCardHtml(task, steps = []) {
   const typeInfo = getTypeInfo(task.type_name);
   const categoryBadgeHtml = createCategoryBadgeHtml(task.category_name);
@@ -185,6 +212,19 @@ function createTaskCardHtml(task, steps = []) {
     : "";
   const timeHtml = createTimeHtml(task);
   const stepBadgeHtml = createStepBadgeHtml(steps);
+
+  // v2.21.22追加：ステップ（孫タスク）の開閉表示
+  const stepToggleHtml =
+    steps.length > 0
+      ? `
+      <button type="button" class="task-card-step-toggle" data-task-id="${task.id}">
+        <span class="task-card-step-toggle-arrow">▶</span> ステップ (${steps.filter((s) => s.is_completed).length}/${steps.length})
+      </button>
+      <ul class="task-card-step-mini-list hidden" data-task-id="${task.id}">
+        ${steps.map(createStepMiniItemHtml).join("")}
+      </ul>
+    `
+      : "";
 
   return `
     <article class="task-card task-card--${typeInfo.class}" data-task-id="${task.id}" tabindex="0">
@@ -198,6 +238,7 @@ function createTaskCardHtml(task, steps = []) {
         ${timeHtml}
         ${stepBadgeHtml}
       </div>
+      ${stepToggleHtml}
     </article>
   `;
 }
@@ -843,6 +884,21 @@ function bindKanbanEvents() {
       }
     });
   });
+
+  // v2.21.22追加：ステップ（孫タスク）開閉トグル
+  document.querySelectorAll(".task-card-step-toggle").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const taskId = btn.dataset.taskId;
+      const list = document.querySelector(
+        `.task-card-step-mini-list[data-task-id="${taskId}"]`,
+      );
+      if (!list) return;
+      const isHidden = list.classList.toggle("hidden");
+      const arrow = btn.querySelector(".task-card-step-toggle-arrow");
+      if (arrow) arrow.textContent = isHidden ? "▶" : "▼";
+    });
+  });
 }
 
 async function fetchTaskViewData() {
@@ -928,6 +984,14 @@ const TASK_STATUS_DOT_CLASS = {
 function getCollapsedStatuses() {
   return JSON.parse(localStorage.getItem("collapsedTableStatuses") || "[]");
 }
+
+// v2.21.22追加：データベースビューでのステップ行の開閉状態
+function getExpandedTableSteps() {
+  return JSON.parse(localStorage.getItem("expandedTableSteps") || "[]");
+}
+function saveExpandedTableSteps(ids) {
+  localStorage.setItem("expandedTableSteps", JSON.stringify(ids));
+}
 function saveCollapsedStatuses(statuses) {
   localStorage.setItem("collapsedTableStatuses", JSON.stringify(statuses));
 }
@@ -950,6 +1014,32 @@ function createGroupRowHtml(group, childCount, status) {
         </td>
       </tr>
     `;
+}
+
+function createStepTableRowHtml(step, taskId) {
+  const plannedDate = formatDateShort(step.start_planned_date) || "－";
+  const actualDate = formatDateShort(step.end_date) || "－";
+  const time = step.study_time ? `${minutesToHours(step.study_time)}h` : "－";
+  const statusLabel = step.is_completed ? "完了" : "未完了";
+  const dotClass = step.is_completed ? "done" : "todo";
+
+  return `
+    <tr class="step-row hidden" data-task-id="${taskId}" data-step-id="${step.id}">
+      <td class="task-table-dim" style="padding-left: 44px;">└ ${step.title}</td>
+      <td class="task-table-dim">ステップ</td>
+      <td>
+        <span class="task-table-status">
+          <span class="task-table-status-dot task-table-status-dot--${dotClass}"></span>
+          ${statusLabel}
+        </span>
+      </td>
+      <td class="task-table-dim">－</td>
+      <td class="task-table-dim">${plannedDate}</td>
+      <td class="task-table-dim">${actualDate}</td>
+      <td class="task-table-dim">${time}</td>
+      <td class="task-table-dim">－</td>
+    </tr>
+  `;
 }
 
 function createTaskRowHtml(task, steps, status) {
@@ -976,13 +1066,24 @@ function createTaskRowHtml(task, steps, status) {
   `;
 
   const stepBadge =
-    steps && steps.length > 0
-      ? `<span class="task-step-badge">${steps.filter((s) => s.is_completed).length}/${steps.length}</span>`
+    totalSteps > 0
+      ? `<span class="task-step-badge">${completedSteps}/${totalSteps}</span>`
       : `<span class="task-table-dim">－</span>`;
+
+  // v2.21.22追加：ステップ行の開閉トグル
+  const stepToggleHtml =
+    totalSteps > 0
+      ? `<span class="step-row-toggle" data-task-id="${task.id}">▸</span>`
+      : `<span class="step-row-toggle-spacer"></span>`;
+
+  const stepRowsHtml =
+    totalSteps > 0
+      ? steps.map((step) => createStepTableRowHtml(step, task.id)).join("")
+      : "";
 
   return `
       <tr class="task-row" data-task-id="${task.id}" data-parent-status="${status}" data-child-of-group="${task.group_id}" tabindex="0">
-        <td>${task.title}</td>
+        <td>${stepToggleHtml}${task.title}</td>
         <td>
           <div class="task-table-badges">
             <span class="task-type-badge task-type-badge--${typeInfo.class}">${typeInfo.label}</span>
@@ -1001,10 +1102,36 @@ function createTaskRowHtml(task, steps, status) {
         <td class="task-table-dim">${minutes}</td>
         <td>${stepBadge}</td>
       </tr>
+      ${stepRowsHtml}
     `;
 }
 
 function bindTableEvents() {
+
+  // v2.21.22追加：ステップ行の開閉トグル＋状態保持
+  document
+    .querySelectorAll("#task-table-body .step-row-toggle")
+    .forEach((toggle) => {
+      toggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const taskId = toggle.dataset.taskId;
+        const expanded = getExpandedTableSteps();
+        const isExpanding = !expanded.includes(taskId);
+        document
+          .querySelectorAll(
+            `#task-table-body .step-row[data-task-id="${taskId}"]`,
+          )
+          .forEach((row) => row.classList.toggle("hidden", !isExpanding));
+        toggle.textContent = isExpanding ? "▾" : "▸";
+        if (isExpanding) {
+          expanded.push(taskId);
+        } else {
+          const idx = expanded.indexOf(taskId);
+          if (idx >= 0) expanded.splice(idx, 1);
+        }
+        saveExpandedTableSteps(expanded);
+      });
+    });
   // ① 「未着手」「進行中」「完了」ステータス大枠の開閉
   document
     .querySelectorAll("#task-table-body .table-status-header-row")
@@ -1259,8 +1386,21 @@ function renderTable(data) {
     }
   });
 
+  // v2.21.22追加：前回開いていたステップ行を復元
+  const expandedSteps = getExpandedTableSteps();
+  expandedSteps.forEach((taskId) => {
+    const toggle = tbody.querySelector(
+      `.step-row-toggle[data-task-id="${taskId}"]`,
+    );
+    if (toggle) toggle.textContent = "▾";
+    tbody
+      .querySelectorAll(`.step-row[data-task-id="${taskId}"]`)
+      .forEach((row) => row.classList.remove("hidden"));
+  });
+
   // イベントハンドラをバインド
   bindTableEvents();
+  setTimeout(syncTaskViewHeights, 0); // v2.21.24追加：見出し行のsticky位置を再計算
 }
 
 // ===== カレンダービュー =====
@@ -1331,6 +1471,12 @@ function bindCalendarEvents() {
 function renderCalendar(data) {
   const { tasks, stepsByTaskId } = data;
 
+  // v2.21.22追加：ステップ表示トグルの状態を反映
+  const showSteps = localStorage.getItem("calendar_show_steps") === "true";
+  document
+    .getElementById("btn-calendar-toggle-steps")
+    ?.classList.toggle("active", showSteps);
+
   // 1. ストレージから保存されたモードを読み出す（デフォルトは 'all'）
   const savedMode = localStorage.getItem("calendar_display_mode") || "all";
 
@@ -1380,21 +1526,35 @@ function renderCalendar(data) {
 
   // ===== バー高さ定数 =====
   const BAR_PLANNED_H = 20; // 予定バーの高さ
+  const BAR_STEP_H = 15; // v2.21.22追加：ステップバーの高さ
   const BAR_ACTUAL_H = 18; // 実績バーの高さ
   const BAR_GAP = 2; // 予定バーと実績バーの間隔
   const TASK_GAP = 4; // タスク同士の間隔
 
   // 1タスクの占有高さを計算
+  function getStepsForHeight(task) {
+    if (!showSteps) return [];
+    return (stepsByTaskId[task.id] || []).filter(
+      (s) => s.start_date || s.end_date || s.start_planned_date || s.end_planned_date,
+    );
+  }
+
   function getTaskHeight(task) {
+    let base;
     if (displayMode === "planned") {
-      return BAR_PLANNED_H + TASK_GAP;
+      base = BAR_PLANNED_H + TASK_GAP;
+    } else if (displayMode === "actual") {
+      base = task.start_date ? BAR_ACTUAL_H + TASK_GAP : 0;
+    } else {
+      base = task.start_date
+        ? BAR_PLANNED_H + BAR_GAP + BAR_ACTUAL_H + TASK_GAP
+        : BAR_PLANNED_H + TASK_GAP;
     }
-    if (displayMode === "actual") {
-      return task.start_date ? BAR_ACTUAL_H + TASK_GAP : 0;
+    const steps = getStepsForHeight(task);
+    if (steps.length > 0) {
+      base += steps.length * (BAR_STEP_H + TASK_GAP);
     }
-    return task.start_date
-      ? BAR_PLANNED_H + BAR_GAP + BAR_ACTUAL_H + TASK_GAP
-      : BAR_PLANNED_H + TASK_GAP;
+    return base;
   }
 
   // 週ごとにグリッド行を生成
@@ -1630,6 +1790,76 @@ function renderCalendar(data) {
         }
       }
 
+      // v2.21.22追加：孫タスク(ステップ)のバー描画
+      const stepsForBars = getStepsForHeight(task);
+      if (stepsForBars.length > 0) {
+        let stepTop =
+          taskBaseTop +
+          (task.start_date
+            ? BAR_PLANNED_H + BAR_GAP + BAR_ACTUAL_H
+            : BAR_PLANNED_H) +
+          4;
+
+        stepsForBars.forEach((step) => {
+          const spStartStr = step.start_planned_date
+            ? formatDateForInput(step.start_planned_date)
+            : null;
+          const spEndStr = step.end_planned_date
+            ? formatDateForInput(step.end_planned_date)
+            : spStartStr;
+          const saStartStr = step.start_date
+            ? formatDateForInput(step.start_date)
+            : null;
+          const saEndStr = step.end_date
+            ? formatDateForInput(step.end_date)
+            : saStartStr;
+
+          // 実績優先、なければ予定日で位置決め
+          const baseStartStr = saStartStr || spStartStr;
+          const baseEndStr = saEndStr || spEndStr || baseStartStr;
+          if (!baseStartStr) return;
+
+          const sStart = new Date(baseStartStr).setHours(0, 0, 0, 0);
+          const sEnd = new Date(baseEndStr).setHours(0, 0, 0, 0);
+          if (sEnd < weekStart || sStart > weekEnd) return;
+
+          const stepStartDiff = Math.max(
+            0,
+            Math.round((sStart - weekStart) / (1000 * 60 * 60 * 24)),
+          );
+          const stepEndDiff = Math.min(
+            6,
+            Math.round((sEnd - weekStart) / (1000 * 60 * 60 * 24)),
+          );
+          const leftPct = (stepStartDiff / 7) * 100;
+          const widthPct = ((stepEndDiff - stepStartDiff + 1) / 7) * 100;
+          const isActualStep = !!saStartStr;
+
+          layer.insertAdjacentHTML(
+            "beforeend",
+            `<div class="calendar-task-bar calendar-task-bar--step ${isActualStep ? "calendar-task-bar--step-actual" : "calendar-task-bar--step-planned"}" data-task-id="${task.id}" style="
+              position:absolute;
+              left: calc(${leftPct}% + 6px);
+              width: calc(${widthPct}% - 10px);
+              top: ${stepTop}px;
+              height: ${BAR_STEP_H}px;
+              font-size: 10px;
+              padding: 0 5px;
+              border-radius: 3px;
+              cursor: pointer;
+              pointer-events: auto;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              box-sizing: border-box;
+              display:flex;
+              align-items:center;
+            ">└ ${step.title}</div>`,
+          );
+          stepTop += BAR_STEP_H + TASK_GAP;
+        });
+      }
+
       currentTop += getTaskHeight(task);
     });
 
@@ -1643,6 +1873,7 @@ function renderCalendar(data) {
   });
 
   bindCalendarEvents();
+  setTimeout(syncTaskViewHeights, 0); // v2.21.24追加：曜日ヘッダーのsticky位置を再計算
 }
 
 // 補助用：日付オブジェクトを "YYYY-MM-DD" にする関数
@@ -1722,6 +1953,11 @@ function getTimelineDisplayMode() {
   return localStorage.getItem("timeline_display_mode") || "all";
 }
 
+// v2.21.22追加
+function getTimelineShowSteps() {
+  return localStorage.getItem("timeline_show_steps") === "true";
+}
+
 function getTimelineStatusFilter() {
   return localStorage.getItem("timeline_status_filter") || "all";
 }
@@ -1774,55 +2010,68 @@ function syncTimelineStickyOffsets() {
   const toolbar = document.querySelector(".timeline-toolbar");
   if (!viewTabs || !toolbar) return;
 
-  const viewTabsTop = parseFloat(getComputedStyle(viewTabs).top) || 0;
-  const toolbarTop = viewTabsTop + viewTabs.getBoundingClientRect().height;
-  toolbar.style.setProperty("top", `${toolbarTop}px`, "important");
+  const header = document.querySelector(".tasks-header");
+  const headerHeight = header ? header.getBoundingClientRect().height : 0;
+  const viewTabsHeight = viewTabs.getBoundingClientRect().height;
+  const contentTop = headerHeight + viewTabsHeight;
+
+  toolbar.style.setProperty("top", `${contentTop}px`, "important");
+
+  const toolbarHeight = toolbar.getBoundingClientRect().height;
+  const axisRow = document.querySelector(".timeline-row--axis");
+  if (axisRow) {
+    axisRow.style.setProperty(
+      "top",
+      `${contentTop + toolbarHeight}px`,
+      "important",
+    );
+  }
 }
 
 function syncTaskViewHeights() {
   const header = document.querySelector(".tasks-header");
   const viewTabs = document.querySelector(".view-tabs");
-  if (!header || !viewTabs) return;
+  const headerHeight = header ? header.getBoundingClientRect().height : 0;
 
-  const headerHeight = header.getBoundingClientRect().height;
-  const viewTabsHeight = viewTabs.getBoundingClientRect().height;
-  const BOTTOM_MARGIN = 32; // #page-tasksの下部余白・スクロールバー等を考慮した安全マージン
-  const MIN_HEIGHT = 300; // 極端に低いウィンドウでも最低限の表示領域を確保する
+  // view-tabsのtopをヘッダー実測値から算出（従来の固定105pxをやめる）
+  if (viewTabs) {
+    viewTabs.style.setProperty("top", `${headerHeight}px`, "important");
+  }
+  const viewTabsHeight = viewTabs ? viewTabs.getBoundingClientRect().height : 0;
+  const contentTop = headerHeight + viewTabsHeight;
 
-  const availablePx = Math.max(
-    MIN_HEIGHT,
-    window.innerHeight - headerHeight - viewTabsHeight - BOTTOM_MARGIN,
+  // ===== テーブルビュー：見出し行3段のsticky topを動的算出 =====
+  const theadRow = document.querySelector(".task-table thead tr");
+  const theadHeight = theadRow ? theadRow.getBoundingClientRect().height : 0;
+
+  document.querySelectorAll(".task-table th").forEach((th) => {
+    th.style.setProperty("top", `${contentTop}px`, "important");
+  });
+
+  const statusHeaderRow = document.querySelector(
+    ".task-table-wrapper .table-status-header-row",
   );
+  const statusHeaderHeight = statusHeaderRow
+    ? statusHeaderRow.getBoundingClientRect().height
+    : 0;
+  document
+    .querySelectorAll(".task-table tr.table-status-header-row td")
+    .forEach((td) => {
+      td.style.setProperty("top", `${contentTop + theadHeight}px`, "important");
+    });
 
-  const kanban = document.querySelector('[data-view-panel="kanban"] .kanban');
-  if (kanban) {
-    kanban.style.setProperty("height", `${availablePx}px`, "important");
-  }
-
-  const tableWrapper = document.querySelector(
-    '[data-view-panel="table"] .task-table-wrapper',
-  );
-  if (tableWrapper) {
-    tableWrapper.style.setProperty("height", `${availablePx}px`, "important");
-  }
-
-  const calendarWrapper = document.querySelector(".calendar-wrapper");
-  if (calendarWrapper) {
-    calendarWrapper.style.setProperty("height", `${availablePx}px`, "important");
-  }
-
-  // タイムラインは .timeline-toolbar の分だけさらに差し引く
-  const timelineWrapper = document.querySelector(".timeline-wrapper");
-  if (timelineWrapper) {
-    const toolbar = document.querySelector(".timeline-toolbar");
-    const toolbarHeight = toolbar ? toolbar.getBoundingClientRect().height : 0;
-    const timelineHeight = Math.max(MIN_HEIGHT, availablePx - toolbarHeight);
-    timelineWrapper.style.setProperty(
-      "height",
-      `${timelineHeight}px`,
+  document.querySelectorAll(".task-table tr.group-row td").forEach((td) => {
+    td.style.setProperty(
+      "top",
+      `${contentTop + theadHeight + statusHeaderHeight}px`,
       "important",
     );
-  }
+  });
+
+  // ===== カレンダービュー：曜日ヘッダーのsticky top =====
+  document.querySelectorAll(".calendar-weekday").forEach((el) => {
+    el.style.setProperty("top", `${contentTop}px`, "important");
+  });
 }
 
 window.addEventListener("resize", () => {
@@ -2051,7 +2300,11 @@ async function updateTaskPlannedDate(taskId, newDate) {
 }
 
 function renderTimeline(data) {
-  const { groups, tasks } = data;
+  const { groups, tasks, stepsByTaskId } = data;
+  const showSteps = getTimelineShowSteps();
+  document
+    .getElementById("btn-timeline-toggle-steps")
+    ?.classList.toggle("active", showSteps);
 
   const today = new Date();
   const year = timelineDate.getFullYear();
@@ -2195,6 +2448,38 @@ function renderTimeline(data) {
                   <span class="timeline-bar-title">${task.title}</span>
                 </div>`;
         }
+
+        // v2.21.22追加：孫タスク(ステップ)のレーンをその下に追加
+        if (showSteps) {
+          const steps = (stepsByTaskId[task.id] || []).filter(
+            (s) => s.start_planned_date || s.end_planned_date || s.start_date || s.end_date,
+          );
+          steps.forEach((step) => {
+            const stepPlannedPos = calcTimelineBarPosition(
+              step.start_planned_date,
+              step.end_planned_date,
+              daysInMonth,
+              monthStart,
+              monthEnd,
+            );
+            const stepActualPos = calcTimelineBarPosition(
+              step.start_date,
+              step.end_date,
+              daysInMonth,
+              monthStart,
+              monthEnd,
+            );
+            const pos = stepActualPos || stepPlannedPos;
+            if (!pos) return;
+
+            laneCounter++;
+            const stepLaneTop = (laneCounter - 1) * LANE_HEIGHT + 4;
+
+            barsHtml += `<div class="timeline-bar timeline-bar--step" data-task-id="${task.id}" data-step-id="${step.id}" style="left: ${pos.leftPercent}%; width: ${pos.widthPercent}%; top: ${stepLaneTop}px;">
+                  <span class="timeline-bar-title">└ ${step.title}</span>
+                </div>`;
+          });
+        }
       });
 
       laneCount = laneCounter;
@@ -2207,18 +2492,22 @@ function renderTimeline(data) {
 
     const currentTodayLineHtml = !isGroupCollapsed ? commonTodayLineHtml : "";
 
+    const headerStateClass = isGroupCollapsed
+    ? "timeline-row-header--collapsed"
+    : "timeline-row-header--expanded";
+
     grid.insertAdjacentHTML(
-      "beforeend",
-      `<div class="timeline-row">
-            <div class="timeline-row-header">
-              <button type="button" class="timeline-group-toggle" data-group-id="${group.id}" aria-label="子タスクの表示切替">${groupArrow}</button>
-              <span class="timeline-row-header-title">${group.title}（${childTasks.length}件）</span>
-            </div>
-            <div class="timeline-track" data-group-id="${group.id}" style="min-height: ${trackHeight}px;">
-              ${currentTodayLineHtml}
-              ${barsHtml}
-            </div>
-          </div>`,
+     "beforeend",
+     `<div class="timeline-row">
+        <div class="timeline-row-header ${headerStateClass}">
+          <button type="button" class="timeline-group-toggle" data-group-id="${group.id}" aria-label="子タスクの表示切替">${groupArrow}</button>
+          <span class="timeline-row-header-title">${group.title}（${childTasks.length}件）</span>
+        </div>
+        <div class="timeline-track" data-group-id="${group.id}" style="min-height: ${trackHeight}px;">
+          ${currentTodayLineHtml}
+          ${barsHtml}
+        </div>
+      </div>`,
     );
   });
 
@@ -2326,6 +2615,26 @@ function switchView(view) {
     syncTimelineStickyOffsets();
   }
 }
+
+// v2.21.22追加：カレンダーのステップ表示トグル
+document
+  .getElementById("btn-calendar-toggle-steps")
+  ?.addEventListener("click", (e) => {
+    const next = localStorage.getItem("calendar_show_steps") !== "true";
+    localStorage.setItem("calendar_show_steps", String(next));
+    e.currentTarget.classList.toggle("active", next);
+    if (lastTaskViewData) renderCalendar(lastTaskViewData);
+  });
+
+// v2.21.22追加：タイムラインのステップ表示トグル
+document
+  .getElementById("btn-timeline-toggle-steps")
+  ?.addEventListener("click", (e) => {
+    const next = localStorage.getItem("timeline_show_steps") !== "true";
+    localStorage.setItem("timeline_show_steps", String(next));
+    e.currentTarget.classList.toggle("active", next);
+    if (lastTaskViewData) renderTimeline(lastTaskViewData);
+  });
 
 switchView(currentView);
 

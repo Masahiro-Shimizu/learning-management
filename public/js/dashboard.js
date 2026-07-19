@@ -92,6 +92,65 @@ function filterEntriesByRange(entries, range) {
   });
 }
 
+// v2.21.22追加：進捗率集計の単位（ステップ or フォールバックタスク）を組み立てる。
+// 子タスク（実作業）はさらに孫タスク（ステップ）に分解されており、実際に手を
+// 動かす最小単位はステップであるため、進捗率系の集計はタスクではなくステップを
+// 母数とする。ステップが0件の子タスクは、タスク自体を1ステップ相当として
+// カウントする（フォールバック。未完了/完了の2値で扱う）。
+// 進捗率カード・進捗率推移グラフ・書籍別/カテゴリ別進捗率はこの単位で集計する。
+// 「進行中タスク数」カード・「ステータス別件数」ドーナツは、タスクの3値ステータス
+// （未着手/進行中/完了）を表すカードのため、引き続きタスク単位のfilteredTasksを
+// 参照する（ステップ側にはis_completedの2値しかなく「進行中」に相当する状態がない）
+function buildProgressUnits(tasks, stepsByTaskId) {
+  const units = [];
+  tasks.forEach((task) => {
+    const steps = stepsByTaskId[task.id] || [];
+
+    if (steps.length > 0) {
+      steps.forEach((step) => {
+        units.push({
+          task_id: task.id,
+          category_name: task.category_name,
+          book_id: task.book_id,
+          is_completed: !!Number(step.is_completed),
+          planned_end_date: step.end_planned_date || null,
+          actual_end_date: step.end_date || null,
+          target_date_str:
+            step.end_date ||
+            step.end_planned_date ||
+            step.start_planned_date ||
+            null,
+        });
+      });
+    } else {
+      units.push({
+        task_id: task.id,
+        category_name: task.category_name,
+        book_id: task.book_id,
+        is_completed: task.status === "完了",
+        planned_end_date: task.end_planned_date || null,
+        actual_end_date: task.end_date || null,
+        target_date_str:
+          task.end_date ||
+          task.end_planned_date ||
+          task.start_planned_date ||
+          null,
+      });
+    }
+  });
+  return units;
+}
+
+// v2.21.22追加：進捗率ユニットを期間範囲で絞り込む共通ヘルパー（filterEntriesByRangeの進捗率版）
+function filterProgressUnitsByRange(units, range) {
+  if (!range) return units; // "全期間"は絞り込みなし
+  return units.filter((u) => {
+    if (!u.target_date_str) return false;
+    const d = new Date(u.target_date_str);
+    return d >= range.start && d <= range.end;
+  });
+}
+
 // v2.21.14追加：サマリーカードの数値をフェードイン＋カウントアップで表示する
 // endValueは最終的にそのままtextContentへ入る値（"3" や "3.5" など既存の表示フォーマットを崩さないため）
 let summaryAnimCounter = 0;
@@ -313,6 +372,9 @@ function renderCharts() {
   // v2.21.19追加：groupStepsByTaskId()はtasks.jsで定義済みのものを再利用
   const stepsByTaskId = groupStepsByTaskId(allSteps);
   const { actualEntries, plannedEntries } = buildTimeEntries(tasks, stepsByTaskId);
+  // v2.21.22追加：進捗率系（カード・推移グラフ・書籍別/カテゴリ別）の集計に使う
+  // ステップ単位の進捗ユニット一覧。期間での絞り込みは後段でrangeごとに行う
+  const allProgressUnits = buildProgressUnits(tasks, stepsByTaskId);
 
 
   updatePeriodLabel();
@@ -522,21 +584,27 @@ function renderCharts() {
   }
 
   // ② 進捗率
-  // v2.21.13：母数を「全タスク」から「期間内タスクのみ」に変更。
-  // 従来（v2.21.7）は締め日時（borderDate）までに完了した全タスクの割合、
-  // つまり全体に対する累積進捗を表していたが、下部の「進捗率推移」グラフ
-  // （v2.21.12）と考え方がズレて画面内で数字が一致しないことがあった。
-  // 進捗率推移グラフと同じ考え方に統一し、週/月/年トグル時は
-  // 「その期間に属するタスクのうち完了しているものの割合」を表示する。
-  // 「全期間」表示時は filteredTasks が全タスクと一致するため、
-  // 従来通り全体に対する進捗率と同じ値になる（挙動は変わらない）。
-  const periodCompletedCount = filteredTasks.filter(
-    (t) => t.status === "完了",
+  // v2.21.22修正：進捗率カード・推移グラフの母数を「子タスク」から「ステップ」に変更。
+  // 子タスク（実作業の単位）はさらに孫タスク（ステップ）に分解されており、実際に
+  // 手を動かす最小単位はステップであるため、進捗率もステップ単位で集計する方が
+  // 実態に近い。ステップが0件の子タスクは、そのタスク自体を1ステップ相当として
+  // カウントする（フォールバック。未完了/完了の2値で扱う）。
+  // なお「進行中タスク数」カード・「ステータス別件数」ドーナツは、タスクの
+  // ステータス（未着手/進行中/完了の3値）を表すカードのため、引き続きタスク単位
+  // （filteredTasks）のまま据え置く（ステップにはis_completedの2値しかなく
+  // 「進行中」に相当する状態が存在しないため）。
+  const filteredProgressUnits = filterProgressUnitsByRange(
+    allProgressUnits,
+    currentRange,
+  );
+
+  const periodCompletedUnits = filteredProgressUnits.filter(
+    (u) => u.is_completed,
   ).length;
 
   const currentProgressRate =
-    filteredTasks.length > 0
-      ? Math.round((periodCompletedCount / filteredTasks.length) * 100)
+    filteredProgressUnits.length > 0
+      ? Math.round((periodCompletedUnits / filteredProgressUnits.length) * 100)
       : 0;
 
   const progressRateEl = document.getElementById("progress-rate");
@@ -544,27 +612,20 @@ function renderCharts() {
     animateSummaryValue(progressRateEl, currentProgressRate);
   }
 
-// 変更後
-let prevProgressRate = 0;
+  let prevProgressRate = 0;
+  const prevProgressUnits = filterProgressUnitsByRange(
+    allProgressUnits,
+    prevRange,
+  );
 
-// v2.21.19修正：prevRangeは上のサマリーカードセクションで算出済みのものを再利用
-// 修正後
-if (currentPeriod !== "all" && prevRange) {
-  const prevPeriodTasks = tasks.filter((t) => {
-    const targetDateStr =
-      t.end_date || t.end_planned_date || t.start_planned_date;
-    if (!targetDateStr) return false;
-    const d = new Date(targetDateStr);
-    return d >= prevRange.start && d <= prevRange.end;
-  });
-
-    const prevCompletedCount = prevPeriodTasks.filter(
-      (t) => t.status === "完了",
+  if (currentPeriod !== "all" && prevRange) {
+    const prevCompletedUnits = prevProgressUnits.filter(
+      (u) => u.is_completed,
     ).length;
 
     prevProgressRate =
-      prevPeriodTasks.length > 0
-        ? Math.round((prevCompletedCount / prevPeriodTasks.length) * 100)
+      prevProgressUnits.length > 0
+        ? Math.round((prevCompletedUnits / prevProgressUnits.length) * 100)
         : 0;
   }
 
@@ -707,12 +768,24 @@ if (currentPeriod !== "all" && prevRange) {
     },
   });
 
+  // v2.21.22修正：書籍別進捗率もステップ単位で集計する（期間絞り込みなし＝
+  // 通算進捗という位置づけは従来通り。allProgressUnitsは絞り込み前の全ユニット）
+  const bookUnitMap = new Map();
+  allProgressUnits.forEach((u) => {
+    if (!u.book_id) return;
+    const key = String(u.book_id);
+    if (!bookUnitMap.has(key)) bookUnitMap.set(key, { total: 0, done: 0 });
+    const entry = bookUnitMap.get(key);
+    entry.total += 1;
+    if (u.is_completed) entry.done += 1;
+  });
+
   const bookProgress = books
     .map((book) => {
-      const total = book.task_count || 0;
-      const completed = Number(book.completed_count) || 0;
-      const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
-      return { title: book.title, rate, total };
+      const entry = bookUnitMap.get(String(book.id)) || { total: 0, done: 0 };
+      const rate =
+        entry.total > 0 ? Math.round((entry.done / entry.total) * 100) : 0;
+      return { title: book.title, rate, total: entry.total };
     })
     .filter((b) => b.total > 0);
 
@@ -779,9 +852,9 @@ if (currentPeriod !== "all" && prevRange) {
 
   // 変更後
   // v2.21.19修正：カテゴリ別学習時間はtimeEntries（ステップ単位）、
-  // カテゴリ別進捗率は従来通りfilteredTasks（タスク単位）から別々に算出する。
-  // 時間＝実際に作業した記録の積み上げ、進捗率＝タスクの完了件数の割合であり、
-  // 集計すべき粒度が異なるため
+  // カテゴリ別進捗率も v2.21.22 でステップ単位（filteredProgressUnits）に統一。
+  // 時間＝実際に作業した記録の積み上げ、進捗率＝完了ステップの割合であり、
+  // どちらもステップという同じ最小単位から算出するようになった
 
   const categoryTimeMap = new Map();
   filteredActualEntries.forEach((e) => {
@@ -797,14 +870,14 @@ if (currentPeriod !== "all" && prevRange) {
   );
 
   const categoryProgressMap = new Map();
-  filteredTasks.forEach((t) => {
-    const name = t.category_name || "(言語不問)";
+  filteredProgressUnits.forEach((u) => {
+    const name = u.category_name || "(言語不問)";
     if (!categoryProgressMap.has(name)) {
       categoryProgressMap.set(name, { total: 0, done: 0 });
     }
     const entry = categoryProgressMap.get(name);
     entry.total += 1;
-    if (t.status === "完了") entry.done += 1;
+    if (u.is_completed) entry.done += 1;
   });
   const categoryProgressNames = Array.from(categoryProgressMap.keys());
   const categoryProgressData = categoryProgressNames.map((name) => {
@@ -967,32 +1040,27 @@ if (currentPeriod !== "all" && prevRange) {
     }
   }
 
-  // v2.21.12: 進捗率推移は「その期間に該当するタスクのうち、その日までに完了/予定済みの割合」に変更。
-  // 従来は母数が常に「全タスク」（allTasks / totalAllTasks）だったため、週や月の初日でも
-  // 既に全体の進捗率（例：69%）がそのままグラフの開始値になってしまい、
-  // 「その期間の進捗が0%からどう積み上がったか」が見えない状態だった。
-  // 母数を「その期間に属するタスクのみ」（filteredTasks）に変更することで、
-  // 期間の開始時点は0%からスタートし、期間内で完了が進むごとに上昇する見た目になる。
-  // 「全期間」トグル時は filteredTasks === tasks（全件）となるため、
-  // 従来通りの全体累積進捗と同じ結果になる（挙動は変わらない）。
-  const periodTaskCount = filteredTasks.length;
+  // v2.21.22修正：進捗率推移グラフの母数もステップ単位（filteredProgressUnits）に変更。
+  // 従来はfilteredTasks（子タスク数）を母数にしていたが、進捗率カード・
+  // カテゴリ/書籍別進捗率と考え方を統一し、実際の作業単位であるステップを分母にする。
+  const periodUnitCount = filteredProgressUnits.length;
 
   const plannedProgressData = progressLabelDates.map((labelDate) => {
-    if (periodTaskCount === 0) return 0;
-    const count = filteredTasks.filter((t) => {
-      if (!t.end_planned_date) return false;
-      return new Date(t.end_planned_date) <= labelDate;
+    if (periodUnitCount === 0) return 0;
+    const count = filteredProgressUnits.filter((u) => {
+      if (!u.planned_end_date) return false;
+      return new Date(u.planned_end_date) <= labelDate;
     }).length;
-    return Math.round((count / periodTaskCount) * 100);
+    return Math.round((count / periodUnitCount) * 100);
   });
 
   const actualProgressData = progressLabelDates.map((labelDate) => {
-    if (periodTaskCount === 0) return 0;
-    const count = filteredTasks.filter((t) => {
-      if (t.status !== "完了" || !t.end_date) return false;
-      return new Date(t.end_date) <= labelDate;
+    if (periodUnitCount === 0) return 0;
+    const count = filteredProgressUnits.filter((u) => {
+      if (!u.is_completed || !u.actual_end_date) return false;
+      return new Date(u.actual_end_date) <= labelDate;
     }).length;
-    return Math.round((count / periodTaskCount) * 100);
+    return Math.round((count / periodUnitCount) * 100);
   });
 
   chartProgress = upsertChart(chartProgress, document.getElementById("chart-progress"), {

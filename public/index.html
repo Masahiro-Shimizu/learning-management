@@ -473,6 +473,13 @@
                 >
                   実績
                 </button>
+                <button
+                  type="button"
+                  id="btn-calendar-toggle-steps"
+                  class="calendar-step-toggle-btn"
+                >
+                  🔽 ステップ表示
+                </button>
               </div>
             </div>
 
@@ -483,55 +490,31 @@
 
           <div class="view-panel hidden" data-view-panel="timeline">
             <div class="timeline-toolbar">
-              <div class="timeline-display-selector">
-                <button type="button" class="timeline-mode-tab" data-mode="all">
-                  すべて
-                </button>
-                <button
-                  type="button"
-                  class="timeline-mode-tab"
-                  data-mode="planned"
-                >
-                  予定
-                </button>
-                <button
-                  type="button"
-                  class="timeline-mode-tab"
-                  data-mode="actual"
-                >
-                  実績
-                </button>
-              </div>
-
-              <div class="timeline-status-filter">
-                <button
-                  type="button"
-                  class="timeline-status-filter-tab active"
-                  data-status-filter="all"
-                >
-                  すべて
-                </button>
-                <button
-                  type="button"
-                  class="timeline-status-filter-tab"
-                  data-status-filter="未着手"
-                >
-                  未着手
-                </button>
-                <button
-                  type="button"
-                  class="timeline-status-filter-tab"
-                  data-status-filter="進行中"
-                >
-                  進行中
-                </button>
-                <button
-                  type="button"
-                  class="timeline-status-filter-tab"
-                  data-status-filter="完了"
-                >
-                  完了
-                </button>
+              <div class="timeline-toolbar-groups">
+                <div class="timeline-control-row">
+                  <span class="timeline-control-label">表示</span>
+                  <div class="timeline-display-selector">
+                    <button type="button" class="timeline-mode-tab" data-mode="all">すべて</button>
+                    <button type="button" class="timeline-mode-tab" data-mode="planned">予定</button>
+                    <button type="button" class="timeline-mode-tab" data-mode="actual">実績</button>
+                  </div>
+                </div>
+            
+                <div class="timeline-control-row">
+                  <span class="timeline-control-label">状態</span>
+                  <div class="timeline-status-filter">
+                    <button type="button" class="timeline-status-filter-tab active" data-status-filter="all">すべて</button>
+                    <button type="button" class="timeline-status-filter-tab" data-status-filter="未着手">未着手</button>
+                    <button type="button" class="timeline-status-filter-tab" data-status-filter="進行中">進行中</button>
+                    <button type="button" class="timeline-status-filter-tab" data-status-filter="完了">完了</button>
+                  </div>
+                </div>
+            
+                <div class="timeline-control-row">
+                  <button type="button" id="btn-timeline-toggle-steps" class="timeline-step-toggle-btn">
+                    🔽 ステップ表示
+                  </button>
+                </div>
               </div>
             </div>
             <div class="timeline-wrapper">
