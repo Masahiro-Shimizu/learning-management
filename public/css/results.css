@@ -1,4 +1,4 @@
-/* ==========================================================================
+//* ==========================================================================
    【完全復活・デザインシステム統合版】リザルト専用総合CSS（1/2）
 ========================================================================== */
 
@@ -60,7 +60,9 @@
 
 #result-modal-content-area {
   flex-grow: 1 !important;
-  overflow: hidden !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding-right: 4px !important; /* スクロールバー分の食い込み防止 */
 }
 
 #result-modal-content-area .result-header {

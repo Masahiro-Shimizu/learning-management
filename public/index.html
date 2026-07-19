@@ -1302,6 +1302,40 @@
         </div>
       </div>
     </div>
+
+    <div id="result-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>📊 前期間のリザルト</h3>
+          <button
+            type="button"
+            id="btn-result-modal-close-x"
+            class="btn-modal-close"
+            aria-label="閉じる"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="result-modal-nav hidden" id="result-modal-nav">
+          <button type="button" id="result-modal-prev" class="btn-result-nav" aria-label="前へ">＜</button>
+          <span id="result-modal-page" class="result-modal-page-label"></span>
+          <button type="button" id="result-modal-next" class="btn-result-nav" aria-label="次へ">＞</button>
+        </div>
+
+        <div id="result-modal-content-area"></div>
+
+        <div class="modal-actions result-modal-footer">
+          <button type="button" id="btn-result-modal-go-page" class="btn btn-secondary">
+            リザルト画面を見る
+          </button>
+          <button type="button" id="btn-result-modal-close" class="btn btn-primary">
+            閉じる
+          </button>
+        </div>
+      </div>
+    </div>
+
     <script>
       lucide.createIcons();
     </script>
