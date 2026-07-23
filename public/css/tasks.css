@@ -1598,9 +1598,9 @@
 .timeline-bar--step,
 .timeline-task-bar--step,
 .timeline-step-bar {
-  background-color: rgb(139 92 246 / 0.22) !important; /* 上品なパープル系背景 */
-  border: 1px solid rgb(139 92 246 / 0.5) !important;
-  color: #ddd6fe !important;
+  background-color: rgb(34 211 238 / 0.18) !important; /* シアン系背景（v2.21.26） */
+  border: 1px solid rgb(34 211 238 / 0.5) !important;
+  color: #a5f3fc !important;
   border-radius: 4px !important;
   font-size: 0.75rem !important;
   padding: 2px 8px !important;
@@ -1618,10 +1618,9 @@
 .timeline-bar--step:hover,
 .timeline-task-bar--step:hover,
 .timeline-step-bar:hover {
-  background-color: rgb(139 92 246 / 0.4) !important;
-  border-color: rgb(139 92 246 / 0.8) !important;
+  background-color: rgb(34 211 238 / 0.35) !important;
+  border-color: rgb(34 211 238 / 0.8) !important;
   color: #fff !important;
-  cursor: pointer;
   z-index: 10;
 }
 
@@ -1657,13 +1656,13 @@
 
 /* 3. テーブルビューにおける孫タスク行の視認性アップ */
 .task-table tr.step-row td {
-  background-color: rgb(139 92 246 / 0.04) !important; /* ほんのりパープルで親と区別 */
+  background-color: rgb(34 211 238 / 0.04) !important; /* ほんのりシアンで親と区別（v2.21.26） */
   color: var(--color-text-secondary) !important;
   border-bottom: 1px solid rgb(255 255 255 / 0.03) !important;
 }
 
 .task-table tr.step-row:hover td {
-  background-color: rgb(139 92 246 / 0.1) !important;
+  background-color: rgb(34 211 238 / 0.1) !important;
   color: var(--color-text-primary) !important;
 }
 

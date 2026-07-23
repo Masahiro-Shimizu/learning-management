@@ -35,9 +35,51 @@ function minutesToHours(minutes) {
   return Math.round((minutes / 60) * 10) / 10;
 }
 
-// v2.21.19追加：学習時間集計をステップ単位に分解する。
-// ステップが1件以上あるタスクはステップ個別の実績日・時間を使い、
-// ステップが0件のタスクは従来通りタスク自体のend_date/study_timeを使う（フォールバック）
+// v2.21.25追加：開始日〜終了日の日数で学習時間を均等按分するヘルパー
+// 実績（start_date〜end_date）・予定（start_planned_date〜end_planned_date）の
+// 両方から呼び出す共通ロジック。開始日が無い、または終了日より後になっている
+// 不整合なデータの場合は、従来通り終了日1日にまとめて計上するフォールバックとする
+function distributeTimeEntry(entries, startStr, endStr, minutes, categoryName) {
+  if (!minutes || !endStr) return;
+
+  const start = startStr ? new Date(startStr) : new Date(endStr);
+  const end = new Date(endStr);
+
+  if (
+    Number.isNaN(start.getTime()) ||
+    Number.isNaN(end.getTime()) ||
+    end < start
+  ) {
+    entries.push({ date: endStr, minutes, category_name: categoryName });
+    return;
+  }
+
+  const dayMs = 24 * 60 * 60 * 1000;
+  const dayCount = Math.round((end - start) / dayMs) + 1;
+
+  if (dayCount <= 1) {
+    entries.push({ date: endStr, minutes, category_name: categoryName });
+    return;
+  }
+
+  const perDayMinutes = minutes / dayCount;
+  for (let i = 0; i < dayCount; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    entries.push({
+      date: `${y}-${m}-${day}`,
+      minutes: perDayMinutes,
+      category_name: categoryName,
+    });
+  }
+}
+
+// v2.21.25修正：終了日にまとめて計上する方式から、開始日〜終了日で
+// 均等按分する方式に変更（実績・予定の両方）。長期間にまたがる
+// ステップ/タスクの学習時間が最終日に偏って表示される問題を解消する
 function buildTimeEntries(tasks, stepsByTaskId) {
   const actualEntries = [];
   const plannedEntries = [];
@@ -47,36 +89,36 @@ function buildTimeEntries(tasks, stepsByTaskId) {
 
     if (steps.length > 0) {
       steps.forEach((step) => {
-        if (step.study_time && step.end_date) {
-          actualEntries.push({
-            date: step.end_date,
-            minutes: Number(step.study_time) || 0,
-            category_name: task.category_name,
-          });
-        }
-        if (step.planned_study_time && step.end_planned_date) {
-          plannedEntries.push({
-            date: step.end_planned_date,
-            minutes: Number(step.planned_study_time) || 0,
-            category_name: task.category_name,
-          });
-        }
+        distributeTimeEntry(
+          actualEntries,
+          step.start_date,
+          step.end_date,
+          Number(step.study_time) || 0,
+          task.category_name,
+        );
+        distributeTimeEntry(
+          plannedEntries,
+          step.start_planned_date,
+          step.end_planned_date,
+          Number(step.planned_study_time) || 0,
+          task.category_name,
+        );
       });
     } else {
-      if (task.study_time && task.end_date) {
-        actualEntries.push({
-          date: task.end_date,
-          minutes: Number(task.study_time) || 0,
-          category_name: task.category_name,
-        });
-      }
-      if (task.planned_study_time && task.end_planned_date) {
-        plannedEntries.push({
-          date: task.end_planned_date,
-          minutes: Number(task.planned_study_time) || 0,
-          category_name: task.category_name,
-        });
-      }
+      distributeTimeEntry(
+        actualEntries,
+        task.start_date,
+        task.end_date,
+        Number(task.study_time) || 0,
+        task.category_name,
+      );
+      distributeTimeEntry(
+        plannedEntries,
+        task.start_planned_date,
+        task.end_planned_date,
+        Number(task.planned_study_time) || 0,
+        task.category_name,
+      );
     }
   });
 

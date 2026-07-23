@@ -1837,7 +1837,7 @@ function renderCalendar(data) {
 
           layer.insertAdjacentHTML(
             "beforeend",
-            `<div class="calendar-task-bar calendar-task-bar--step ${isActualStep ? "calendar-task-bar--step-actual" : "calendar-task-bar--step-planned"}" data-task-id="${task.id}" style="
+            `<div class="calendar-task-bar calendar-task-bar--step ${isActualStep ? "calendar-task-bar--step-actual" : "calendar-task-bar--step-planned"}" data-task-id="${task.id}" title="${(step.title || "").replace(/"/g, "&quot;")}" style="
               position:absolute;
               left: calc(${leftPct}% + 6px);
               width: calc(${widthPct}% - 10px);
@@ -2475,9 +2475,10 @@ function renderTimeline(data) {
             laneCounter++;
             const stepLaneTop = (laneCounter - 1) * LANE_HEIGHT + 4;
 
-            barsHtml += `<div class="timeline-bar timeline-bar--step" data-task-id="${task.id}" data-step-id="${step.id}" style="left: ${pos.leftPercent}%; width: ${pos.widthPercent}%; top: ${stepLaneTop}px;">
-                  <span class="timeline-bar-title">└ ${step.title}</span>
-                </div>`;
+            // 変更後（v2.21.27追加：title属性でネイティブツールチップ表示）
+            barsHtml += `<div class="timeline-bar timeline-bar--step" data-task-id="${task.id}" data-step-id="${step.id}" title="${(step.title || "").replace(/"/g, "&quot;")}" style="left: ${pos.leftPercent}%; width: ${pos.widthPercent}%; top: ${stepLaneTop}px;">
+              <span class="timeline-bar-title">└ ${step.title}</span>
+            </div>`;
           });
         }
       });
