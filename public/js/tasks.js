@@ -2068,9 +2068,22 @@ function syncTaskViewHeights() {
     );
   });
 
-  // ===== カレンダービュー：曜日ヘッダーのsticky top =====
+  // ===== カレンダービュー：ヘッダー（月ナビ・すべて/予定/実績等）と
+  // 曜日ヘッダーのsticky topを動的算出（v2.21.30追加：ヘッダーも追従させ、
+  // 曜日ヘッダーはヘッダーの実測高さ分だけ下にずらして重ならないようにする） =====
+  const calendarHeader = document.querySelector(".calendar-header");
+  const calendarHeaderHeight = calendarHeader
+    ? calendarHeader.getBoundingClientRect().height
+    : 0;
+  if (calendarHeader) {
+    calendarHeader.style.setProperty("top", `${contentTop}px`, "important");
+  }
   document.querySelectorAll(".calendar-weekday").forEach((el) => {
-    el.style.setProperty("top", `${contentTop}px`, "important");
+    el.style.setProperty(
+      "top",
+      `${contentTop + calendarHeaderHeight}px`,
+      "important",
+    );
   });
 }
 
@@ -2436,8 +2449,12 @@ function renderTimeline(data) {
 
         const laneTop = targetLane * LANE_HEIGHT + 4;
 
+        // v2.21.29追加：カレンダーの予定バーと表示を揃えるため、カテゴリバッジを追加
+        const categoryBadgeHtml = createCategoryBadgeHtml(task.category_name);
+
         if (showPlanned) {
           barsHtml += `<div class="timeline-bar timeline-bar--planned" data-task-id="${task.id}" style="left: ${plannedPos.leftPercent}%; width: ${plannedPos.widthPercent}%; top: ${laneTop}px;">
+                  ${categoryBadgeHtml}
                   <span class="timeline-bar-title">${task.title}</span>
                 </div>`;
         }
@@ -2475,10 +2492,9 @@ function renderTimeline(data) {
             laneCounter++;
             const stepLaneTop = (laneCounter - 1) * LANE_HEIGHT + 4;
 
-            // 変更後（v2.21.27追加：title属性でネイティブツールチップ表示）
             barsHtml += `<div class="timeline-bar timeline-bar--step" data-task-id="${task.id}" data-step-id="${step.id}" title="${(step.title || "").replace(/"/g, "&quot;")}" style="left: ${pos.leftPercent}%; width: ${pos.widthPercent}%; top: ${stepLaneTop}px;">
-              <span class="timeline-bar-title">└ ${step.title}</span>
-            </div>`;
+                  <span class="timeline-bar-title">└ ${step.title}</span>
+                </div>`;
           });
         }
       });

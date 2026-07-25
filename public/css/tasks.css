@@ -1,4 +1,3 @@
-
 /* ========================================================
    タスク一覧画面：ヘッダー＆ビュー統合設定
 ======================================================== */
@@ -680,7 +679,10 @@
   margin-bottom: var(--space-16);
   min-height: 38px;
   width: 100%;
-  position: relative; /* 右側の切り替えタブを絶対配置にする基準 */
+  position: sticky !important; /* v2.21.30変更：relative→sticky。右側の切り替えタブの
+  絶対配置の基準にもなるため引き続き機能する。topはJS（syncTaskViewHeights）で動的算出 */
+  z-index: 60 !important;
+  background-color: var(--color-bg-base) !important;
 }
 
 .calendar-month-label {
@@ -1176,6 +1178,9 @@
   border-radius: 6px;
   display: flex;
   align-items: center;
+  gap: 6px;
+  padding: 0 6px;
+  box-sizing: border-box;
   overflow: hidden;
   white-space: nowrap;
   cursor: pointer;
@@ -1189,16 +1194,25 @@
 }
 
 .timeline-bar-title {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* v2.21.28変更：カレンダーの予定バー（.calendar-task-bar--planned）と
+   見た目を統一。以前はアクセントの紫系だったが、白系の控えめな半透明に変更 */
 .timeline-bar--planned {
-  background-color: rgb(139 92 246 / 0.25);
-  color: #c4b5fd;
+  background-color: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
   font-size: 0.7rem;
   height: 20px;
+}
+
+.timeline-bar--planned:hover {
+  background-color: rgba(255, 255, 255, 0.14);
 }
 
 .timeline-bar--actual {
@@ -1207,6 +1221,12 @@
   color: #fcd34d;
   font-size: 0.65rem;
   height: 18px;
+}
+
+/* v2.21.29追加：予定・実績バーにカテゴリバッジを表示するため、バッジ自体が
+   潰れて縮まないよう固定する（カレンダーの予定バーと表示を揃えるため） */
+.timeline-bar .task-category-badge {
+  flex-shrink: 0;
 }
 
 /* ==========================================
@@ -1598,7 +1618,7 @@
 .timeline-bar--step,
 .timeline-task-bar--step,
 .timeline-step-bar {
-  background-color: rgb(34 211 238 / 0.18) !important; /* シアン系背景（v2.21.26） */
+  background-color: rgb(34 211 238 / 0.18) !important; /* v2.21.26：紫系→シアン系に変更 */
   border: 1px solid rgb(34 211 238 / 0.5) !important;
   color: #a5f3fc !important;
   border-radius: 4px !important;
@@ -1621,6 +1641,7 @@
   background-color: rgb(34 211 238 / 0.35) !important;
   border-color: rgb(34 211 238 / 0.8) !important;
   color: #fff !important;
+  cursor: pointer;
   z-index: 10;
 }
 
@@ -1656,7 +1677,7 @@
 
 /* 3. テーブルビューにおける孫タスク行の視認性アップ */
 .task-table tr.step-row td {
-  background-color: rgb(34 211 238 / 0.04) !important; /* ほんのりシアンで親と区別（v2.21.26） */
+  background-color: rgb(34 211 238 / 0.04) !important; /* v2.21.26：紫系→シアン系に変更 */
   color: var(--color-text-secondary) !important;
   border-bottom: 1px solid rgb(255 255 255 / 0.03) !important;
 }
@@ -1664,6 +1685,18 @@
 .task-table tr.step-row:hover td {
   background-color: rgb(34 211 238 / 0.1) !important;
   color: var(--color-text-primary) !important;
+}
+
+/* v2.21.27追加：ステップバーhover時に全文表示（見切れ対策）。
+   inline style（left/width%）より優先させるためwidth側のみ!importantで上書きし、
+   overflow:visibleでtext-overflow:ellipsisを無効化してタイトル全体を見せる */
+.calendar-task-bar--step:hover,
+.timeline-bar--step:hover {
+  width: max-content !important;
+  max-width: 320px !important;
+  overflow: visible !important;
+  z-index: 200 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
 }
 
 
