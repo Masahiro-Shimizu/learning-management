@@ -22,6 +22,7 @@ app.use("/api/groups", groupRoutes);
 app.use("/api/steps", require("./routes/steps"));
 app.use("/api/task-types", taskTypeRoutes);
 app.use("/api/task-categories", taskCategoriesRouter);
+app.use("/api/study-logs", require("./routes/study_logs"));
 app.use("/api/mandalas", mandalaRoutes);
 app.use("/api/result-reviews", require("./routes/result_reviews"));
 

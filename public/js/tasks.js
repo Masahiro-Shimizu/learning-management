@@ -468,7 +468,7 @@ function createStepItemHtml(step) {
   const st = step.study_time ? minutesToHours(step.study_time) : "";
 
   return `
-    <li class="step-item ${completed}" data-step-id="${step.id}">
+    <li class="step-item ${completed}" data-step-id="${step.id}" data-original-study-time="${step.study_time || 0}" data-original-end-date="${step.end_date || ""}">
       <div class="step-item-row" style="display:flex;align-items:center;gap:8px;">
         <input type="checkbox" ${checked} aria-label="ステップ完了" />
         <div style="flex:1;min-width:0;">
@@ -729,6 +729,20 @@ document.getElementById("step-list")?.addEventListener("click", async (e) => {
 
     // 【修正】ステップ行を再描画（抜け落ちていた newLi の定義を追加）
     const taskId = document.getElementById("task-modal").dataset.taskId;
+    const originalStudyTime = Number(li.dataset.originalStudyTime) || 0;
+      const newStudyTime = st || 0;
+      const delta = newStudyTime - originalStudyTime;
+      if (delta > 0 && aed) {
+        const taskDataForLog = await api(`/api/tasks/${taskId}`);
+        await api("/api/study-logs", "POST", {
+          log_date: aed,
+          task_id: taskId,
+          step_id: stepId,
+          book_id: taskDataForLog.book_id || null,
+          study_time: delta,
+          progress_value: 1,
+        });
+      }
     const tmp = document.createElement("ul");
     tmp.innerHTML = createStepItemHtml(updatedStep);
 
@@ -791,6 +805,7 @@ document.getElementById("step-modal")?.addEventListener("click", (e) => {
 async function openTaskEditModal(taskId) {
   const task = await api(`/api/tasks/${taskId}`);
   document.getElementById("task-modal").dataset.taskId = taskId;
+  document.getElementById("task-modal").dataset.originalStudyTime = task.study_time || 0; // ★追加
   document.getElementById("task-modal").dataset.groupId = task.group_id;
   document.getElementById("task-title").value = task.title;
   document.getElementById("task-type").value = task.type_id;
@@ -2778,6 +2793,22 @@ document
       await api(`/api/tasks/${taskId}`, "PUT", body);
     } else {
       await api("/api/tasks", "POST", body);
+    }
+
+    // v2.21.27追加：ステップを持たないタスクのみ、study_logsへ増分記録
+    const stepCountForLog = document.querySelectorAll("#step-list .step-item").length;
+    if (stepCountForLog === 0 && body.study_time && body.end_date) {
+      const originalStudyTime = Number(document.getElementById("task-modal").dataset.originalStudyTime) || 0;
+      const delta = body.study_time - originalStudyTime;
+      if (delta > 0) {
+        await api("/api/study-logs", "POST", {
+          log_date: body.end_date,
+          task_id: taskId || null,
+          book_id: body.book_id || null,
+          study_time: delta,
+          progress_value: 1,
+        });
+      }
     }
 
     markTaskModalClean();

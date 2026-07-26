@@ -159,3 +159,27 @@ ALTER TABLE books
 ALTER TABLE tasks
   ADD COLUMN understood_memo TEXT AFTER memo,
   ADD COLUMN unclear_points  TEXT AFTER understood_memo;
+
+-- =========================================
+-- study_logs（学習実績ログ：Python予測分析用の生データ）v2.21.27追加
+-- =========================================
+CREATE TABLE IF NOT EXISTS study_logs (
+  id             INT UNSIGNED    NOT NULL AUTO_INCREMENT,
+  log_date       DATE            NOT NULL,
+  task_id        INT UNSIGNED,
+  step_id        INT UNSIGNED,
+  book_id        INT UNSIGNED,
+  study_time     SMALLINT UNSIGNED NOT NULL,
+  progress_value DECIMAL(6,2)    NOT NULL DEFAULT 1,
+  created_at     DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  CONSTRAINT fk_study_logs_task
+    FOREIGN KEY (task_id) REFERENCES tasks (id)
+    ON UPDATE CASCADE ON DELETE SET NULL,
+  CONSTRAINT fk_study_logs_step
+    FOREIGN KEY (step_id) REFERENCES task_steps (id)
+    ON UPDATE CASCADE ON DELETE SET NULL,
+  CONSTRAINT fk_study_logs_book
+    FOREIGN KEY (book_id) REFERENCES books (id)
+    ON UPDATE CASCADE ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
