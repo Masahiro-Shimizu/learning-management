@@ -31,7 +31,7 @@ router.post("/tasks/:id", async (req, res, next) => {
     const [rows] = await db.query("SELECT * FROM task_steps WHERE id = ?", [
       result.insertId,
     ]);
-    res.status(201).json(rows);
+    res.status(201).json(rows[0]);
   } catch (err) {
     next(err);
   }

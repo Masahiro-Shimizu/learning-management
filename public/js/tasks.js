@@ -466,6 +466,7 @@ function createStepItemHtml(step) {
     ? minutesToHours(step.planned_study_time)
     : "";
   const st = step.study_time ? minutesToHours(step.study_time) : "";
+  const hasBook = !!document.getElementById("task-book-id")?.value;
 
   return `
     <li class="step-item ${completed}" data-step-id="${step.id}" data-original-study-time="${step.study_time || 0}" data-original-end-date="${step.end_date || ""}">
@@ -504,6 +505,10 @@ function createStepItemHtml(step) {
             <label>実績学習時間（h）</label>
             <input type="number" step="0.1" min="0" class="step-field-st" value="${st}" />
           </div>
+          ${hasBook ? `<div class="step-detail-field">
+            <label>進んだページ/章数（任意）</label>
+            <input type="number" step="1" min="0" class="step-field-progress" placeholder="例：5" />
+          </div>` : ""}
         </div>
         <button type="button" class="btn btn-primary step-detail-save">保存</button>
       </div>
@@ -602,8 +607,8 @@ async function syncStepTotalsToTask(taskId) {
     study_time: totalActual || null,
   };
   if (hasSteps) {
-    body.start_date = autoStartDate;
-    body.end_date = autoEndDate;
+    body.start_date = formatDateForInput(autoStartDate);
+    body.end_date = formatDateForInput(autoEndDate);
   }
 
   await api(`/api/tasks/${taskId}`, "PUT", body);
@@ -716,6 +721,11 @@ document.getElementById("step-list")?.addEventListener("click", async (e) => {
       stVal && !isNaN(parseFloat(stVal))
         ? Math.round(parseFloat(stVal) * 60)
         : null;
+    const progressVal = li.querySelector(".step-field-progress")?.value;
+    const progressValue =
+      progressVal && !isNaN(parseFloat(progressVal)) && parseFloat(progressVal) > 0
+        ? parseFloat(progressVal)
+        : 1;
 
     // 【改善】PUTの戻り値（更新後のデータ）を直接 updatedStep に格納する
     const updatedStep = await api(`/api/steps/${stepId}`, "PUT", {
@@ -740,7 +750,7 @@ document.getElementById("step-list")?.addEventListener("click", async (e) => {
           step_id: stepId,
           book_id: taskDataForLog.book_id || null,
           study_time: delta,
-          progress_value: 1,
+          progress_value: progressValue,
         });
       }
     const tmp = document.createElement("ul");
@@ -2789,10 +2799,12 @@ document
       unclear_points: document.getElementById("task-unclear-points").value || null,   // 追加
     };
 
+    let savedTaskId = taskId;
     if (taskId) {
       await api(`/api/tasks/${taskId}`, "PUT", body);
     } else {
-      await api("/api/tasks", "POST", body);
+      const newTask = await api("/api/tasks", "POST", body);
+      savedTaskId = newTask.id;
     }
 
     // v2.21.27追加：ステップを持たないタスクのみ、study_logsへ増分記録
@@ -2803,7 +2815,7 @@ document
       if (delta > 0) {
         await api("/api/study-logs", "POST", {
           log_date: body.end_date,
-          task_id: taskId || null,
+          task_id: savedTaskId || null,
           book_id: body.book_id || null,
           study_time: delta,
           progress_value: 1,
