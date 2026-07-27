@@ -785,3 +785,49 @@
   color: var(--color-text-primary);
   background-color: rgb(255 255 255 / 0.08);
 }
+/* v2.21.28追加：ステップ詳細の体感難易度・やる気（絵文字選択） */
+.step-detail-meta-row {
+  display: flex;
+  gap: var(--space-16);
+  margin-top: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.step-detail-meta-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.step-detail-meta-group label {
+  font-size: 0.72rem;
+  color: var(--color-text-tertiary);
+}
+
+.step-meta-emoji-row {
+  display: flex;
+  gap: 4px;
+}
+
+.step-meta-emoji-btn {
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: var(--color-bg-base);
+  border-radius: 6px;
+  font-size: 1rem;
+  padding: 4px 8px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition:
+    opacity 0.15s,
+    border-color 0.15s;
+}
+
+.step-meta-emoji-btn:hover {
+  opacity: 0.85;
+}
+
+.step-meta-emoji-btn.active {
+  opacity: 1;
+  border-color: var(--color-accent-primary);
+  background: rgb(99 102 241 / 0.12);
+}

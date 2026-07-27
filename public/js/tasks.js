@@ -510,6 +510,28 @@ function createStepItemHtml(step) {
             <input type="number" step="1" min="0" class="step-field-progress" placeholder="例：5" />
           </div>` : ""}
         </div>
+        <div class="step-detail-meta-row">
+          <div class="step-detail-meta-group">
+            <label>体感の難易度（任意）</label>
+            <div class="step-meta-emoji-row" data-meta="difficulty">
+              <button type="button" class="step-meta-emoji-btn" data-value="1">😄</button>
+              <button type="button" class="step-meta-emoji-btn" data-value="2">🙂</button>
+              <button type="button" class="step-meta-emoji-btn" data-value="3">😐</button>
+              <button type="button" class="step-meta-emoji-btn" data-value="4">😣</button>
+              <button type="button" class="step-meta-emoji-btn" data-value="5">😫</button>
+            </div>
+          </div>
+          <div class="step-detail-meta-group">
+            <label>その日のやる気（任意）</label>
+            <div class="step-meta-emoji-row" data-meta="motivation">
+              <button type="button" class="step-meta-emoji-btn" data-value="1">😴</button>
+              <button type="button" class="step-meta-emoji-btn" data-value="2">😑</button>
+              <button type="button" class="step-meta-emoji-btn" data-value="3">🙂</button>
+              <button type="button" class="step-meta-emoji-btn" data-value="4">😊</button>
+              <button type="button" class="step-meta-emoji-btn" data-value="5">🔥</button>
+            </div>
+          </div>
+        </div>
         <button type="button" class="btn btn-primary step-detail-save">保存</button>
       </div>
     </li>
@@ -675,6 +697,14 @@ document.getElementById("step-list")?.addEventListener("change", async (e) => {
 });
 
 document.getElementById("step-list")?.addEventListener("click", async (e) => {
+  // v2.21.28追加：難易度・やる気の絵文字ボタン選択（トグル）
+  if (e.target.classList.contains("step-meta-emoji-btn")) {
+    const row = e.target.closest(".step-meta-emoji-row");
+    const wasActive = e.target.classList.contains("active");
+    row.querySelectorAll(".step-meta-emoji-btn").forEach((btn) => btn.classList.remove("active"));
+    if (!wasActive) e.target.classList.add("active");
+    return;
+  }
   // 削除
   if (e.target.classList.contains("btn-step-delete")) {
     const li = e.target.closest(".step-item");
@@ -726,6 +756,10 @@ document.getElementById("step-list")?.addEventListener("click", async (e) => {
       progressVal && !isNaN(parseFloat(progressVal)) && parseFloat(progressVal) > 0
         ? parseFloat(progressVal)
         : 1;
+    const difficultyBtn = li.querySelector('.step-meta-emoji-row[data-meta="difficulty"] .step-meta-emoji-btn.active');
+    const motivationBtn = li.querySelector('.step-meta-emoji-row[data-meta="motivation"] .step-meta-emoji-btn.active');
+    const difficultyValue = difficultyBtn ? Number(difficultyBtn.dataset.value) : null;
+    const motivationValue = motivationBtn ? Number(motivationBtn.dataset.value) : null;
 
     // 【改善】PUTの戻り値（更新後のデータ）を直接 updatedStep に格納する
     const updatedStep = await api(`/api/steps/${stepId}`, "PUT", {
@@ -751,6 +785,8 @@ document.getElementById("step-list")?.addEventListener("click", async (e) => {
           book_id: taskDataForLog.book_id || null,
           study_time: delta,
           progress_value: progressValue,
+          difficulty: difficultyValue,
+          motivation: motivationValue,
         });
       }
     const tmp = document.createElement("ul");

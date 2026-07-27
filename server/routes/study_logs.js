@@ -1,9 +1,7 @@
 "use strict";
-
 const express = require("express");
 const router = express.Router();
 const db = require("../db");
-
 // GET /api/study-logs - ログ一覧取得（Python分析側からの参照・確認用）
 router.get("/", async (req, res, next) => {
   try {
@@ -15,7 +13,6 @@ router.get("/", async (req, res, next) => {
     next(err);
   }
 });
-
 // POST /api/study-logs - ログ新規作成
 router.post("/", async (req, res, next) => {
   try {
@@ -26,20 +23,19 @@ router.post("/", async (req, res, next) => {
       book_id = null,
       study_time,
       progress_value = 1,
+      difficulty = null,
+      motivation = null,
     } = req.body;
-
     if (!log_date || !study_time || study_time <= 0) {
       return res
         .status(400)
         .json({ error: "log_date と study_time（正の値）は必須です" });
     }
-
     const [result] = await db.query(
-      `INSERT INTO study_logs (log_date, task_id, step_id, book_id, study_time, progress_value)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [log_date, task_id, step_id, book_id, study_time, progress_value],
+      `INSERT INTO study_logs (log_date, task_id, step_id, book_id, study_time, progress_value, difficulty, motivation)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [log_date, task_id, step_id, book_id, study_time, progress_value, difficulty, motivation],
     );
-
     const [rows] = await db.query("SELECT * FROM study_logs WHERE id = ?", [
       result.insertId,
     ]);
@@ -48,5 +44,4 @@ router.post("/", async (req, res, next) => {
     next(err);
   }
 });
-
 module.exports = router;
