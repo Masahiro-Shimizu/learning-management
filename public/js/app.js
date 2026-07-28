@@ -5,6 +5,7 @@ const pages = document.querySelectorAll("main section");
 let booksInitialized = false;
 let dashboardInitialized = false;
 let settingsInitialized = false;
+let studyLogsPageInited = false;
 let mandalaInitialized = false;
 let resultsInitialized = false;
 
@@ -149,6 +150,14 @@ document.getElementById("btn-sidebar-show")?.addEventListener("click", () => {
     mandalaInitialized = true;
   }
 
+  if (pageId === "page-study-logs") {
+    if (!studyLogsPageInited) {
+      studyLogsPageInited = true;
+      initStudyLogsPage();
+    } else if (typeof renderStudyLogsTable === "function") {
+      renderStudyLogsTable();
+    }
+  }
   // 【完全同期】文字列を「page-results」へ厳格に修正し、リザルト初期化を確実に呼び出します
   if (pageId === "page-results") {
     if (!resultsInitialized) {

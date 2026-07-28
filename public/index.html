@@ -28,6 +28,7 @@
     <script src="js/settings.js" defer></script>
     <script src="js/mandala.js" defer></script>
     <script src="js/results.js" defer></script>
+    <script src="js/study_logs.js" defer></script>
     <script src="js/app.js" defer></script>
   </head>
   <body>
@@ -78,6 +79,12 @@
             <a href="#page-results">
               <i data-lucide="trophy" class="nav-icon"></i>
               <span>リザルト</span>
+            </a>
+          </li>
+          <li>
+            <a href="#page-study-logs">
+              <i data-lucide="notebook-pen" class="nav-icon"></i>
+              <span>学習ログ</span>
             </a>
           </li>
         </ul>
@@ -705,6 +712,28 @@
           </div>
 
           <div id="results-page-body"></div>
+        </section>
+
+        <section id="page-study-logs">
+          <h2>学習ログ</h2>
+          <p class="tasks-sub">日々の学習実績（study_logs）の記録一覧です。誤った記録はここから削除できます。</p>
+          <div class="study-logs-table-wrapper">
+            <table class="study-logs-table">
+              <thead>
+                <tr>
+                  <th>日付</th>
+                  <th>タスク</th>
+                  <th>学習時間</th>
+                  <th>進んだ量</th>
+                  <th>難易度</th>
+                  <th>やる気</th>
+                  <th>記録日時</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="study-logs-table-body"></tbody>
+            </table>
+          </div>
         </section>
 
         <section id="page-settings">

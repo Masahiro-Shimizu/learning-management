@@ -44,4 +44,18 @@ router.post("/", async (req, res, next) => {
     next(err);
   }
 });
+// DELETE /api/study-logs/:id - ログ削除（誤記録の訂正用）
+router.delete("/:id", async (req, res, next) => {
+  try {
+    const [result] = await db.query("DELETE FROM study_logs WHERE id = ?", [
+      req.params.id,
+    ]);
+    if (result.affectedRows === 0)
+      return res.status(404).json({ error: "ログが見つかりません" });
+    res.json({ message: "削除しました", id: Number(req.params.id) });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
