@@ -774,21 +774,34 @@ document.getElementById("step-list")?.addEventListener("click", async (e) => {
     // 【修正】ステップ行を再描画（抜け落ちていた newLi の定義を追加）
     const taskId = document.getElementById("task-modal").dataset.taskId;
     const originalStudyTime = Number(li.dataset.originalStudyTime) || 0;
-      const newStudyTime = st || 0;
-      const delta = newStudyTime - originalStudyTime;
-      if (delta > 0 && aed) {
-        const taskDataForLog = await api(`/api/tasks/${taskId}`);
-        await api("/api/study-logs", "POST", {
-          log_date: aed,
-          task_id: taskId,
-          step_id: stepId,
-          book_id: taskDataForLog.book_id || null,
-          study_time: delta,
-          progress_value: progressValue,
-          difficulty: difficultyValue,
-          motivation: motivationValue,
-        });
-      }
+    const newStudyTime = st || 0;
+    const delta = newStudyTime - originalStudyTime;
+
+    // 💡 【完全解決】外部の関数に頼らず、ここで直接「ローカルタイムの今日(YYYY-MM-DD)」を生成！
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    const todayStr = `${y}-${m}-${d}`;
+    
+    // 💡 【改修ポイント】終了日(aed)が無ければ開始日(asd)、それも無ければ「今日」を採用
+    const targetLogDate = aed || asd || todayStr;
+
+    // 💡 【改修ポイント】「&& aed」の縛りを消し、差分(delta)があれば確実に保存する
+    if (delta > 0) {
+      const taskDataForLog = await api(`/api/tasks/${taskId}`);
+      await api("/api/study-logs", "POST", {
+        log_date: targetLogDate, // 自動判定した日付をセット
+        task_id: taskId,
+        step_id: stepId,
+        book_id: taskDataForLog.book_id || null,
+        study_time: delta,
+        progress_value: progressValue,
+        difficulty: difficultyValue,
+        motivation: motivationValue,
+      });
+    }
+
     const tmp = document.createElement("ul");
     tmp.innerHTML = createStepItemHtml(updatedStep);
 

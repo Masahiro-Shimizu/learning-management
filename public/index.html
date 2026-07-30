@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="css/mandala.css" />
     <link rel="stylesheet" href="css/modal.css" />
     <link rel="stylesheet" href="css/results.css" />
+    <link rel="stylesheet" href="css/study_logs.css" />
     <link rel="stylesheet" href="css/settings.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -714,10 +715,32 @@
           <div id="results-page-body"></div>
         </section>
 
-        <section id="page-study-logs">
-          <h2>学習ログ</h2>
-          <p class="tasks-sub">日々の学習実績（study_logs）の記録一覧です。誤った記録はここから削除できます。</p>
-          <div class="study-logs-table-wrapper">
+        <section id="page-study-logs" class="hidden" style="padding: 32px 24px; box-sizing: border-box; width: 100%;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+            <div>
+              <h2 style="margin: 0 0 4px 0; font-size: 1.5rem; font-weight: 700; color: #fff; font-family: 'Syne', sans-serif;">学習ログ</h2>
+              <p style="margin: 0; font-size: 0.85rem; color: #aaa;">日々の学習実績（study_logs）の記録一覧です。誤った記録はここから編集・削除できます。</p>
+            </div>
+            <div>
+              <button id="btn-open-add-log-modal" class="btn btn-primary" style="white-space: nowrap;">
+                ＋ 新規ログを手動記録
+              </button>
+            </div>
+          </div>
+  
+          <div class="study-logs-filter-bar">
+            <button class="btn btn-primary btn-log-filter" data-range="all">すべて</button>
+            <button class="btn btn-secondary btn-log-filter" data-range="year">今年</button>
+            <button class="btn btn-secondary btn-log-filter" data-range="month">今月</button>
+            <button class="btn btn-secondary btn-log-filter" data-range="week">今週</button>
+  
+            <div class="study-logs-date-search">
+              <span class="study-logs-date-search-label">🔍 特定の日を見る:</span>
+              <input type="date" id="search-log-date" class="study-logs-date-input">
+            </div>
+          </div>
+  
+          <div class="task-table-wrapper study-logs-table-wrapper">
             <table class="study-logs-table">
               <thead>
                 <tr>
@@ -728,7 +751,7 @@
                   <th>難易度</th>
                   <th>やる気</th>
                   <th>記録日時</th>
-                  <th></th>
+                  <th>操作</th>
                 </tr>
               </thead>
               <tbody id="study-logs-table-body"></tbody>
@@ -736,60 +759,25 @@
           </div>
         </section>
 
-        <section id="page-settings">
+        <section id="page-settings" class="hidden">
           <h2>設定</h2>
-
-          <div
-            class="settings-container"
-            style="
-              display: flex;
-              gap: var(--space-24);
-              flex-wrap: wrap;
-              margin-top: var(--space-24);
-            "
-          >
-            <div
-              class="settings-block"
-              style="margin-top: 0; flex: 1; min-width: 320px"
-            >
+          <div class="settings-container" style="display: flex; gap: var(--space-24); flex-wrap: wrap; margin-top: var(--space-24);">
+            <div class="settings-block" style="margin-top: 0; flex: 1; min-width: 320px">
               <h3>タスク種別</h3>
               <p class="settings-sub">タスクの「種別」項目を管理します。</p>
               <div class="settings-add-row">
-                <input
-                  type="text"
-                  id="task-type-new-name"
-                  placeholder="新しい種別名"
-                />
-                <button
-                  type="button"
-                  id="btn-task-type-add"
-                  class="btn btn-primary"
-                >
-                  追加
-                </button>
+                <input type="text" id="task-type-new-name" placeholder="新しい種別名" />
+                <button type="button" id="btn-task-type-add" class="btn btn-primary">追加</button>
               </div>
               <ul id="task-type-list" class="settings-list"></ul>
             </div>
 
-            <div
-              class="settings-block"
-              style="margin-top: 0; flex: 1; min-width: 320px"
-            >
+            <div class="settings-block" style="margin-top: 0; flex: 1; min-width: 320px">
               <h3>カテゴリ種別</h3>
               <p class="settings-sub">タスクの「カテゴリ」項目を管理します。</p>
               <div class="settings-add-row">
-                <input
-                  type="text"
-                  id="task-category-new-name"
-                  placeholder="新しいカテゴリ名"
-                />
-                <button
-                  type="button"
-                  id="btn-task-category-add"
-                  class="btn btn-primary"
-                >
-                  追加
-                </button>
+                <input type="text" id="task-category-new-name" placeholder="新しいカテゴリ名" />
+                <button type="button" id="btn-task-category-add" class="btn btn-primary">追加</button>
               </div>
               <ul id="task-category-list" class="settings-list"></ul>
             </div>
@@ -802,24 +790,14 @@
       <div class="modal-content">
         <div class="modal-header">
           <h3>親タスクを登録</h3>
-          <button
-            type="button"
-            id="btn-group-close-x"
-            class="btn-modal-close"
-            aria-label="閉じる"
-          >
-            ✕
-          </button>
+          <button type="button" id="btn-group-close-x" class="btn-modal-close" aria-label="閉じる">✕</button>
         </div>
-
         <label for="group-title">タイトル</label>
         <input type="text" id="group-title" />
         <div style="border-top: 1px solid rgb(255 255 255 / 0.08); padding-top: var(--space-16); margin-top: var(--space-8);">
           <div style="font-size: 0.8rem; font-weight: 600; color: #a5b4fc; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
             <span>🎯 マイルストーン計画（目安期間）</span>
-            <span id="group-auto-badge" class="hidden" style="background: rgb(139 92 246 / 0.2); color: #c4b5fd; font-size: 0.7rem; padding: 2px 8px; border-radius: 9999px; border: 1px solid rgb(139 92 246 / 0.4);">
-              🤖 子タスクから自動計算中
-            </span>
+            <span id="group-auto-badge" class="hidden" style="background: rgb(139 92 246 / 0.2); color: #c4b5fd; font-size: 0.7rem; padding: 2px 8px; border-radius: 9999px; border: 1px solid rgb(139 92 246 / 0.4);">🤖 子タスクから自動計算中</span>
           </div>
           <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-16);">
             <div class="field">
@@ -832,7 +810,6 @@
             </div>
           </div>
         </div>
-        
         <div style="border-top: 1px solid rgb(255 255 255 / 0.08); padding-top: var(--space-16); margin-top: var(--space-16); margin-bottom: var(--space-24);">
           <div style="font-size: 0.8rem; font-weight: 600; color: #6ee7b7; margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
             <span>📈 実績データ（着手・完了日）</span>
@@ -850,73 +827,31 @@
         </div>
         <label for="group-memo">メモ</label>
         <textarea id="group-memo"></textarea>
-
         <div class="modal-actions">
-          <button type="button" id="btn-group-delete" class="btn btn-danger">
-            削除
-          </button>
+          <button type="button" id="btn-group-delete" class="btn btn-danger">削除</button>
           <div class="task-actions-right">
-            <button
-              type="button"
-              id="btn-group-close"
-              class="btn btn-secondary"
-            >
-              キャンセル
-            </button>
-            <button type="button" id="btn-group-save" class="btn btn-primary">
-              保存
-            </button>
+            <button type="button" id="btn-group-close" class="btn btn-secondary">キャンセル</button>
+            <button type="button" id="btn-group-save" class="btn btn-primary">保存</button>
           </div>
         </div>
-        <div
-          id="btn-group-add-task-wrapper"
-          class="hidden"
-          style="margin-top: 12px"
-        >
-          <button
-            type="button"
-            id="btn-group-add-task"
-            class="btn btn-primary"
-            style="width: 100%"
-          >
-            ＋ 子タスクを追加する
-          </button>
+        <div id="btn-group-add-task-wrapper" class="hidden" style="margin-top: 12px">
+          <button type="button" id="btn-group-add-task" class="btn btn-primary" style="width: 100%">＋ 子タスクを追加する</button>
         </div>
       </div>
     </div>
 
     <div id="task-modal" class="modal hidden">
-      <div
-        class="modal-content"
-        style="
-          max-height: 90vh;
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-        "
-      >
+      <div class="modal-content" style="max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;">
         <div class="modal-header" style="flex-shrink: 0">
           <h3>タスクを登録</h3>
-          <button
-            type="button"
-            id="btn-task-close-x"
-            class="btn-modal-close"
-            aria-label="閉じる"
-          >
-            ✕
-          </button>
+          <button type="button" id="btn-task-close-x" class="btn-modal-close" aria-label="閉じる">✕</button>
         </div>
-
-        <div
-          class="modal-scroll-area"
-          style="flex: 1; overflow-y: auto; padding-right: 4px"
-        >
+        <div class="modal-scroll-area" style="flex: 1; overflow-y: auto; padding-right: 4px">
           <div class="form-grid">
             <div class="field field-full">
               <label for="task-title">タイトル</label>
               <input type="text" id="task-title" />
             </div>
-
             <div class="field">
               <label for="task-type">種別</label>
               <select id="task-type"></select>
@@ -929,7 +864,6 @@
                 <option value="完了">完了</option>
               </select>
             </div>
-
             <div class="field">
               <label for="task-category">カテゴリ</label>
               <select id="task-category"></select>
@@ -942,19 +876,13 @@
                 <option value="トピック単位">トピック単位</option>
               </select>
             </div>
-
             <div class="field field-full" style="display:flex; align-items:flex-end; gap:8px;">
               <div style="flex:1;">
                 <label for="task-book-id">紐づく書籍</label>
-                <select id="task-book-id">
-                  <option value="">（なし）</option>
-                </select>
+                <select id="task-book-id"><option value="">（なし）</option></select>
               </div>
-              <button type="button" id="btn-task-view-book" class="btn btn-secondary hidden" style="white-space:nowrap;">
-                📖 書籍を見る
-              </button>
+              <button type="button" id="btn-task-view-book" class="btn btn-secondary hidden" style="white-space:nowrap;">📖 書籍を見る</button>
             </div>
-
             <div class="field">
               <label for="task-start-planned-date">開始予定日</label>
               <input type="date" id="task-start-planned-date" />
@@ -963,17 +891,8 @@
               <label for="task-end-planned-date">終了予定日</label>
               <input type="date" id="task-end-planned-date" />
             </div>
-
-            <!-- 変更後 -->
-           <div class="field field-full" style="margin-bottom: -4px;">
-              <span
-                id="task-actual-date-auto-badge"
-                class="hidden"
-                style="background: rgb(139 92 246 / 0.2); color: #c4b5fd; font-size: 0.7rem; padding: 2px 8px; border-radius: 9999px; border: 1px solid rgb(139 92 246 / 0.4); display: inline-block;"
-                title="ステップの実績日から自動計算されています"
-              >
-                🤖 ステップから自動計算中
-              </span>
+            <div class="field field-full" style="margin-bottom: -4px;">
+              <span id="task-actual-date-auto-badge" class="hidden" style="background: rgb(139 92 246 / 0.2); color: #c4b5fd; font-size: 0.7rem; padding: 2px 8px; border-radius: 9999px; border: 1px solid rgb(139 92 246 / 0.4); display: inline-block;">🤖 ステップから自動計算中</span>
             </div>
             <div class="field">
               <label for="task-start-date">開始日（実績）</label>
@@ -983,7 +902,6 @@
               <label for="task-end-date">終了日（実績）</label>
               <input type="date" id="task-end-date" />
             </div>
-
             <div class="field">
               <label for="task-planned-study-time">予定学習時間（h）</label>
               <input type="number" id="task-planned-study-time" />
@@ -992,63 +910,33 @@
               <label for="task-study-time">学習時間（h）</label>
               <input type="number" id="task-study-time" />
             </div>
-
             <div class="field field-full">
               <label for="task-memo">メモ</label>
               <textarea id="task-memo"></textarea>
             </div>
-
             <div class="field field-full">
               <label for="task-understood-memo">理解したこと</label>
               <textarea id="task-understood-memo" rows="2"></textarea>
             </div>
-
             <div class="field field-full">
               <label for="task-unclear-points">不明だったこと</label>
               <textarea id="task-unclear-points" rows="2"></textarea>
             </div>
           </div>
-
           <div style="display:flex; align-items:center; justify-content:space-between; margin-top: var(--space-16); padding-top: var(--space-16); border-top: 1px solid rgb(255 255 255 / 0.06);">
             <span style="font-size:0.85rem; color:var(--color-text-secondary);">ステップ（孫タスク）</span>
-            <button type="button" id="btn-open-step-modal" class="btn btn-secondary">
-                📝 ステップを管理
-                <span id="task-step-summary-badge" class="task-step-badge" style="margin-left:6px;">0/0</span>
-              </button>
+            <button type="button" id="btn-open-step-modal" class="btn btn-secondary">📝 ステップを管理<span id="task-step-summary-badge" class="task-step-badge" style="margin-left:6px;">0/0</span></button>
           </div>
         </div>
-
-        <div
-          class="modal-footer"
-          style="
-            flex-shrink: 0;
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-            margin-top: 16px;
-            padding-top: 16px;
-            border-top: 1px solid rgb(255 255 255 / 0.06);
-          "
-        >
-          <button
-            type="button"
-            id="btn-task-delete"
-            class="btn btn-danger"
-            style="margin-right: auto"
-          >
-            削除
-          </button>
-          <button type="button" id="btn-task-close" class="btn btn-secondary">
-            キャンセル
-          </button>
-          <button type="button" id="btn-task-save" class="btn btn-primary">
-            保存
-          </button>
+        <div class="modal-footer" style="flex-shrink: 0; display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgb(255 255 255 / 0.06);">
+          <button type="button" id="btn-task-delete" class="btn btn-danger" style="margin-right: auto">削除</button>
+          <button type="button" id="btn-task-close" class="btn btn-secondary">キャンセル</button>
+          <button type="button" id="btn-task-save" class="btn btn-primary">保存</button>
         </div>
       </div>
     </div>
 
-    <div id="step-modal" class="modal hidden"><!-- ← ここに移動。task-modalと同じ階層 -->
+    <div id="step-modal" class="modal hidden">
       <div class="modal-content" style="width:560px; max-height:85vh; display:flex; flex-direction:column;">
         <div class="modal-header">
           <h3>ステップ（孫タスク）管理</h3>
@@ -1078,16 +966,8 @@
       <div class="modal-content">
         <div class="modal-header">
           <h3>書籍詳細</h3>
-          <button
-            type="button"
-            id="btn-book-close-x"
-            class="btn-modal-close"
-            aria-label="閉じる"
-          >
-            ✕
-          </button>
+          <button type="button" id="btn-book-close-x" class="btn-modal-close" aria-label="閉じる">✕</button>
         </div>
-
         <div class="book-modal-top">
           <div class="book-modal-cover">
             <img id="book-modal-cover-img" alt="表紙" style="display: none" />
@@ -1095,41 +975,25 @@
           </div>
           <div class="book-modal-top-info">
             <p id="book-modal-title" class="book-modal-title"></p>
-
             <label for="book-author">著者名</label>
             <input type="text" id="book-author" />
-
             <div class="book-modal-progress-wrap">
-              <div class="book-modal-progress-bar">
-                <i id="book-modal-progress-fill" style="width: 0%"></i>
-              </div>
-              <p
-                id="book-modal-progress-label"
-                class="book-modal-progress-label"
-              ></p>
+              <div class="book-modal-progress-bar"><i id="book-modal-progress-fill" style="width: 0%"></i></div>
+              <p id="book-modal-progress-label" class="book-modal-progress-label"></p>
             </div>
           </div>
         </div>
-
         <label for="book-total-chapters">全章数</label>
         <input type="number" id="book-total-chapters" />
-
         <div class="book-modal-chapters">
           <label>目次</label>
           <ul id="book-chapter-list" class="book-chapter-list"></ul>
         </div>
-
         <div class="modal-actions">
-          <button type="button" id="btn-book-delete" class="btn btn-danger">
-            削除
-          </button>
+          <button type="button" id="btn-book-delete" class="btn btn-danger">削除</button>
           <div class="task-actions-right">
-            <button type="button" id="btn-book-close" class="btn btn-secondary">
-              キャンセル
-            </button>
-            <button type="button" id="btn-book-save" class="btn btn-primary">
-              保存
-            </button>
+            <button type="button" id="btn-book-close" class="btn btn-secondary">キャンセル</button>
+            <button type="button" id="btn-book-save" class="btn btn-primary">保存</button>
           </div>
         </div>
       </div>
@@ -1139,14 +1003,7 @@
       <div class="modal-content" style="max-width: 400px">
         <div class="modal-header">
           <h3>親タスクを選択</h3>
-          <button
-            type="button"
-            id="btn-group-picker-close"
-            class="btn-modal-close"
-            aria-label="閉じる"
-          >
-            ✕
-          </button>
+          <button type="button" id="btn-group-picker-close" class="btn-modal-close" aria-label="閉じる">✕</button>
         </div>
         <ul id="group-picker-list" class="settings-list"></ul>
       </div>
@@ -1156,178 +1013,39 @@
       <div class="modal-content">
         <div class="modal-header">
           <h3>タスクを選択</h3>
-          <button
-            type="button"
-            id="btn-mandala-task-picker-close"
-            class="btn-modal-close"
-            aria-label="閉じる"
-          >
-            ✕
-          </button>
+          <button type="button" id="btn-mandala-task-picker-close" class="btn-modal-close" aria-label="閉じる">✕</button>
         </div>
-
-        <div
-          class="mandala-task-picker-search-row"
-          style="
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 12px;
-          "
-        >
-          <select
-            id="mandala-task-picker-group"
-            style="
-              width: 100%;
-              padding: 8px 12px;
-              border-radius: 6px;
-              border: 1px solid rgba(255, 255, 255, 0.1);
-              background-color: var(--color-bg-card);
-              color: var(--color-text-primary);
-              font-family: &quot;DM Sans&quot;, sans-serif;
-              font-size: 0.85rem;
-              cursor: pointer;
-            "
-          >
+        <div class="mandala-task-picker-search-row" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+          <select id="mandala-task-picker-group" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.1); background-color: var(--color-bg-card); color: var(--color-text-primary); font-family: &quot;DM Sans&quot;, sans-serif; font-size: 0.85rem; cursor: pointer;">
             <option value="all">📁 すべての親タスクを表示</option>
           </select>
-          <input
-            type="text"
-            id="mandala-task-picker-search"
-            placeholder="タスク名でさらに検索..."
-            style="width: 100%; box-sizing: border-box"
-          />
+          <input type="text" id="mandala-task-picker-search" placeholder="タスク名でさらに検索..." style="width: 100%; box-sizing: border-box" />
         </div>
-
-        <div
-          id="mandala-task-picker-list"
-          class="mandala-task-picker-list"
-        ></div>
-
+        <div id="mandala-task-picker-list" class="mandala-task-picker-list"></div>
         <div class="modal-actions" style="margin-top: 16px">
-          <div
-            class="task-actions-right"
-            style="margin-left: auto; display: flex; gap: 8px"
-          >
-            <button
-              type="button"
-              id="btn-mandala-task-picker-cancel"
-              class="btn btn-secondary"
-            >
-              キャンセル
-            </button>
-            <button
-              type="button"
-              id="btn-mandala-task-picker-save"
-              class="btn btn-primary"
-            >
-              選択を保存
-            </button>
+          <div class="task-actions-right" style="margin-left: auto; display: flex; gap: 8px">
+            <button type="button" id="btn-mandala-task-picker-cancel" class="btn btn-secondary">キャンセル</button>
+            <button type="button" id="btn-mandala-task-picker-save" class="btn btn-primary">選択を保存</button>
           </div>
         </div>
       </div>
     </div>
+
     <div id="goal-modal" class="modal hidden">
-      <div class="modal-content" style="
-        width: 480px; 
-        max-height: 85vh; 
-        display: flex; 
-        flex-direction: column; 
-        background: var(--color-bg-card, #1e1e2e); 
-        border: 1px solid rgba(255, 255, 255, 0.08); 
-        border-radius: var(--radius-lg, 12px);
-        box-shadow: 0 16px 36px rgba(0,0,0,0.4);
-        overflow: hidden;
-      ">
-        
-        <div class="modal-header" style="
-          display: flex; 
-          align-items: center; 
-          justify-content: space-between; 
-          padding: var(--space-16, 16px) var(--space-24, 24px);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-        ">
-          <h3 style="
-            font-family: 'Syne', sans-serif; 
-            font-size: 1.15rem; 
-            margin: 0; 
-            color: var(--color-text-primary, #ffffff);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-          ">🎯 目標を設定する</h3>
-          <button type="button" id="btn-goal-modal-close-x" class="btn-modal-close" style="
-            background: transparent; 
-            border: none; 
-            color: var(--color-text-tertiary, #a6adc8); 
-            font-size: 1.1rem; 
-            cursor: pointer;
-            padding: 4px;
-          ">✕</button>
+      <div class="modal-content" style="width: 480px; max-height: 85vh; display: flex; flex-direction: column; background: var(--color-bg-card, #1e1e2e); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--radius-lg, 12px); box-shadow: 0 16px 36px rgba(0,0,0,0.4); overflow: hidden;">
+        <div class="modal-header" style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-16, 16px) var(--space-24, 24px); border-bottom: 1px solid rgba(255, 255, 255, 0.06);">
+          <h3 style="font-family: 'Syne', sans-serif; font-size: 1.15rem; margin: 0; color: var(--color-text-primary, #ffffff); display: flex; align-items: center; gap: 8px;">🎯 目標を設定する</h3>
+          <button type="button" id="btn-goal-modal-close-x" class="btn-modal-close" style="background: transparent; border: none; color: var(--color-text-tertiary, #a6adc8); font-size: 1.1rem; cursor: pointer; padding: 4px;">✕</button>
         </div>
-    
-        <div class="modal-body" style="
-          padding: var(--space-24, 24px); 
-          overflow-y: auto;
-          flex-grow: 1;
-        ">
+        <div class="modal-body" style="padding: var(--space-24, 24px); overflow-y: auto; flex-grow: 1;">
           <div class="form-group" style="display: flex; flex-direction: column; gap: var(--space-8, 8px);">
-            <label for="goal-input-text" style="
-              font-size: 0.82rem; 
-              color: var(--color-text-secondary, #cdd6f4);
-              font-weight: 500;
-            ">新しい目標内容</label>
-            <textarea
-              id="goal-input-text"
-              rows="5"
-              placeholder="例：今週は〇〇の基礎を完全にマスターする！"
-              style="
-                width: 100%; 
-                padding: 12px; 
-                border-radius: var(--radius-md, 8px); 
-                border: 1px solid rgba(255, 255, 255, 0.1); 
-                background: var(--color-bg-base, #11111b); 
-                color: var(--color-text-primary, #ffffff); 
-                box-sizing: border-box;
-                resize: none;
-                font-family: inherit;
-                font-size: 0.9rem;
-                line-height: 1.5;
-                outline: none;
-                transition: border-color 0.15s ease;
-              "
-              onfocus="this.style.borderColor='var(--color-accent-primary, #6366f1)'"
-              onblur="this.style.borderColor='rgba(255, 255, 255, 0.1)'"
-            ></textarea>
+            <label for="goal-input-text" style="font-size: 0.82rem; color: var(--color-text-secondary, #cdd6f4); font-weight: 500;">新しい目標内容</label>
+            <textarea id="goal-input-text" rows="5" placeholder="例：今週は〇〇の基礎を完全にマスターする！" style="width: 100%; padding: 12px; border-radius: var(--radius-md, 8px); border: 1px solid rgba(255, 255, 255, 0.1); background: var(--color-bg-base, #11111b); color: var(--color-text-primary, #ffffff); box-sizing: border-box; resize: none; font-family: inherit; font-size: 0.9rem; line-height: 1.5; outline: none; transition: border-color 0.15s ease;" onfocus="this.style.borderColor='var(--color-accent-primary, #6366f1)'" onblur="this.style.borderColor='rgba(255, 255, 255, 0.1)'"></textarea>
           </div>
         </div>
-    
-        <div class="modal-footer" style="
-          display: flex; 
-          justify-content: flex-end; 
-          gap: 12px; 
-          padding: var(--space-16, 16px) var(--space-24, 24px);
-          background: rgba(0, 0, 0, 0.15);
-          border-top: 1px solid rgba(255, 255, 255, 0.06);
-          margin-top: auto;
-        ">
-          <button type="button" id="btn-goal-modal-cancel" class="btn btn-secondary" style="
-            padding: 8px 16px;
-            border-radius: var(--radius-md, 6px);
-            font-size: 0.88rem;
-            cursor: pointer;
-          ">
-            キャンセル
-          </button>
-          <button type="button" id="btn-goal-modal-save" class="btn btn-primary" style="
-            padding: 8px 20px;
-            border-radius: var(--radius-md, 6px);
-            font-size: 0.88rem;
-            font-weight: 600;
-            cursor: pointer;
-          ">
-            保存する
-          </button>
+        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 12px; padding: var(--space-16, 16px) var(--space-24, 24px); background: rgba(0, 0, 0, 0.15); border-top: 1px solid rgba(255, 255, 255, 0.06); margin-top: auto;">
+          <button type="button" id="btn-goal-modal-cancel" class="btn btn-secondary" style="padding: 8px 16px; border-radius: var(--radius-md, 6px); font-size: 0.88rem; cursor: pointer;">キャンセル</button>
+          <button type="button" id="btn-goal-modal-save" class="btn btn-primary" style="padding: 8px 20px; border-radius: var(--radius-md, 6px); font-size: 0.88rem; font-weight: 600; cursor: pointer;">保存する</button>
         </div>
       </div>
     </div>
@@ -1336,31 +1054,78 @@
       <div class="modal-content">
         <div class="modal-header">
           <h3>📊 前期間のリザルト</h3>
-          <button
-            type="button"
-            id="btn-result-modal-close-x"
-            class="btn-modal-close"
-            aria-label="閉じる"
-          >
-            ✕
-          </button>
+          <button type="button" id="btn-result-modal-close-x" class="btn-modal-close" aria-label="閉じる">✕</button>
         </div>
-
         <div class="result-modal-nav hidden" id="result-modal-nav">
           <button type="button" id="result-modal-prev" class="btn-result-nav" aria-label="前へ">＜</button>
           <span id="result-modal-page" class="result-modal-page-label"></span>
           <button type="button" id="result-modal-next" class="btn-result-nav" aria-label="次へ">＞</button>
         </div>
-
         <div id="result-modal-content-area"></div>
-
         <div class="modal-actions result-modal-footer">
-          <button type="button" id="btn-result-modal-go-page" class="btn btn-secondary">
-            リザルト画面を見る
-          </button>
-          <button type="button" id="btn-result-modal-close" class="btn btn-primary">
-            閉じる
-          </button>
+          <button type="button" id="btn-result-modal-go-page" class="btn btn-secondary">リザルト画面を見る</button>
+          <button type="button" id="btn-result-modal-close" class="btn btn-primary">閉じる</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="add-log-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 16px;">
+          <h3 style="margin: 0;">✍️ 学習ログの新規手動記録</h3>
+          <button id="btn-close-add-log-modal" style="background: none; border: none; color: #aaa; font-size: 1.5rem; cursor: pointer;">&times;</button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          <div>
+            <label style="display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 4px;">📅 学習日 *</label>
+            <input type="date" id="add-log-date">
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 4px;">📌 紐づける子タスク（任意）</label>
+            <select id="add-log-task-id"><option value="">（タスクに紐づけない・一般学習）</option></select>
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 4px;">📖 紐づける書籍（任意）</label>
+            <select id="add-log-book-id"><option value="">（書籍に紐づけない）</option></select>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+              <label style="display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 4px;">⏱️ 学習時間 (分) *</label>
+              <input type="number" id="add-log-time" placeholder="例: 45" min="1">
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 4px;">🚀 進んだページ/章数</label>
+              <input type="number" id="add-log-progress" placeholder="例: 5" min="0">
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+              <label style="display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 4px;">🧠 体感難易度</label>
+              <select id="add-log-difficulty">
+                <option value="">（未選択）</option>
+                <option value="1">1: 超簡単 😌</option>
+                <option value="2">2: やや易しい 🙂</option>
+                <option value="3">3: 普通 😐</option>
+                <option value="4">4: やや難しい 汗</option>
+                <option value="5">5: 激ムズ 爆発</option>
+              </select>
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 4px;">🔥 その日のやる気</label>
+              <select id="add-log-motivation">
+                <option value="">（未選択）</option>
+                <option value="1">1: 全く出ない 眠い</option>
+                <option value="2">2: あまり出ない 曇</option>
+                <option value="3">3: 普通 晴</option>
+                <option value="4">4: やる気あり 炎</option>
+                <option value="5">5: 最高潮 ロケット</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions" style="margin-top: 20px; justify-content: flex-end;">
+          <button id="btn-cancel-add-log" class="btn btn-secondary">キャンセル</button>
+          <button id="btn-save-add-log" class="btn btn-primary">この内容で記録</button>
         </div>
       </div>
     </div>

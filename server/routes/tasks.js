@@ -110,14 +110,37 @@ router.put("/:id", async (req, res, next) => {
       "understood_memo",
       "unclear_points",
     ];
+
     const fields = [];
     const values = [];
+
     for (const field of allowedFields) {
       if (field in req.body) {
+        let value = req.body[field];
+
+        // 💡 【追加ガード処理】日付や数値フィールドで空文字("")が送られてきたら NULL に変換して MySQL のエラーを防ぐ！
+        if (value === "") {
+          const nullFields = [
+            "start_planned_date",
+            "end_planned_date",
+            "start_date",
+            "end_date",
+            "study_time",
+            "planned_study_time",
+            "progress_rate",
+            "group_id",
+            "book_id"
+          ];
+          if (nullFields.includes(field)) {
+            value = null;
+          }
+        }
+
         fields.push(`${field} = ?`);
-        values.push(req.body[field]);
+        values.push(value);
       }
     }
+
     if (fields.length === 0)
       return res.status(400).json({ error: "更新するフィールドがありません" });
 
