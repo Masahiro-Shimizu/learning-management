@@ -795,7 +795,8 @@ document.getElementById("step-list")?.addEventListener("click", async (e) => {
         task_id: taskId,
         step_id: stepId,
         book_id: taskDataForLog.book_id || null,
-        study_time: delta,
+        // study_logs.study_time は「時間(h)」で保持するため、分単位のdeltaを変換する
+        study_time: Math.round((delta / 60) * 100) / 100,
         progress_value: progressValue,
         difficulty: difficultyValue,
         motivation: motivationValue,
@@ -2866,7 +2867,8 @@ document
           log_date: body.end_date,
           task_id: savedTaskId || null,
           book_id: body.book_id || null,
-          study_time: delta,
+          // study_logs.study_time は「時間(h)」で保持するため、分単位のdeltaを変換する
+          study_time: Math.round((delta / 60) * 100) / 100,
           progress_value: 1,
         });
       }

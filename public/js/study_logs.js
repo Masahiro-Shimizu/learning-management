@@ -21,16 +21,16 @@ function formatLogDate(dateStr) {
 
 function createStudyLogRowHtml(log) {
   const taskTitle = studyLogsTaskMap[log.task_id] || (log.task_id ? `#${log.task_id}` : "－");
-  const hours = (Number(log.study_time || 0) / 60).toFixed(1);
+  // 変更： / 60 を削除して、そのままの数値を小数点第1位で表示
+  const hours = Number(log.study_time || 0).toFixed(1);
   const difficultyHtml = log.difficulty ? DIFFICULTY_EMOJI[log.difficulty] || "" : "－";
   const motivationHtml = log.motivation ? MOTIVATION_EMOJI[log.motivation] || "" : "－";
 
   return `
-    <tr data-log-id="${log.id}">
-      <td>${formatLogDate(log.log_date)}</td>
+  <td>${formatLogDate(log.log_date)}</td>
       <td>${taskTitle}</td>
-      <td>${hours}h</td>
-      <td>${log.progress_value ?? "－"}</td>
+      <td>${hours} h</td>
+      <td>${log.progress_value != null ? Number(log.progress_value) : "－"}</td>
       <td>${difficultyHtml}</td>
       <td>${motivationHtml}</td>
       <td class="task-table-dim">${formatLogDateTime(log.created_at)}</td>
@@ -179,7 +179,8 @@ document.addEventListener("click", async (e) => {
       document.getElementById("add-log-date").value = formattedDate;
       document.getElementById("add-log-task-id").value = log.task_id || "";
       document.getElementById("add-log-book-id").value = log.book_id || "";
-      document.getElementById("add-log-time").value = log.study_time || "";
+      // 変更： 小数点や0も正しく表示されるように ?? を使用
+      document.getElementById("add-log-time").value = log.study_time ?? "";
       document.getElementById("add-log-progress").value = log.progress_value || "";
       document.getElementById("add-log-difficulty").value = log.difficulty || "";
       document.getElementById("add-log-motivation").value = log.motivation || "";
@@ -204,7 +205,8 @@ document.addEventListener("click", async (e) => {
     const logDate = document.getElementById("add-log-date").value;
     const taskId = document.getElementById("add-log-task-id").value;
     const bookId = document.getElementById("add-log-book-id").value;
-    const studyTime = parseInt(document.getElementById("add-log-time").value, 10);
+    // 変更： 小数点を受け取るために parseFloat に変更
+    const studyTime = parseFloat(document.getElementById("add-log-time").value);
     const progressValue = parseInt(document.getElementById("add-log-progress").value, 10) || 0;
     const difficulty = document.getElementById("add-log-difficulty").value;
     const motivation = document.getElementById("add-log-motivation").value;
@@ -213,8 +215,9 @@ document.addEventListener("click", async (e) => {
       alert("📅 学習日を入力してください。");
       return;
     }
-    if (!studyTime || isNaN(studyTime) || studyTime <= 0) {
-      alert("⏱️ 学習時間を正しい数値（1分以上）で入力してください。");
+    // 変更： 小数点（0.5など）を許可するため !studyTime を削除し、メッセージを変更
+    if (isNaN(studyTime) || studyTime <= 0) {
+      alert("⏱️ 学習時間を正しい数値（例: 0.5、1.5）で入力してください。");
       return;
     }
 
