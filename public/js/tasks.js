@@ -590,6 +590,32 @@ function setTaskModalActualDateLock(isAuto, autoStartDate, autoEndDate) {
   }
 }
 
+// v2.21.30追加：残ページ数の表示（study_logs.progress_valueの合計から算出）
+async function renderBookProgressInfo(bookId) {
+  const el = document.getElementById("task-book-progress-info");
+  if (!el) return;
+  if (!bookId) {
+    el.textContent = "";
+    return;
+  }
+  const { totalPages, pagesCompleted, remainingPages } = await api(
+    `/api/books/${bookId}/progress`,
+  );
+  el.textContent =
+    totalPages != null
+      ? `残り ${remainingPages}p ／ 全 ${totalPages}p（完了 ${pagesCompleted}p）`
+      : "この書籍には総ページ数が未設定です";
+}
+
+// v2.21.30追加：書籍セレクト変更時に残ページ数表示とページ管理モード判定を更新
+document.getElementById("task-book-id")?.addEventListener("change", async (e) => {
+  const bookId = e.target.value;
+  renderBookProgressInfo(bookId);
+  document.getElementById("task-modal").dataset.bookTotalPages = bookId
+    ? (await api(`/api/books/${bookId}`)).total_pages ?? ""
+    : "";
+});
+
 // ステップ一覧からmodalの時間入力欄を上書きし、APIも更新する
 // 変更後
 async function syncStepTotalsToTask(taskId) {
@@ -752,10 +778,15 @@ document.getElementById("step-list")?.addEventListener("click", async (e) => {
         ? Math.round(parseFloat(stVal) * 60)
         : null;
     const progressVal = li.querySelector(".step-field-progress")?.value;
-    const progressValue =
+    // v2.21.30変更：総ページ数が設定された書籍のタスクは、フォールバック値を
+    // 1から0（記録なし）に変更する。目安ページ数(tasks.page_count)ではなく
+    // 総ページ数(books.total_pages)の有無で判定する（chapter_idという概念は不採用のため）
+    const pageTrackingEnabled = !!document.getElementById("task-modal").dataset.bookTotalPages;
+    const enteredProgress =
       progressVal && !isNaN(parseFloat(progressVal)) && parseFloat(progressVal) > 0
         ? parseFloat(progressVal)
-        : 1;
+        : null;
+    const progressValue = enteredProgress ?? (pageTrackingEnabled ? 0 : 1);
     const difficultyBtn = li.querySelector('.step-meta-emoji-row[data-meta="difficulty"] .step-meta-emoji-btn.active');
     const motivationBtn = li.querySelector('.step-meta-emoji-row[data-meta="motivation"] .step-meta-emoji-btn.active');
     const difficultyValue = difficultyBtn ? Number(difficultyBtn.dataset.value) : null;
@@ -787,8 +818,9 @@ document.getElementById("step-list")?.addEventListener("click", async (e) => {
     // 💡 【改修ポイント】終了日(aed)が無ければ開始日(asd)、それも無ければ「今日」を採用
     const targetLogDate = aed || asd || todayStr;
 
-    // 💡 【改修ポイント】「&& aed」の縛りを消し、差分(delta)があれば確実に保存する
-    if (delta > 0) {
+    // v2.21.30変更：ページ管理モードのタスクは、ページ数が実際に入力された場合のみ記録する
+    const shouldLog = pageTrackingEnabled ? enteredProgress != null : delta > 0;
+    if (delta > 0 && shouldLog) {
       const taskDataForLog = await api(`/api/tasks/${taskId}`);
       await api("/api/study-logs", "POST", {
         log_date: targetLogDate, // 自動判定した日付をセット
@@ -801,6 +833,11 @@ document.getElementById("step-list")?.addEventListener("click", async (e) => {
         difficulty: difficultyValue,
         motivation: motivationValue,
       });
+
+      // v2.21.30追加：残ページ数表示をリアルタイムに反映
+      if (pageTrackingEnabled) {
+        renderBookProgressInfo(taskDataForLog.book_id);
+      }
     }
 
     const tmp = document.createElement("ul");
@@ -872,6 +909,14 @@ async function openTaskEditModal(taskId) {
   document.getElementById("task-category").value = task.category_id;
   document.getElementById("task-granularity").value = task.granularity || "";
   document.getElementById("task-book-id").value = task.book_id || "";
+  // v2.21.30追加：書籍の総ページ数を取得し、ページ管理モードかどうかを判定・残ページ数を表示
+  if (task.book_id) {
+    const book = await api(`/api/books/${task.book_id}`);
+    document.getElementById("task-modal").dataset.bookTotalPages = book.total_pages ?? "";
+  } else {
+    document.getElementById("task-modal").dataset.bookTotalPages = "";
+  }
+  renderBookProgressInfo(task.book_id);
   document.getElementById("task-status").value = task.status;
   document.getElementById("task-start-planned-date").value = formatDateForInput(
     task.start_planned_date,
@@ -2751,6 +2796,9 @@ function openTaskModal(
   document.getElementById("task-granularity").value =
     prefill?.granularity ?? "";
   document.getElementById("task-book-id").value = prefill?.book_id ?? "";
+  // v2.21.30追加：新規作成時はページ管理モードを一旦リセット
+  document.getElementById("task-modal").dataset.bookTotalPages = "";
+  renderBookProgressInfo(prefill?.book_id ?? "");
   document.getElementById("task-status").value = status;
   document.getElementById("task-start-planned-date").value =
     prefill?.start_planned_date ?? plannedDate ?? "";

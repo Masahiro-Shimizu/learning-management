@@ -7,20 +7,16 @@ let currentBookModalTasks = []; // 開いている書籍モーダルの章（子
 // ==========================================
 function calcBookStatus(book, tasks = []) {
   const completed = Number(book.completed_count) || 0;
-  // 読了：全何章が設定済みかつ完了数が全何章以上
   if (book.total_chapters && completed >= book.total_chapters) return "読了";
 
-  // tasksが空または配列でない場合の安全対策
   const safeTasks = Array.isArray(tasks) ? tasks : [];
   const children = safeTasks.filter(
     (t) => String(t.book_id) === String(book.id),
   );
 
-  // 子タスクが0件、または全て未着手 → 未読
   if (children.length === 0 || children.every((t) => t.status === "未着手")) {
     return "未読";
   }
-  // それ以外（着手中・一部完了など）→ 読書中
   return "読書中";
 }
 
@@ -128,6 +124,7 @@ function openBookModal(book) {
   document.getElementById("book-author").value = book.author || "";
   document.getElementById("book-total-chapters").value =
     book.total_chapters ?? "";
+  document.getElementById("book-total-pages").value = book.total_pages ?? "";
 
   // 表紙画像
   const coverImg = document.getElementById("book-modal-cover-img");
@@ -151,6 +148,7 @@ function openBookModal(book) {
 
   renderBookChapterList(currentBookModalTasks);
   updateBookModalProgress(currentBookModalTasks);
+  renderBookPagesSummary(bookId);
 
   document.getElementById("book-modal").dataset.bookId = bookId;
   document.getElementById("book-modal").classList.remove("hidden");
@@ -172,15 +170,14 @@ function renderBookChapterList(tasks) {
     li.className = "book-chapter-item";
     li.dataset.taskId = task.id;
 
-    // ★ 修正箇所: 枠線や背景色のスタイル設定を削除し、下の余白（間隔）だけ設定
     li.style.marginBottom = "12px";
 
-    // アコーディオンのHTML構造を作成（メモ欄の上の点線なども削除しシンプルにしました）
     li.innerHTML = `
   <div class="chapter-header" style="display: flex; align-items: center; gap: 8px;">
     <button type="button" class="chapter-toggle-btn" style="background: none; border: none; color: #aaa; cursor: pointer; width: 24px; height: 24px; font-size: 12px; display: flex; align-items: center; justify-content: center; padding: 0;">▶</button>
     <input type="checkbox" class="chapter-check" ${task.status === "完了" ? "checked" : ""}>
     <span class="book-chapter-title chapter-title" style="flex: 1; cursor: pointer; text-decoration: underline; text-decoration-color: rgba(255,255,255,0.25);">${task.title}</span>
+    <input type="number" class="chapter-page-count-input" value="${task.page_count ?? ""}" placeholder="p" title="この章のページ数" style="width:56px; padding:2px 6px; font-size:0.78rem; background:rgba(0,0,0,0.2); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:4px;" />
     <button type="button" class="chapter-goto-task-btn" title="このタスクを編集" style="background:none;border:none;color:#818cf8;cursor:pointer;display:flex;align-items:center;padding:2px;flex-shrink:0;">
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
     </button>
@@ -214,6 +211,21 @@ function renderBookChapterList(tasks) {
     checkbox.addEventListener("change", () =>
       handleBookChapterToggle(task.id, checkbox.checked),
     );
+
+    // ===== ページ数入力イベント =====
+    const pageCountInput = li.querySelector(".chapter-page-count-input");
+    pageCountInput.addEventListener("change", async () => {
+      const value = pageCountInput.value === "" ? null : Number(pageCountInput.value);
+      await api(`/api/tasks/${task.id}`, "PUT", { page_count: value });
+
+      const cached = currentBookModalTasks.find((t) => t.id === task.id);
+      if (cached) cached.page_count = value;
+      const globalTask = allTasksForBooks.find((t) => t.id === task.id);
+      if (globalTask) globalTask.page_count = value;
+
+      const bookId = document.getElementById("book-modal").dataset.bookId;
+      renderBookPagesSummary(bookId);
+    });
 
     const title = li.querySelector(".chapter-title");
     title.addEventListener("click", () => {
@@ -272,6 +284,9 @@ async function handleBookChapterToggle(taskId, checked) {
 
     const globalTask = allTasksForBooks.find((t) => t.id === taskId);
     if (globalTask) globalTask.status = newStatus;
+
+    const bookId = document.getElementById("book-modal").dataset.bookId;
+    renderBookPagesSummary(bookId);
   } catch (err) {
     console.error("章の状態更新に失敗しました:", err);
     alert("更新に失敗しました");
@@ -294,6 +309,23 @@ function updateBookModalProgress(tasks) {
         ? `進捗 ${done} / ${total}（${percent}%）`
         : "紐づくタスクがまだありません";
   }
+}
+
+// 残ページ数の集計表示（study_logsベース）
+async function renderBookPagesSummary(bookId) {
+  const el = document.getElementById("book-modal-pages-summary");
+  if (!el || !bookId) return;
+  const { totalPages, pagesCompleted, pageCountSum, isMismatched, remainingPages } =
+    await api(`/api/books/${bookId}/progress`);
+
+  let text = `章の合計 ${pageCountSum}p`;
+  if (totalPages != null) {
+    text += ` ／ 総ページ数 ${totalPages}p`;
+    if (isMismatched) text += " ⚠️一致していません";
+    text += `（実績 ${pagesCompleted}p進行・残り ${remainingPages}p）`;
+  }
+  el.textContent = text;
+  el.style.color = isMismatched ? "#f59e0b" : "";
 }
 
 function closeBookModal() {
@@ -333,11 +365,13 @@ function initBooks() {
       ).value;
       const total_chapters =
         totalChaptersValue === "" ? null : Number(totalChaptersValue);
+      const total_pages =
+        document.getElementById("book-total-pages").value || null;
 
-      // 古いメモ機能は削除したため、authorとtotal_chaptersのみ更新する
       await api(`/api/books/${bookId}`, "PUT", {
         author,
         total_chapters,
+        total_pages,
       });
       closeBookModal();
       renderBooks();

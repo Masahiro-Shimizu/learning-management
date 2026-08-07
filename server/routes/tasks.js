@@ -48,6 +48,7 @@ router.post("/", async (req, res, next) => {
       category_id = 1,
       granularity = null,
       book_id = null,
+      page_count = null,
       status = "未着手",
       start_planned_date = null,
       end_planned_date = null,
@@ -62,8 +63,8 @@ router.post("/", async (req, res, next) => {
       return res.status(400).json({ error: "title と type_id は必須です" });
 
     const [result] = await db.query(
-      `INSERT INTO tasks (group_id, title, type_id, category_id, granularity, book_id, status, start_planned_date, end_planned_date, start_date, end_date, study_time, planned_study_time, memo)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO tasks (group_id, title, type_id, category_id, granularity, book_id, page_count, status, start_planned_date, end_planned_date, start_date, end_date, study_time, planned_study_time, memo)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         group_id,
         title,
@@ -71,6 +72,7 @@ router.post("/", async (req, res, next) => {
         category_id,
         granularity,
         book_id,
+        page_count,
         status,
         start_planned_date,
         end_planned_date,
@@ -99,6 +101,7 @@ router.put("/:id", async (req, res, next) => {
       "category_id",
       "granularity",
       "book_id",
+      "page_count",
       "status",
       "start_planned_date",
       "end_planned_date",
@@ -118,7 +121,6 @@ router.put("/:id", async (req, res, next) => {
       if (field in req.body) {
         let value = req.body[field];
 
-        // 💡 【追加ガード処理】日付や数値フィールドで空文字("")が送られてきたら NULL に変換して MySQL のエラーを防ぐ！
         if (value === "") {
           const nullFields = [
             "start_planned_date",
@@ -129,7 +131,8 @@ router.put("/:id", async (req, res, next) => {
             "planned_study_time",
             "progress_rate",
             "group_id",
-            "book_id"
+            "book_id",
+            "page_count",
           ];
           if (nullFields.includes(field)) {
             value = null;

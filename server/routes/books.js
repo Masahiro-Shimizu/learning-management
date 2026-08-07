@@ -34,6 +34,44 @@ router.get("/:id", async (req, res, next) => {
   }
 });
 
+// GET /api/books/:id/progress - 残ページ数（study_logsの積み上げから算出）
+// ※ /:id より前に置く必要はない（パスの形が違うため衝突しない）が、
+//   分かりやすさのため /:id の直後に配置している
+router.get("/:id/progress", async (req, res, next) => {
+  try {
+    const [[book]] = await db.query(
+      "SELECT total_pages FROM books WHERE id = ?",
+      [req.params.id],
+    );
+    if (!book) return res.status(404).json({ error: "書籍が見つかりません" });
+
+    const [[{ pagesCompleted }]] = await db.query(
+      `SELECT COALESCE(SUM(progress_value), 0) AS pagesCompleted
+       FROM study_logs WHERE book_id = ?`,
+      [req.params.id],
+    );
+    const [[{ pageCountSum }]] = await db.query(
+      `SELECT COALESCE(SUM(page_count), 0) AS pageCountSum
+       FROM tasks WHERE book_id = ?`,
+      [req.params.id],
+    );
+
+    const totalPages = book.total_pages;
+    res.json({
+      totalPages,
+      pagesCompleted: Number(pagesCompleted),
+      pageCountSum: Number(pageCountSum),
+      isMismatched: totalPages != null && totalPages !== Number(pageCountSum),
+      remainingPages:
+        totalPages != null
+          ? Math.max(totalPages - Number(pagesCompleted), 0)
+          : null,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.post("/", async (req, res, next) => {
   try {
     const {
@@ -77,6 +115,7 @@ router.put("/:id", async (req, res, next) => {
       "cover_url",
       "memo",
       "total_chapters",
+      "total_pages",
       "understood_memo",
       "unclear_points",
     ];
