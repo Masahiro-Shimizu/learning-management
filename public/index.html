@@ -876,14 +876,19 @@
                 <option value="トピック単位">トピック単位</option>
               </select>
             </div>
-            <div class="field field-full" style="display:flex; align-items:flex-end; gap:8px;">
-              <div style="flex:1;">
-                <label for="task-book-id">紐づく書籍</label>
-                <select id="task-book-id"><option value="">（なし）</option></select>
+            <!-- 💡 書籍選択と進捗情報を1つのブロックにまとめます -->
+            <div class="field field-full">
+              <div style="display:flex; align-items:flex-end; gap:8px;">
+                <div style="flex:1;">
+                  <label for="task-book-id">紐づく書籍</label>
+                  <select id="task-book-id"><option value="">（なし）</option></select>
+                </div>
+                <button type="button" id="btn-task-view-book" class="btn btn-secondary hidden" style="white-space:nowrap;">📖 書籍を見る</button>
               </div>
-              <button type="button" id="btn-task-view-book" class="btn btn-secondary hidden" style="white-space:nowrap;">📖 書籍を見る</button>
+              <!-- 💡 右寄せにして、セレクトボックスの右下にさりげなく配置します -->
+              <p id="task-book-progress-info" class="tasks-sub" style="margin: 6px 4px 0 0; text-align: right; font-size: 0.75rem;"></p>
             </div>
-            <p id="task-book-progress-info" class="tasks-sub" style="margin: -4px 0 4px 0;"></p>
+            
             <div class="field">
               <label for="task-start-planned-date">開始予定日</label>
               <input type="date" id="task-start-planned-date" />
