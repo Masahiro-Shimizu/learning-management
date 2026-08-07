@@ -236,16 +236,40 @@ function animateSummaryValue(el, endValue, { decimals = 0, duration = 700 } = {}
 // が発生してしまっていた。optionsの中身（軸設定・凡例など）は毎回同じ内容しか
 // 渡していないため、初回生成時以外はoptionsに一切触らず、data（labels/datasets）
 // の差し替えとupdate()のみを行うようにした。
+// ===== グラフ =====
+// アニメーションスキップ問題を根本解決する、完全固定バリア方式の upsertChart
+// ===== グラフ =====
+// アニメーションスキップ問題を根本解決する「遅延update」方式の upsertChart
 function upsertChart(existingChart, canvasEl, config) {
   if (existingChart) {
-    existingChart.data.labels = config.data.labels;
-    existingChart.data.datasets = config.data.datasets;
-    existingChart.update();
-    return existingChart;
+    existingChart.destroy();
   }
-  return new Chart(canvasEl, config);
-}
 
+  // 【最強の裏技】
+  // 初期化時は「すべて0」のデータで生成し、画面の揺れが収まってから本来のデータを流し込むことで、
+  // リサイズ検知によるアニメーションの強制終了を完全に回避します。
+
+  // 1. 本来のデータセットを安全に退避
+  const originalDatasets = config.data.datasets;
+  
+  // 2. グラフ生成用には「すべて0」のダミーデータセットを作成してセット
+  config.data.datasets = originalDatasets.map(dataset => ({
+    ...dataset,
+    data: dataset.data ? dataset.data.map(() => 0) : []
+  }));
+
+  // 3. データ0の状態でグラフインスタンスを生成（呼び出し元の処理を止めないようすぐ返す）
+  const chart = new Chart(canvasEl, config);
+
+  // 4. CSSフェードイン等の微小な画面の揺れが完全に終わる頃合い（約400ms後）に、
+  //    本来のデータを注入してアニメーションを意図的に発動させる！
+  setTimeout(() => {
+    chart.data.datasets = originalDatasets;
+    chart.update(); // 🌟ここで確実に「0からスゥーッと伸びる」アニメーションが再生されます
+  }, 400);
+
+  return chart;
+}
 function shiftPeriod(direction) {
   if (currentPeriod === "week") {
     viewDate.setDate(viewDate.getDate() + 7 * direction);

@@ -190,6 +190,8 @@ function buildDiffBadgeHtml(current, prev, unit = "") {
 //   "#7fd46f",
 // ];
 
+// ===== グラフ描画（個別独立生成ロジック：アニメーション対応版） =====
+
 function createBarChart(canvasEl, filteredTasks) {
   if (!canvasEl) return null;
   const categoryMap = new Map();
@@ -200,14 +202,18 @@ function createBarChart(canvasEl, filteredTasks) {
   const catNames = [...categoryMap.keys()];
   const catHours = catNames.map((n) => minutesToHours(categoryMap.get(n)));
 
-  return new Chart(canvasEl, {
+  // 1. 本来のデータを退避し、最初はすべて0のダミーデータを用意
+  const originalData = catHours.length > 0 ? catHours : [];
+  const dummyData = originalData.map(() => 0);
+
+  const chart = new Chart(canvasEl, {
     type: "bar",
     data: {
       labels: catNames.length > 0 ? catNames : ["データなし"],
       datasets: [
         {
           label: "学習時間（h）",
-          data: catHours.length > 0 ? catHours : [],
+          data: dummyData, // 最初は0をセットして生成
           backgroundColor: catNames.map((n) => getCategoryChartColor(n)),
           borderRadius: 4,
         },
@@ -227,6 +233,14 @@ function createBarChart(canvasEl, filteredTasks) {
       },
     },
   });
+
+  // 2. 画面の切り替え（揺れ）が収まる約400ms後に本来のデータを流し込んでアニメーション発動
+  setTimeout(() => {
+    chart.data.datasets[0].data = originalData;
+    chart.update();
+  }, 400);
+
+  return chart;
 }
 
 function createDoughnutChart(canvasEl, filteredTasks) {
@@ -235,13 +249,17 @@ function createDoughnutChart(canvasEl, filteredTasks) {
   const inprogress = filteredTasks.filter((t) => t.status === "進行中").length;
   const done = filteredTasks.filter((t) => t.status === "完了").length;
 
-  return new Chart(canvasEl, {
+  // 1. 本来のデータを退避し、最初はすべて0のダミーデータを用意
+  const originalData = [todo, inprogress, done];
+  const dummyData = [0, 0, 0];
+
+  const chart = new Chart(canvasEl, {
     type: "doughnut",
     data: {
       labels: [`未着手 ${todo}`, `進行中 ${inprogress}`, `完了 ${done}`],
       datasets: [
         {
-          data: [todo, inprogress, done],
+          data: dummyData, // 最初は0をセットして生成
           backgroundColor: ["#808080", "#4d7fd4", "#3a9d6e"],
           borderWidth: 0,
         },
@@ -265,6 +283,14 @@ function createDoughnutChart(canvasEl, filteredTasks) {
       },
     },
   });
+
+  // 2. 画面の切り替え（揺れ）が収まる約400ms後に本来のデータを流し込んでアニメーション発動
+  setTimeout(() => {
+    chart.data.datasets[0].data = originalData;
+    chart.update();
+  }, 400);
+
+  return chart;
 }
 // ===== コンテンツHTML生成（モーダル・ページ共通） =====
 
@@ -460,24 +486,69 @@ async function initResults() {
   renderResultsPage(tasks);
   initResultsPageFilter();
 }
+// ===== リザルト画面：タブ切り替えとアニメーション再発火 =====
 function initResultsPageFilter() {
   const tabs = document.querySelectorAll(".results-filter-tab");
   if (tabs.length === 0) return;
+
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => {
+      // 💡 既に選択中のタブを押した場合は何もしない
+      if (tab.classList.contains("active")) return;
+
       tabs.forEach((t) => t.classList.remove("active"));
       tab.classList.add("active");
       const text = tab.textContent.trim();
+      
       document.querySelectorAll(".result-page-card").forEach((card) => {
-        /* 【完全同期】新しく統一した「週・月・年・全」の1文字判定に上書きします */
-        if (text === "全") card.style.display = "block";
-        else if (text === "週" && card.classList.contains("result-type-week"))
+        let isMatch = false;
+        if (text === "全") isMatch = true;
+        else if (text === "週" && card.classList.contains("result-type-week")) isMatch = true;
+        else if (text === "月" && card.classList.contains("result-type-month")) isMatch = true;
+        else if (text === "年" && card.classList.contains("result-type-year")) isMatch = true;
+        
+        if (isMatch) {
           card.style.display = "block";
-        else if (text === "月" && card.classList.contains("result-type-month"))
-          card.style.display = "block";
-        else if (text === "年" && card.classList.contains("result-type-year"))
-          card.style.display = "block";
-        else card.style.display = "none";
+          
+          // 🚀 1. 数値とバッジのフェードインアニメーションを再発動
+          card.querySelectorAll(".result-stat-value--anim").forEach((el) => {
+            el.classList.remove("result-stat-value--visible");
+            void el.offsetWidth; // リフロー強制
+            el.classList.add("result-stat-value--visible");
+          });
+          card.querySelectorAll(".result-diff").forEach((el, i) => {
+            el.classList.remove("result-diff--visible");
+            void el.offsetWidth; // リフロー強制
+            el.style.animationDelay = `${0.1 + i * 0.08}s`;
+            el.classList.add("result-diff--visible");
+          });
+
+          // 🚀 2. グラフのアニメーションを「0」から再発動
+          card.querySelectorAll("canvas").forEach((canvas) => {
+            const chart = Chart.getChart(canvas);
+            if (chart) {
+              // 本来の数値をCanvas要素の裏側にバックアップ（初回のみ）
+              if (!canvas.hasOwnProperty('_originalDataBackup')) {
+                canvas._originalDataBackup = [...chart.data.datasets[0].data];
+              }
+              const originalData = canvas._originalDataBackup;
+              
+              // 一旦すべてのデータを「0」にして即時描画（アニメーションなし）
+              chart.data.datasets[0].data = originalData.map(() => 0);
+              chart.update("none");
+              
+              // 💡 【超重要】1回目の表示時（none -> block）に発生する巨大なリサイズ検知を
+              // 完全にやり過ごすため、ダッシュボードと同じ「400ms」待ちます。
+              setTimeout(() => {
+                chart.data.datasets[0].data = [...originalData];
+                chart.update();
+              }, 400);
+            }
+          });
+
+        } else {
+          card.style.display = "none";
+        }
       });
     });
   });
