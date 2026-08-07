@@ -1299,6 +1299,17 @@ function bindTableEvents() {
             } else {
               row.style.display = isParentCollapsed ? "none" : "";
             }
+            // 💡 ここから追加：大枠ステータスが切り替わったときの孫タスクの連動制御
+            const taskId = row.dataset.taskId;
+            document
+              .querySelectorAll(`#task-table-body .step-row[data-task-id="${taskId}"]`)
+              .forEach(stepRow => {
+                if (isCollapsed || isParentCollapsed) {
+                  stepRow.style.display = "none";
+                } else {
+                  stepRow.style.display = ""; // 元の表示状態(.hidden等のクラス)に委ねる
+                }
+              });
           });
       });
     });
@@ -1337,6 +1348,14 @@ function bindTableEvents() {
         )
         .forEach((childRow) => {
           childRow.style.display = isCollapsed ? "none" : "";
+          
+          // 💡 ここから追加：親グループが開閉したときの孫タスクの連動制御
+          const taskId = childRow.dataset.taskId;
+          document
+            .querySelectorAll(`#task-table-body .step-row[data-task-id="${taskId}"]`)
+            .forEach(stepRow => {
+              stepRow.style.display = isCollapsed ? "none" : "";
+            });
         });
     });
   });
@@ -1483,6 +1502,13 @@ function renderTable(data) {
       .querySelectorAll(`[data-parent-status="${status}"]`)
       .forEach((row) => {
         row.style.display = "none";
+
+        if (row.classList.contains("task-row")) {
+          const taskId = row.dataset.taskId;
+          tbody.querySelectorAll(`.step-row[data-task-id="${taskId}"]`).forEach(stepRow => {
+            stepRow.style.display = "none";
+          });
+        }
       });
   });
 
@@ -1501,6 +1527,11 @@ function renderTable(data) {
           .querySelectorAll(`.task-row[data-child-of-group="${groupId}"]`)
           .forEach((childRow) => {
             childRow.style.display = "none";
+
+            const taskId = childRow.dataset.taskId;
+            tbody.querySelectorAll(`.step-row[data-task-id="${taskId}"]`).forEach(stepRow => {
+              stepRow.style.display = "none";
+            });
           });
       }
     }
