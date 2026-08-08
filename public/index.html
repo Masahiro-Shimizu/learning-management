@@ -727,19 +727,35 @@
               </button>
             </div>
           </div>
-  
-          <div class="study-logs-filter-bar">
-            <button class="btn btn-primary btn-log-filter" data-range="all">すべて</button>
-            <button class="btn btn-secondary btn-log-filter" data-range="year">今年</button>
-            <button class="btn btn-secondary btn-log-filter" data-range="month">今月</button>
-            <button class="btn btn-secondary btn-log-filter" data-range="week">今週</button>
-  
-            <div class="study-logs-date-search">
-              <span class="study-logs-date-search-label">🔍 特定の日を見る:</span>
-              <input type="date" id="search-log-date" class="study-logs-date-input">
+
+          <!-- v2.21.33修正：期間トグルを2行目に分離（リザルト画面のfilter-tabs行と同じ構成） -->
+          <div class="study-logs-period-row">
+            <div class="period-controls">
+              <div class="period-toggle">
+                <button class="btn btn-log-period active" data-log-period="week">週</button>
+                <button class="btn btn-log-period" data-log-period="month">月</button>
+                <button class="btn btn-log-period" data-log-period="year">年</button>
+                <button class="btn btn-log-period" data-log-period="all">全</button>
+              </div>
+              <div class="period-nav">
+                <button id="log-period-prev-btn" class="btn-period-nav" aria-label="前へ">&lt;</button>
+                <span
+                  id="log-period-label-wrap"
+                  class="period-label"
+                  role="button"
+                  tabindex="0"
+                  aria-label="期間を選択"
+                >
+                  <span id="log-period-label"></span>
+                  <input type="week" id="log-period-week-picker" class="period-picker-input" aria-hidden="true" />
+                  <input type="month" id="log-period-month-picker" class="period-picker-input" aria-hidden="true" />
+                  <input type="month" id="log-period-year-picker" class="period-picker-input" aria-hidden="true" />
+                </span>
+                <button id="log-period-next-btn" class="btn-period-nav" aria-label="次へ">&gt;</button>
+              </div>
             </div>
           </div>
-  
+
           <div class="task-table-wrapper study-logs-table-wrapper">
             <table class="study-logs-table">
               <thead>

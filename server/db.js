@@ -26,6 +26,7 @@ const pool = mysql.createPool({
   waitForConnections: true,
   queueLimit: 0,
   timezone: '+09:00',
+  dateStrings: ['DATE'],
 });
 (async () => {
   try {

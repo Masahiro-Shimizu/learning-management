@@ -169,7 +169,7 @@ CREATE TABLE IF NOT EXISTS study_logs (
   task_id        INT UNSIGNED,
   step_id        INT UNSIGNED,
   book_id        INT UNSIGNED,
-  study_time     SMALLINT UNSIGNED NOT NULL,
+  study_time     DECIMAL(5,2) UNSIGNED NOT NULL DEFAULT 0.00,
   progress_value DECIMAL(6,2)    NOT NULL DEFAULT 1,
   created_at     DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
@@ -183,3 +183,11 @@ CREATE TABLE IF NOT EXISTS study_logs (
     FOREIGN KEY (book_id) REFERENCES books (id)
     ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =========================================
+-- study_logs：難易度・やる気の記録 v2.21.28追加
+-- （実DBには追加済み。schema.sqlファイルへの記載漏れを解消するための追記）
+-- =========================================
+ALTER TABLE study_logs
+  ADD COLUMN difficulty TINYINT UNSIGNED NULL AFTER progress_value,
+  ADD COLUMN motivation TINYINT UNSIGNED NULL AFTER difficulty;

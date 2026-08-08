@@ -1,46 +1,49 @@
 /* =================================================================
    学習ログ画面 (Study Logs) 専用スタイル
 ================================================================= */
+  
+/* 💡 テーブルのラッパー */
+.study-logs-table-wrapper {
+  margin-top: var(--space-8, 8px);
+  overflow-x: auto;
+}
 
-/* 💡 スクロール追従するフィルター＆カレンダー検索バー */
-.study-logs-filter-bar {
+/* v2.21.33修正：リザルト画面の絞り込みタブと同じコンパクトサイズに調整 */
+.btn-log-period {
+    padding: 4px 14px !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    background-color: var(--color-bg-card);
+    color: var(--color-text-secondary);
+    border: 1px solid rgb(255 255 255 / 0.1);
+  }
+  
+  .btn-log-period.active {
+    background-color: var(--color-accent-primary);
+    color: var(--color-text-primary);
+  }
+  
+  /* 前後移動ボタンも合わせて少し小さく */
+  .study-logs-period-row .btn-period-nav {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+  
+  .study-logs-period-row .period-label {
+    font-size: 0.8rem;
+    min-width: 90px;
+  }
+
+  /* v2.21.33追加：期間トグルをヘッダー2行目・右寄せに配置 */
+.study-logs-period-row {
     display: flex;
-    gap: 8px;
+    justify-content: flex-end;
     margin-bottom: var(--space-16, 16px);
-    align-items: center;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    background-color: var(--color-bg-base, #18181b);
-    padding-top: var(--space-12, 12px);
-    padding-bottom: var(--space-12, 12px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   }
   
-  /* 💡 カレンダー検索エリア（右寄せ） */
-  .study-logs-date-search {
-    margin-left: auto;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  
-  .study-logs-date-search-label {
-    font-size: 0.85rem;
-    color: var(--color-text-tertiary, #aaa);
-  }
-  
-  .study-logs-date-input {
-    padding: 6px 12px;
-    border-radius: 6px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: var(--color-bg-card, #27272a);
-    color: var(--color-text-primary, #fff);
-    font-family: "DM Sans", sans-serif;
-  }
-  
-  /* 💡 テーブルのラッパー */
-  .study-logs-table-wrapper {
-    margin-top: var(--space-8, 8px);
-    overflow-x: auto;
+  @media (max-width: 768px) {
+    .study-logs-period-row {
+      justify-content: flex-start;
+    }
   }

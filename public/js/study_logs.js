@@ -4,8 +4,14 @@ const DIFFICULTY_EMOJI = { 1: "😄", 2: "🙂", 3: "😐", 4: "😣", 5: "😫"
 const MOTIVATION_EMOJI = { 1: "😴", 2: "😑", 3: "🙂", 4: "😊", 5: "🔥" };
 
 let studyLogsTaskMap = {};
-let currentLogFilter = "all";
-let searchDateString = "";
+let studyLogsGroupMap = {};
+let allTasksForLog = [];
+let allBooksForLog = [];
+
+// v2.21.32追加：ダッシュボードと同じ 週/月/年/全 の期間管理に変更
+// （dashboard.jsのcurrentPeriod/viewDateと名前が被らないようlogsプレフィックスを付ける）
+let logsCurrentPeriod = "week";
+let logsViewDate = new Date();
 
 function formatLogDateTime(dateStr) {
   const d = new Date(dateStr);
@@ -43,6 +49,151 @@ function createStudyLogRowHtml(log) {
 }
 
 // =================================================================
+// 💡 期間トグル（週/月/年/全）の管理 v2.21.32追加
+//    dashboard.jsと同ロジックだが、名前衝突を避けるためlogsプレフィックス
+// =================================================================
+function getLogsWeekStart(date) {
+  const dayOfWeek = date.getDay();
+  const monday = new Date(date);
+  monday.setDate(date.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+  monday.setHours(0, 0, 0, 0);
+  return monday;
+}
+
+function getLogsPeriodRange(period, baseDate) {
+  if (period === "week") {
+    const monday = getLogsWeekStart(baseDate);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+    return { start: monday, end: sunday };
+  }
+  if (period === "month") {
+    const year = baseDate.getFullYear();
+    const month = baseDate.getMonth();
+    return {
+      start: new Date(year, month, 1, 0, 0, 0, 0),
+      end: new Date(year, month + 1, 0, 23, 59, 59, 999),
+    };
+  }
+  if (period === "year") {
+    const year = baseDate.getFullYear();
+    return {
+      start: new Date(year, 0, 1, 0, 0, 0, 0),
+      end: new Date(year, 11, 31, 23, 59, 59, 999),
+    };
+  }
+  return null; // "all"
+}
+
+function isLogsCurrentPeriod() {
+  const today = new Date();
+  if (logsCurrentPeriod === "week") {
+    return (
+      getLogsWeekStart(logsViewDate).getTime() ===
+      getLogsWeekStart(today).getTime()
+    );
+  } else if (logsCurrentPeriod === "month") {
+    return (
+      logsViewDate.getFullYear() === today.getFullYear() &&
+      logsViewDate.getMonth() === today.getMonth()
+    );
+  } else if (logsCurrentPeriod === "year") {
+    return logsViewDate.getFullYear() === today.getFullYear();
+  }
+  return true;
+}
+
+function updateLogsPeriodLabel() {
+  const label = document.getElementById("log-period-label");
+  if (!label) return;
+  let text = "";
+
+  if (logsCurrentPeriod === "week") {
+    const monday = getLogsWeekStart(logsViewDate);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    text = `${monday.getMonth() + 1}/${monday.getDate()} 〜 ${sunday.getMonth() + 1}/${sunday.getDate()}`;
+  } else if (logsCurrentPeriod === "month") {
+    text = `${logsViewDate.getFullYear()}年${logsViewDate.getMonth() + 1}月`;
+  } else if (logsCurrentPeriod === "year") {
+    text = `${logsViewDate.getFullYear()}年`;
+  } else if (logsCurrentPeriod === "all") {
+    text = "全期間";
+  }
+
+  label.textContent = text;
+
+  const nextBtn = document.getElementById("log-period-next-btn");
+  if (nextBtn) {
+    nextBtn.disabled = logsCurrentPeriod === "all" || isLogsCurrentPeriod();
+  }
+}
+
+function shiftLogsPeriod(direction) {
+  if (logsCurrentPeriod === "week") {
+    logsViewDate.setDate(logsViewDate.getDate() + 7 * direction);
+  } else if (logsCurrentPeriod === "month") {
+    logsViewDate.setMonth(logsViewDate.getMonth() + direction);
+  } else if (logsCurrentPeriod === "year") {
+    logsViewDate.setFullYear(logsViewDate.getFullYear() + direction);
+  }
+  renderStudyLogsTable();
+}
+
+function logsDateToIsoWeekString(date) {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const dayNum = d.getDay() || 7;
+  d.setDate(d.getDate() + 4 - dayNum);
+  const yearStart = new Date(d.getFullYear(), 0, 1);
+  const weekNo = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+  return `${d.getFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+}
+
+function logsIsoWeekStringToMonday(value) {
+  const [yearStr, weekStr] = value.split("-W");
+  const year = Number(yearStr);
+  const week = Number(weekStr);
+  if (!year || !week) return null;
+  const simple = new Date(year, 0, 1 + (week - 1) * 7);
+  const dayOfWeek = simple.getDay() || 7;
+  simple.setDate(simple.getDate() - dayOfWeek + 1);
+  return simple;
+}
+
+function openLogsPeriodPicker() {
+  if (logsCurrentPeriod === "all") return;
+
+  const weekPicker = document.getElementById("log-period-week-picker");
+  const monthPicker = document.getElementById("log-period-month-picker");
+  const yearPicker = document.getElementById("log-period-year-picker");
+
+  let target = null;
+
+  if (logsCurrentPeriod === "week" && weekPicker) {
+    weekPicker.value = logsDateToIsoWeekString(logsViewDate);
+    target = weekPicker;
+  } else if (logsCurrentPeriod === "month" && monthPicker) {
+    const y = logsViewDate.getFullYear();
+    const m = String(logsViewDate.getMonth() + 1).padStart(2, "0");
+    monthPicker.value = `${y}-${m}`;
+    target = monthPicker;
+  } else if (logsCurrentPeriod === "year" && yearPicker) {
+    yearPicker.value = `${logsViewDate.getFullYear()}-01`;
+    target = yearPicker;
+  }
+
+  if (!target) return;
+  if (typeof target.showPicker === "function") {
+    target.showPicker();
+  } else {
+    target.focus();
+    target.click();
+  }
+}
+
+
+// =================================================================
 // 💡 テーブル描画とカレンダー/期間フィルタリング処理
 // =================================================================
 async function renderStudyLogsTable() {
@@ -59,57 +210,33 @@ async function renderStudyLogsTable() {
     studyLogsTaskMap[t.id] = t.title;
   });
 
-  const now = new Date();
-  const startOfWeek = new Date(now);
-  startOfWeek.setDate(now.getDate() - now.getDay());
-  startOfWeek.setHours(0, 0, 0, 0);
+  // v2.21.32修正：週/月/年/全のトグルに対応した期間範囲フィルタリングに変更
+  updateLogsPeriodLabel();
 
-  const filteredLogs = logs.filter(log => {
-    if (!log.log_date) return false;
+  const currentRange =
+    logsCurrentPeriod === "all"
+      ? null
+      : getLogsPeriodRange(logsCurrentPeriod, logsViewDate);
 
-    const toLocalDateStr = (dateInput) => {
-      const d = new Date(dateInput);
-      if (Number.isNaN(d.getTime())) {
-        return String(dateInput).slice(0, 10);
-      }
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}`;
-    };
-
-    const logDateStr = toLocalDateStr(log.log_date);
-
-    // ① カレンダーで日付が指定されている場合
-    if (searchDateString) {
-      return logDateStr === searchDateString;
-    }
-
-    // ② 期間ボタンの条件
-    if (currentLogFilter === "all") return true;
+      const filteredLogs = logs.filter((log) => {
+        if (!log.log_date) return false;
+        if (!currentRange) return true;
     
-    const logDate = new Date(log.log_date);
-    if (currentLogFilter === "year") {
-      return logDate.getFullYear() === now.getFullYear();
-    }
-    if (currentLogFilter === "month") {
-      return logDate.getFullYear() === now.getFullYear() && logDate.getMonth() === now.getMonth();
-    }
-    if (currentLogFilter === "week") {
-      return logDate >= startOfWeek;
-    }
-    return true;
-  });
-
-  tbody.innerHTML = "";
-  if (filteredLogs.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--color-text-tertiary);padding:var(--space-24);">該当する記録がありません</td></tr>`;
-    return;
-  }
-
-  filteredLogs.forEach((log) => {
-    tbody.insertAdjacentHTML("beforeend", createStudyLogRowHtml(log));
-  });
+        const logDate = new Date(log.log_date);
+        return logDate >= currentRange.start && logDate <= currentRange.end;
+      });
+    
+      // v2.21.32で描画前のクリア処理が抜けていたため復元
+      // （再描画のたびに行が積み重なって重複表示されるバグの修正）
+      tbody.innerHTML = "";
+      if (filteredLogs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--color-text-tertiary);padding:var(--space-24);">該当する記録がありません</td></tr>`;
+        return;
+      }
+    
+      filteredLogs.forEach((log) => {
+        tbody.insertAdjacentHTML("beforeend", createStudyLogRowHtml(log));
+      });
 
   tbody.querySelectorAll(".btn-study-log-delete").forEach((btn) => {
     btn.addEventListener("click", async () => {
@@ -179,6 +306,14 @@ document.addEventListener("click", async (e) => {
       document.getElementById("add-log-date").value = formattedDate;
       document.getElementById("add-log-task-id").value = log.task_id || "";
       document.getElementById("add-log-book-id").value = log.book_id || "";
+
+      // 保存済みの子タスク・書籍の紐づきに応じて、もう片方のセレクトも絞り込む（v2.21.34追加）
+      if (log.book_id) {
+        syncLogSelectFilters("book");
+      } else if (log.task_id) {
+        syncLogSelectFilters("task");
+      }
+
       // 変更： 小数点や0も正しく表示されるように ?? を使用
       document.getElementById("add-log-time").value = log.study_time ?? "";
       document.getElementById("add-log-progress").value = log.progress_value || "";
@@ -259,75 +394,158 @@ async function loadSelectOptionsForLog() {
       api("/api/books")
     ]);
 
-    const groupMap = {};
-    groups.forEach(g => { groupMap[g.id] = g.title; });
+    studyLogsGroupMap = {};
+    groups.forEach(g => { studyLogsGroupMap[g.id] = g.title; });
 
-    const taskSelect = document.getElementById("add-log-task-id");
-    const bookSelect = document.getElementById("add-log-book-id");
+    allTasksForLog = tasks;
+    allBooksForLog = books;
 
-    if (taskSelect) {
-      taskSelect.innerHTML = '<option value="">（タスクに紐づけない・一般学習）</option>';
-      tasks.forEach(task => {
-        const parentTitle = groupMap[task.group_id] || "未分類";
-        const option = document.createElement("option");
-        option.value = task.id;
-        option.textContent = `[${parentTitle}] ＞ ${task.title}`;
-        taskSelect.appendChild(option);
-      });
-    }
-
-    if (bookSelect) {
-      bookSelect.innerHTML = '<option value="">（書籍に紐づけない）</option>';
-      books.forEach(book => {
-        const option = document.createElement("option");
-        option.value = book.id;
-        option.textContent = book.title;
-        bookSelect.appendChild(option);
-      });
-    }
+    renderTaskOptionsForLog(null, "");
+    renderBookOptionsForLog(null, "");
   } catch (err) {
     console.error("セレクトボックスのデータ取得に失敗しました:", err);
   }
 }
 
+// 💡 子タスク⇔書籍の相互絞り込み（v2.21.34追加）
+// filterBookId を渡すと、その書籍に紐づく子タスクのみに絞り込んで描画する
+function renderTaskOptionsForLog(filterBookId, selectedValue) {
+  const taskSelect = document.getElementById("add-log-task-id");
+  if (!taskSelect) return;
+
+  const list = filterBookId
+    ? allTasksForLog.filter(t => String(t.book_id) === String(filterBookId))
+    : allTasksForLog;
+
+  taskSelect.innerHTML = '<option value="">（タスクに紐づけない・一般学習）</option>';
+  list.forEach(task => {
+    const parentTitle = studyLogsGroupMap[task.group_id] || "未分類";
+    const option = document.createElement("option");
+    option.value = task.id;
+    option.textContent = `[${parentTitle}] ＞ ${task.title}`;
+    taskSelect.appendChild(option);
+  });
+
+  const stillValid = selectedValue && list.some(t => String(t.id) === String(selectedValue));
+  taskSelect.value = stillValid ? selectedValue : "";
+}
+
+// filterBookId を渡すと、その書籍のみに絞り込んで描画する
+function renderBookOptionsForLog(filterBookId, selectedValue) {
+  const bookSelect = document.getElementById("add-log-book-id");
+  if (!bookSelect) return;
+
+  const list = filterBookId
+    ? allBooksForLog.filter(b => String(b.id) === String(filterBookId))
+    : allBooksForLog;
+
+  bookSelect.innerHTML = '<option value="">（書籍に紐づけない）</option>';
+  list.forEach(book => {
+    const option = document.createElement("option");
+    option.value = book.id;
+    option.textContent = book.title;
+    bookSelect.appendChild(option);
+  });
+
+  const stillValid = selectedValue && list.some(b => String(b.id) === String(selectedValue));
+  bookSelect.value = stillValid ? selectedValue : "";
+}
+
+// 子タスク選択 or 書籍選択の変更をもう片方に反映する
+function syncLogSelectFilters(source) {
+  const taskSelect = document.getElementById("add-log-task-id");
+  const bookSelect = document.getElementById("add-log-book-id");
+  if (!taskSelect || !bookSelect) return;
+
+  if (source === "task") {
+    const taskId = taskSelect.value;
+    if (!taskId) {
+      renderBookOptionsForLog(null, bookSelect.value);
+      return;
+    }
+    const task = allTasksForLog.find(t => String(t.id) === String(taskId));
+    if (task && task.book_id) {
+      renderBookOptionsForLog(task.book_id, task.book_id);
+    } else {
+      renderBookOptionsForLog(null, bookSelect.value);
+    }
+  } else if (source === "book") {
+    const bookId = bookSelect.value;
+    renderTaskOptionsForLog(bookId || null, taskSelect.value);
+  }
+}
+
+document.addEventListener("change", (e) => {
+  if (e.target && e.target.id === "add-log-task-id") {
+    syncLogSelectFilters("task");
+  }
+  if (e.target && e.target.id === "add-log-book-id") {
+    syncLogSelectFilters("book");
+  }
+});
+
 // =================================================================
 // 💡 イベント制御（カレンダー日付指定 ＆ 期間タブ）
 // =================================================================
-document.addEventListener("input", (e) => {
-  if (e.target && e.target.id === "search-log-date") {
-    searchDateString = e.target.value;
-    if (searchDateString) {
-      document.querySelectorAll(".btn-log-filter").forEach(btn => {
-        btn.classList.remove("btn-primary");
-        btn.classList.add("btn-secondary");
-      });
-    }
-    renderStudyLogsTable();
-  }
-});
-
-document.addEventListener("change", (e) => {
-  if (e.target && e.target.id === "search-log-date") {
-    searchDateString = e.target.value;
-    renderStudyLogsTable();
-  }
-});
-
+// v2.21.32追加：週/月/年/全トグル
 document.addEventListener("click", (e) => {
-  const filterBtn = e.target.closest(".btn-log-filter");
-  if (filterBtn) {
-    const searchInput = document.getElementById("search-log-date");
-    if (searchInput) searchInput.value = "";
-    searchDateString = ""; 
-
-    document.querySelectorAll(".btn-log-filter").forEach(btn => {
-      btn.classList.remove("btn-primary");
-      btn.classList.add("btn-secondary");
+  const periodBtn = e.target.closest(".btn-log-period");
+  if (periodBtn) {
+    document.querySelectorAll(".btn-log-period").forEach((b) => {
+      b.classList.remove("active");
     });
-    filterBtn.classList.remove("btn-secondary");
-    filterBtn.classList.add("btn-primary");
-    
-    currentLogFilter = filterBtn.dataset.range;
+    periodBtn.classList.add("active");
+
+    logsCurrentPeriod = periodBtn.dataset.logPeriod;
+    logsViewDate = new Date();
     renderStudyLogsTable();
   }
 });
+
+document
+  .getElementById("log-period-prev-btn")
+  ?.addEventListener("click", () => shiftLogsPeriod(-1));
+document
+  .getElementById("log-period-next-btn")
+  ?.addEventListener("click", () => shiftLogsPeriod(1));
+
+document
+  .getElementById("log-period-label-wrap")
+  ?.addEventListener("click", openLogsPeriodPicker);
+document
+  .getElementById("log-period-label-wrap")
+  ?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      openLogsPeriodPicker();
+    }
+  });
+
+document
+  .getElementById("log-period-week-picker")
+  ?.addEventListener("change", (e) => {
+    const monday = logsIsoWeekStringToMonday(e.target.value);
+    if (!monday) return;
+    logsViewDate = monday;
+    renderStudyLogsTable();
+  });
+
+document
+  .getElementById("log-period-month-picker")
+  ?.addEventListener("change", (e) => {
+    const value = e.target.value;
+    if (!value) return;
+    const [y, m] = value.split("-").map(Number);
+    logsViewDate = new Date(y, m - 1, 1);
+    renderStudyLogsTable();
+  });
+
+document
+  .getElementById("log-period-year-picker")
+  ?.addEventListener("change", (e) => {
+    const value = e.target.value;
+    if (!value) return;
+    const [y] = value.split("-").map(Number);
+    logsViewDate = new Date(y, 0, 1);
+    renderStudyLogsTable();
+  });
