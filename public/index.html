@@ -716,42 +716,45 @@
         </section>
 
         <section id="page-study-logs" class="hidden" style="padding: 32px 24px; box-sizing: border-box; width: 100%;">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-            <div>
-              <h2 style="margin: 0 0 4px 0; font-size: 1.5rem; font-weight: 700; color: #fff; font-family: 'Syne', sans-serif;">学習ログ</h2>
-              <p style="margin: 0; font-size: 0.85rem; color: #aaa;">日々の学習実績（study_logs）の記録一覧です。誤った記録はここから編集・削除できます。</p>
-            </div>
-            <div>
-              <button id="btn-open-add-log-modal" class="btn btn-primary" style="white-space: nowrap;">
-                ＋ 新規ログを手動記録
-              </button>
-            </div>
-          </div>
-
-          <!-- v2.21.33修正：期間トグルを2行目に分離（リザルト画面のfilter-tabs行と同じ構成） -->
-          <div class="study-logs-period-row">
-            <div class="period-controls">
-              <div class="period-toggle">
-                <button class="btn btn-log-period active" data-log-period="week">週</button>
-                <button class="btn btn-log-period" data-log-period="month">月</button>
-                <button class="btn btn-log-period" data-log-period="year">年</button>
-                <button class="btn btn-log-period" data-log-period="all">全</button>
+          <!-- v2.21.34修正：タイトル行＋期間トグル行をまとめてsticky化するため、共通ラッパーで包む -->
+          <div class="study-logs-page-header">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+              <div>
+                <h2 style="margin: 0 0 4px 0; font-size: 1.5rem; font-weight: 700; color: #fff; font-family: 'Syne', sans-serif;">学習ログ</h2>
+                <p style="margin: 0; font-size: 0.85rem; color: #aaa;">日々の学習実績（study_logs）の記録一覧です。誤った記録はここから編集・削除できます。</p>
               </div>
-              <div class="period-nav">
-                <button id="log-period-prev-btn" class="btn-period-nav" aria-label="前へ">&lt;</button>
-                <span
-                  id="log-period-label-wrap"
-                  class="period-label"
-                  role="button"
-                  tabindex="0"
-                  aria-label="期間を選択"
-                >
-                  <span id="log-period-label"></span>
-                  <input type="week" id="log-period-week-picker" class="period-picker-input" aria-hidden="true" />
-                  <input type="month" id="log-period-month-picker" class="period-picker-input" aria-hidden="true" />
-                  <input type="month" id="log-period-year-picker" class="period-picker-input" aria-hidden="true" />
-                </span>
-                <button id="log-period-next-btn" class="btn-period-nav" aria-label="次へ">&gt;</button>
+              <div>
+                <button id="btn-open-add-log-modal" class="btn btn-primary" style="white-space: nowrap;">
+                  ＋ 新規ログを手動記録
+                </button>
+              </div>
+            </div>
+
+            <!-- v2.21.33修正：期間トグルを2行目に分離（リザルト画面のfilter-tabs行と同じ構成） -->
+            <div class="study-logs-period-row">
+              <div class="period-controls">
+                <div class="period-toggle">
+                  <button class="btn btn-log-period active" data-log-period="week">週</button>
+                  <button class="btn btn-log-period" data-log-period="month">月</button>
+                  <button class="btn btn-log-period" data-log-period="year">年</button>
+                  <button class="btn btn-log-period" data-log-period="all">全</button>
+                </div>
+                <div class="period-nav">
+                  <button id="log-period-prev-btn" class="btn-period-nav" aria-label="前へ">&lt;</button>
+                  <span
+                    id="log-period-label-wrap"
+                    class="period-label"
+                    role="button"
+                    tabindex="0"
+                    aria-label="期間を選択"
+                  >
+                    <span id="log-period-label"></span>
+                    <input type="week" id="log-period-week-picker" class="period-picker-input" aria-hidden="true" />
+                    <input type="month" id="log-period-month-picker" class="period-picker-input" aria-hidden="true" />
+                    <input type="month" id="log-period-year-picker" class="period-picker-input" aria-hidden="true" />
+                  </span>
+                  <button id="log-period-next-btn" class="btn-period-nav" aria-label="次へ">&gt;</button>
+                </div>
               </div>
             </div>
           </div>

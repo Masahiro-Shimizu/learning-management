@@ -1,9 +1,14 @@
 /* =================================================================
    学習ログ画面 (Study Logs) 専用スタイル
 ================================================================= */
+
+/* v2.21.34追加：タイトル行＋期間トグル行をまとめてsticky追従させるラッパー */
+.study-logs-page-header {
+    padding-bottom: var(--space-8, 8px);
+  }
   
-/* 💡 テーブルのラッパー */
-.study-logs-table-wrapper {
+  /* 💡 テーブルのラッパー */
+  .study-logs-table-wrapper {
   margin-top: var(--space-8, 8px);
   overflow-x: auto;
 }

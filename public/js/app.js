@@ -83,6 +83,7 @@ document.getElementById("btn-sidebar-show")?.addEventListener("click", () => {
         ".mandala-header",
         ".results-page-header",
         "#page-books > h2",
+        ".study-logs-page-header",
       ];
       mainHeaders.forEach((selector) => {
         const el = document.querySelector(selector);
