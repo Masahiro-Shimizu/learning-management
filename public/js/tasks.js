@@ -5,8 +5,77 @@ function minutesToHours(minutes) {
   return (Math.round((Number(minutes) / 60) * 10) / 10).toFixed(1);
 }
 
+// new_str
 const CALENDAR_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
 const CLOCK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>`;
+
+// v2.21.35追加：✅の代替（実績バッジ用）
+const CHECK_CIRCLE_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg>`;
+
+// v2.21.35追加：体感の難易度・その日のやる気のアイコンセット（絵文字からの置き換え）
+const SMILE_PLUS_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.267 2.08a10 10 0 108.653 8.653"/><path d="M15 10V9"/><path d="M16 5h6"/><path d="M16.472 15a6 6 0 01-8.943 0"/><path d="M19 2v6"/><path d="M9 10V9"/></svg>`;
+const SMILE_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 10V9"/><path d="M16.472 15a6 6 0 01-8.943 0"/><path d="M9 10V9"/><circle cx="12" cy="12" r="10"/></svg>`;
+const MEH_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 10V9"/><path d="M8 16h8"/><path d="M9 10V9"/><circle cx="12" cy="12" r="10"/></svg>`;
+const FROWN_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 10V9"/><path d="M9 10V9"/><path d="M9 16a5 5 0 016 0"/><circle cx="12" cy="12" r="10"/></svg>`;
+const ANGRY_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 11V9.416"/><path d="M17 9a5 5 0 00-3 1"/><path d="M7 9a5 5 0 013 1"/><path d="M9 11V9.416"/><path d="M9 16a5 5 0 016.001 0"/><circle cx="12" cy="12" r="10"/></svg>`;
+const MOON_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>`;
+const CLOUD_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>`;
+const SUN_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>`;
+const ZAP_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z"/></svg>`;
+const FLAME_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4"/></svg>`;
+
+// v2.21.35追加：難易度・やる気の値→アイコン/色/ラベルのメタ情報
+const DIFFICULTY_META = [
+  { value: 1, icon: SMILE_PLUS_ICON, color: "#5DCAA5", bg: "rgba(93,202,165,0.16)", label: "超簡単" },
+  { value: 2, icon: SMILE_ICON, color: "#9FE1CB", bg: "rgba(159,225,203,0.14)", label: "やや易しい" },
+  { value: 3, icon: MEH_ICON, color: "#B4B2A9", bg: "rgba(180,178,169,0.14)", label: "普通" },
+  { value: 4, icon: FROWN_ICON, color: "#FAC775", bg: "rgba(250,199,117,0.16)", label: "やや難しい" },
+  { value: 5, icon: ANGRY_ICON, color: "#F09595", bg: "rgba(240,149,149,0.16)", label: "激ムズ" },
+];
+const MOTIVATION_META = [
+  { value: 1, icon: MOON_ICON, color: "#B4B2A9", bg: "rgba(180,178,169,0.14)", label: "やる気なし" },
+  { value: 2, icon: CLOUD_ICON, color: "#85B7EB", bg: "rgba(133,183,235,0.16)", label: "微妙" },
+  { value: 3, icon: SUN_ICON, color: "#FAC775", bg: "rgba(250,199,117,0.16)", label: "普通" },
+  { value: 4, icon: ZAP_ICON, color: "#F0997B", bg: "rgba(240,153,123,0.16)", label: "やる気あり" },
+  { value: 5, icon: FLAME_ICON, color: "#F09595", bg: "rgba(240,149,149,0.16)", label: "最高潮" },
+];
+
+// v2.21.35追加：難易度/やる気のアイコンボタン行を生成（step-detail・追加ログモーダル共通）
+function createMetaIconButtonsHtml(metaType, selectedValue) {
+  const items = metaType === "difficulty" ? DIFFICULTY_META : MOTIVATION_META;
+  const buttons = items
+    .map((item) => {
+      const active = String(selectedValue) === String(item.value) ? " active" : "";
+      return `
+        <button type="button" class="step-meta-icon-btn${active}" data-value="${item.value}" title="${item.label}" aria-label="${item.label}">
+          <span class="step-meta-icon-box" style="background:${item.bg};color:${item.color};">${item.icon}</span>
+          <span class="step-meta-icon-label">${item.label}</span>
+        </button>
+      `;
+    })
+    .join("");
+  return `<div class="step-meta-icon-row" data-meta="${metaType}">${buttons}</div>`;
+}
+
+// v2.21.35追加：学習ログ一覧テーブルなど、表示専用の小さいバッジを生成
+function createMetaIconBadgeHtml(metaType, value) {
+  if (!value) return "";
+  const items = metaType === "difficulty" ? DIFFICULTY_META : MOTIVATION_META;
+  const item = items.find((i) => Number(i.value) === Number(value));
+  if (!item) return "";
+  return `<span class="meta-icon-badge" style="background:${item.bg};color:${item.color};" title="${item.label}">${item.icon}</span>`;
+}
+
+// v2.21.35追加：アプリ全体の絵文字置き換え用アイコン
+const CHECK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>`;
+const TRIANGLE_ALERT_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>`;
+const BOT_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>`;
+const LIST_CHECKS_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 5h8"/><path d="M13 12h8"/><path d="M13 19h8"/><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/></svg>`;
+const BOOK_OPEN_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v16"/><path d="M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z"/></svg>`;
+const LINK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`;
+const ROCKET_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09"/><path d="M9 12a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 .05 5 .05"/></svg>`;
+const BRAIN_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 18V5"/><path d="M15 13a4.17 4.17 0 0 1-3-4 4.17 4.17 0 0 1-3 4"/><path d="M17.598 6.5A3 3 0 1 0 12 5a3 3 0 1 0-5.598 1.5"/><path d="M17.997 5.125a4 4 0 0 1 2.526 5.77"/><path d="M18 18a4 4 0 0 0 2-7.464"/><path d="M19.967 17.483A4 4 0 1 1 12 18a4 4 0 1 1-7.967-.517"/><path d="M6 18a4 4 0 0 1-2-7.464"/><path d="M6.003 5.125a4 4 0 0 0-2.526 5.77"/></svg>`;
+const PENCIL_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 21h8"/><path d="m15 5 4 4"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg>`;
 
 let taskTypeOptions = [];
 let taskCategoryOptions = [];
@@ -178,18 +247,19 @@ function createStepBadgeHtml(steps) {
 function createStepMiniItemHtml(step) {
   const completed = step.is_completed ? "completed" : "";
   const metaParts = [];
+  // new_str
   if (step.start_planned_date || step.end_planned_date) {
     const s = step.start_planned_date ? formatDateShort(step.start_planned_date) : "";
     const e = step.end_planned_date ? formatDateShort(step.end_planned_date) : "";
-    metaParts.push(`📅${s && e ? `${s}〜${e}` : s || e}`);
+    metaParts.push(`<span class="mini-meta-icon">${CALENDAR_ICON}</span>${s && e ? `${s}〜${e}` : s || e}`);
   }
   if (step.start_date || step.end_date) {
     const s = step.start_date ? formatDateShort(step.start_date) : "";
     const e = step.end_date ? formatDateShort(step.end_date) : "";
-    metaParts.push(`✅${s && e ? `${s}〜${e}` : s || e}`);
+    metaParts.push(`<span class="mini-meta-icon">${CHECK_CIRCLE_ICON}</span>${s && e ? `${s}〜${e}` : s || e}`);
   }
-  if (step.planned_study_time) metaParts.push(`⏱予定${minutesToHours(step.planned_study_time)}h`);
-  if (step.study_time) metaParts.push(`⏱実績${minutesToHours(step.study_time)}h`);
+  if (step.planned_study_time) metaParts.push(`<span class="mini-meta-icon">${CLOCK_ICON}</span>予定${minutesToHours(step.planned_study_time)}h`);
+  if (step.study_time) metaParts.push(`<span class="mini-meta-icon">${CLOCK_ICON}</span>実績${minutesToHours(step.study_time)}h`);
   const metaHtml = metaParts.length
     ? `<span class="task-card-step-mini-meta">${metaParts.join(" ")}</span>`
     : "";
@@ -430,21 +500,22 @@ function createStepItemHtml(step) {
     const e = step.end_planned_date
       ? formatDateShort(step.end_planned_date)
       : "";
-    metaParts.push(s && e ? `📅 ${s}〜${e}` : `📅 ${s || e}`);
+    // new_str
+    metaParts.push(`<span class="mini-meta-icon">${CALENDAR_ICON}</span>${s && e ? `${s}〜${e}` : s || e}`);
   }
 
   // 【変更】実績開始日・実績終了日のバッジ表示
   if (step.start_date || step.end_date) {
     const as = step.start_date ? formatDateShort(step.start_date) : "";
     const ae = step.end_date ? formatDateShort(step.end_date) : "";
-    metaParts.push(as && ae ? `✅ 実績 ${as}〜${ae}` : `✅ 実績 ${as || ae}`);
+    metaParts.push(`<span class="mini-meta-icon">${CHECK_CIRCLE_ICON}</span>実績 ${as && ae ? `${as}〜${ae}` : as || ae}`);
   }
 
   if (step.planned_study_time) {
-    metaParts.push(`⏱ 予定 ${minutesToHours(step.planned_study_time)}h`);
+    metaParts.push(`<span class="mini-meta-icon">${CLOCK_ICON}</span>予定 ${minutesToHours(step.planned_study_time)}h`);
   }
   if (step.study_time) {
-    metaParts.push(`⏱ 実績 ${minutesToHours(step.study_time)}h`);
+    metaParts.push(`<span class="mini-meta-icon">${CLOCK_ICON}</span>実績 ${minutesToHours(step.study_time)}h`);
   }
   const metaHtml =
     metaParts.length > 0
@@ -513,23 +584,11 @@ function createStepItemHtml(step) {
         <div class="step-detail-meta-row">
           <div class="step-detail-meta-group">
             <label>体感の難易度（任意）</label>
-            <div class="step-meta-emoji-row" data-meta="difficulty">
-              <button type="button" class="step-meta-emoji-btn" data-value="1">😄</button>
-              <button type="button" class="step-meta-emoji-btn" data-value="2">🙂</button>
-              <button type="button" class="step-meta-emoji-btn" data-value="3">😐</button>
-              <button type="button" class="step-meta-emoji-btn" data-value="4">😣</button>
-              <button type="button" class="step-meta-emoji-btn" data-value="5">😫</button>
-            </div>
+            ${createMetaIconButtonsHtml("difficulty", null)}
           </div>
           <div class="step-detail-meta-group">
             <label>その日のやる気（任意）</label>
-            <div class="step-meta-emoji-row" data-meta="motivation">
-              <button type="button" class="step-meta-emoji-btn" data-value="1">😴</button>
-              <button type="button" class="step-meta-emoji-btn" data-value="2">😑</button>
-              <button type="button" class="step-meta-emoji-btn" data-value="3">🙂</button>
-              <button type="button" class="step-meta-emoji-btn" data-value="4">😊</button>
-              <button type="button" class="step-meta-emoji-btn" data-value="5">🔥</button>
-            </div>
+            ${createMetaIconButtonsHtml("motivation", null)}
           </div>
         </div>
         <button type="button" class="btn btn-primary step-detail-save">保存</button>
@@ -723,12 +782,13 @@ document.getElementById("step-list")?.addEventListener("change", async (e) => {
 });
 
 document.getElementById("step-list")?.addEventListener("click", async (e) => {
-  // v2.21.28追加：難易度・やる気の絵文字ボタン選択（トグル）
-  if (e.target.classList.contains("step-meta-emoji-btn")) {
-    const row = e.target.closest(".step-meta-emoji-row");
-    const wasActive = e.target.classList.contains("active");
-    row.querySelectorAll(".step-meta-emoji-btn").forEach((btn) => btn.classList.remove("active"));
-    if (!wasActive) e.target.classList.add("active");
+  // v2.21.35変更：難易度・やる気のアイコンボタン選択（トグル）。SVGクリック対応のためclosest()を使用
+  const metaIconBtn = e.target.closest(".step-meta-icon-btn");
+  if (metaIconBtn) {
+    const row = metaIconBtn.closest(".step-meta-icon-row");
+    const wasActive = metaIconBtn.classList.contains("active");
+    row.querySelectorAll(".step-meta-icon-btn").forEach((btn) => btn.classList.remove("active"));
+    if (!wasActive) metaIconBtn.classList.add("active");
     return;
   }
   // 削除
@@ -787,8 +847,8 @@ document.getElementById("step-list")?.addEventListener("click", async (e) => {
         ? parseFloat(progressVal)
         : null;
     const progressValue = enteredProgress ?? (pageTrackingEnabled ? 0 : 1);
-    const difficultyBtn = li.querySelector('.step-meta-emoji-row[data-meta="difficulty"] .step-meta-emoji-btn.active');
-    const motivationBtn = li.querySelector('.step-meta-emoji-row[data-meta="motivation"] .step-meta-emoji-btn.active');
+    const difficultyBtn = li.querySelector('.step-meta-icon-row[data-meta="difficulty"] .step-meta-icon-btn.active');
+    const motivationBtn = li.querySelector('.step-meta-icon-row[data-meta="motivation"] .step-meta-icon-btn.active');
     const difficultyValue = difficultyBtn ? Number(difficultyBtn.dataset.value) : null;
     const motivationValue = motivationBtn ? Number(motivationBtn.dataset.value) : null;
 

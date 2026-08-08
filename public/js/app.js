@@ -199,18 +199,28 @@ document.getElementById("btn-sidebar-show")?.addEventListener("click", () => {
 showPage();
 window.addEventListener("hashchange", showPage);
 
+// v2.21.35変更：絵文字ではなくアイコンSVG＋テキストで表示するためinnerHTMLに変更
+const SUN_TOGGLE_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>`;
+const MOON_TOGGLE_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>`;
+
+function renderThemeToggleLabel(isLight) {
+  const btn = document.getElementById("btn-theme-toggle");
+  if (!btn) return;
+  btn.innerHTML = isLight
+    ? `<span class="icon-btn-inline">${MOON_TOGGLE_ICON}</span>ダーク`
+    : `<span class="icon-btn-inline">${SUN_TOGGLE_ICON}</span>ライト`;
+}
+
 // テーマの初期化
 const savedTheme = localStorage.getItem("theme");
 if (savedTheme === "light") {
   document.documentElement.classList.add("light");
-  document.getElementById("btn-theme-toggle").textContent = "🌙 ダーク";
 }
+renderThemeToggleLabel(savedTheme === "light");
 
 document.getElementById("btn-theme-toggle").addEventListener("click", () => {
   const isLight = document.documentElement.classList.toggle("light");
-  document.getElementById("btn-theme-toggle").textContent = isLight
-    ? "🌙 ダーク"
-    : "☀️ ライト";
+  renderThemeToggleLabel(isLight);
   localStorage.setItem("theme", isLight ? "light" : "dark");
 });
 

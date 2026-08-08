@@ -1,7 +1,7 @@
 "use strict";
 
-const DIFFICULTY_EMOJI = { 1: "😄", 2: "🙂", 3: "😐", 4: "😣", 5: "😫" };
-const MOTIVATION_EMOJI = { 1: "😴", 2: "😑", 3: "🙂", 4: "😊", 5: "🔥" };
+// v2.21.35変更：難易度・やる気の絵文字マップは廃止。tasks.jsのDIFFICULTY_META/MOTIVATION_META・
+// createMetaIconBadgeHtml()/createMetaIconButtonsHtml()を共通利用する
 
 let studyLogsTaskMap = {};
 let studyLogsGroupMap = {};
@@ -29,8 +29,8 @@ function createStudyLogRowHtml(log) {
   const taskTitle = studyLogsTaskMap[log.task_id] || (log.task_id ? `#${log.task_id}` : "－");
   // 変更： / 60 を削除して、そのままの数値を小数点第1位で表示
   const hours = Number(log.study_time || 0).toFixed(1);
-  const difficultyHtml = log.difficulty ? DIFFICULTY_EMOJI[log.difficulty] || "" : "－";
-  const motivationHtml = log.motivation ? MOTIVATION_EMOJI[log.motivation] || "" : "－";
+  const difficultyHtml = log.difficulty ? createMetaIconBadgeHtml("difficulty", log.difficulty) : "－";
+  const motivationHtml = log.motivation ? createMetaIconBadgeHtml("motivation", log.motivation) : "－";
 
   return `
   <td>${formatLogDate(log.log_date)}</td>
@@ -257,6 +257,16 @@ async function initStudyLogsPage() {
 // =================================================================
 let editingLogId = null;
 
+// v2.21.35追加：追加/編集ログモーダルの難易度・やる気アイコンボタン選択（トグル）
+document.addEventListener("click", (e) => {
+  const metaBtn = e.target.closest("#add-log-modal .step-meta-icon-btn");
+  if (!metaBtn) return;
+  const row = metaBtn.closest(".step-meta-icon-row");
+  const wasActive = metaBtn.classList.contains("active");
+  row.querySelectorAll(".step-meta-icon-btn").forEach((btn) => btn.classList.remove("active"));
+  if (!wasActive) metaBtn.classList.add("active");
+});
+
 document.addEventListener("click", async (e) => {
   const btnOpenModal = e.target.closest("#btn-open-add-log-modal");
   if (btnOpenModal) {
@@ -265,7 +275,7 @@ document.addEventListener("click", async (e) => {
     if (!modal) return;
 
     const titleEl = modal.querySelector(".modal-header h3");
-    if (titleEl) titleEl.textContent = "✍️ 学習ログの新規手動記録";
+    if (titleEl) titleEl.innerHTML = `<span class="icon-btn-inline">${PENCIL_ICON}</span>学習ログの新規手動記録`;
 
     const now = new Date();
     const y = now.getFullYear();
@@ -279,8 +289,9 @@ document.addEventListener("click", async (e) => {
     document.getElementById("add-log-book-id").value = "";
     document.getElementById("add-log-time").value = "";
     document.getElementById("add-log-progress").value = "";
-    document.getElementById("add-log-difficulty").value = "";
-    document.getElementById("add-log-motivation").value = "";
+    // v2.21.35変更：難易度・やる気はアイコンボタンとして再描画（未選択状態）
+    document.getElementById("add-log-difficulty-buttons").innerHTML = createMetaIconButtonsHtml("difficulty", null);
+    document.getElementById("add-log-motivation-buttons").innerHTML = createMetaIconButtonsHtml("motivation", null);
 
     modal.classList.remove("hidden");
     return;
@@ -300,7 +311,7 @@ document.addEventListener("click", async (e) => {
       await loadSelectOptionsForLog();
 
       const titleEl = modal.querySelector(".modal-header h3");
-      if (titleEl) titleEl.textContent = "✏️ 学習ログの編集";
+      if (titleEl) titleEl.innerHTML = `<span class="icon-btn-inline">${PENCIL_ICON}</span>学習ログの編集`;
 
       const formattedDate = log.log_date ? log.log_date.slice(0, 10) : "";
       document.getElementById("add-log-date").value = formattedDate;
@@ -317,8 +328,9 @@ document.addEventListener("click", async (e) => {
       // 変更： 小数点や0も正しく表示されるように ?? を使用
       document.getElementById("add-log-time").value = log.study_time ?? "";
       document.getElementById("add-log-progress").value = log.progress_value || "";
-      document.getElementById("add-log-difficulty").value = log.difficulty || "";
-      document.getElementById("add-log-motivation").value = log.motivation || "";
+      // v2.21.35変更：難易度・やる気はアイコンボタンとして再描画（保存済みの値を選択状態にする）
+      document.getElementById("add-log-difficulty-buttons").innerHTML = createMetaIconButtonsHtml("difficulty", log.difficulty || null);
+      document.getElementById("add-log-motivation-buttons").innerHTML = createMetaIconButtonsHtml("motivation", log.motivation || null);
 
       modal.classList.remove("hidden");
     } catch (err) {
@@ -343,16 +355,18 @@ document.addEventListener("click", async (e) => {
     // 変更： 小数点を受け取るために parseFloat に変更
     const studyTime = parseFloat(document.getElementById("add-log-time").value);
     const progressValue = parseInt(document.getElementById("add-log-progress").value, 10) || 0;
-    const difficulty = document.getElementById("add-log-difficulty").value;
-    const motivation = document.getElementById("add-log-motivation").value;
+    const activeDifficultyBtn = document.querySelector('#add-log-difficulty-buttons .step-meta-icon-btn.active');
+    const activeMotivationBtn = document.querySelector('#add-log-motivation-buttons .step-meta-icon-btn.active');
+    const difficulty = activeDifficultyBtn ? activeDifficultyBtn.dataset.value : "";
+    const motivation = activeMotivationBtn ? activeMotivationBtn.dataset.value : "";
 
     if (!logDate) {
-      alert("📅 学習日を入力してください。");
+      alert("学習日を入力してください。");
       return;
     }
     // 変更： 小数点（0.5など）を許可するため !studyTime を削除し、メッセージを変更
     if (isNaN(studyTime) || studyTime <= 0) {
-      alert("⏱️ 学習時間を正しい数値（例: 0.5、1.5）で入力してください。");
+      alert("学習時間を正しい数値（例: 0.5、1.5）で入力してください。");
       return;
     }
 
@@ -381,7 +395,7 @@ document.addEventListener("click", async (e) => {
       renderStudyLogsTable();
     } catch (err) {
       console.error("ログ保存エラー:", err);
-      alert("❌ 学習ログの保存中にエラーが発生しました。");
+      alert("学習ログの保存中にエラーが発生しました。");
     }
   }
 });

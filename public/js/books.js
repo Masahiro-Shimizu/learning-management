@@ -295,12 +295,15 @@ async function refreshChapterProgressBadges(bookId) {
       badge.title = "";
       return;
     }
+    badge.style.display = "inline-flex";
+    badge.style.alignItems = "center";
+    badge.style.justifyContent = "center";
     if (info.isShort) {
-      badge.textContent = "⚠️";
+      badge.innerHTML = TRIANGLE_ALERT_ICON;
       badge.title = `記録 ${info.logged}p ／ 全 ${info.pageCount}p（あと${info.pageCount - info.logged}p未記録）`;
-      badge.style.color = "";
+      badge.style.color = "#FAC775";
     } else {
-      badge.textContent = "✓";
+      badge.innerHTML = CHECK_ICON;
       badge.title = `記録 ${info.logged}p ／ 全 ${info.pageCount}p`;
       badge.style.color = "#4ade80";
     }
@@ -374,10 +377,12 @@ async function renderBookPagesSummary(bookId) {
   let text = `章の合計 ${pageCountSum}p`;
   if (totalPages != null) {
     text += ` ／ 総ページ数 ${totalPages}p`;
-    if (isMismatched) text += " ⚠️一致していません";
+    if (isMismatched) text += " 一致していません";
     text += `（実績 ${pagesCompleted}p進行・残り ${remainingPages}p）`;
   }
-  el.textContent = text;
+  el.innerHTML = isMismatched
+    ? `<span class="icon-btn-inline" style="color:#f59e0b;">${TRIANGLE_ALERT_ICON}</span>${text}`
+    : text;
   el.style.color = isMismatched ? "#f59e0b" : "";
 
   // v2.21.34追加：目次の記録状況バッジも同時に更新

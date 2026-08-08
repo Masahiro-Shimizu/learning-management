@@ -804,32 +804,102 @@
   color: var(--color-text-tertiary);
 }
 
-.step-meta-emoji-row {
+/* v2.21.35変更：絵文字ボタン→ダッシュボード風アイコンバッジボタンに置き換え */
+.step-meta-icon-row {
   display: flex;
-  gap: 4px;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
-.step-meta-emoji-btn {
-  border: 1px solid rgb(255 255 255 / 0.1);
-  background: var(--color-bg-base);
-  border-radius: 6px;
-  font-size: 1rem;
-  padding: 4px 8px;
+.step-meta-icon-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  border: 1.5px solid transparent;
+  background: transparent;
+  border-radius: 9px;
+  padding: 5px 6px 4px;
   cursor: pointer;
-  opacity: 0.5;
+  opacity: 0.6;
   transition:
     opacity 0.15s,
-    border-color 0.15s;
+    border-color 0.15s,
+    background-color 0.15s;
 }
 
-.step-meta-emoji-btn:hover {
+.step-meta-icon-btn:hover {
   opacity: 0.85;
 }
 
-.step-meta-emoji-btn.active {
+.step-meta-icon-btn.active {
   opacity: 1;
   border-color: var(--color-accent-primary);
   background: rgb(99 102 241 / 0.12);
+}
+
+.step-meta-icon-box {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-meta-icon-box svg {
+  width: 16px;
+  height: 16px;
+}
+
+.step-meta-icon-label {
+  font-size: 0.62rem;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+.step-meta-icon-btn.active .step-meta-icon-label {
+  color: var(--color-text-primary);
+}
+
+/* v2.21.35追加：カード内ミニ表示・学習ログ一覧の小さいアイコン */
+.mini-meta-icon {
+  display: inline-flex;
+  vertical-align: -2px;
+  margin-right: 3px;
+  opacity: 0.8;
+}
+.mini-meta-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.meta-icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+}
+.meta-icon-badge svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* v2.21.35追加：ラベル横・ボタン内のインラインアイコン共通 */
+.field-label-icon,
+.auto-badge-icon,
+.icon-btn-inline {
+  display: inline-flex;
+  vertical-align: -2px;
+  margin-right: 4px;
+}
+.field-label-icon svg,
+.auto-badge-icon svg,
+.icon-btn-inline svg {
+  width: 14px;
+  height: 14px;
 }
 
 /* v2.21.28追加：学習ログページのテーブル */
