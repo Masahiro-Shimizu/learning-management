@@ -177,6 +177,7 @@ function renderBookChapterList(tasks) {
     <button type="button" class="chapter-toggle-btn" style="background: none; border: none; color: #aaa; cursor: pointer; width: 24px; height: 24px; font-size: 12px; display: flex; align-items: center; justify-content: center; padding: 0;">▶</button>
     <input type="checkbox" class="chapter-check" ${task.status === "完了" ? "checked" : ""}>
     <span class="book-chapter-title chapter-title" style="flex: 1; cursor: pointer; text-decoration: underline; text-decoration-color: rgba(255,255,255,0.25);">${task.title}</span>
+    <span class="chapter-progress-badge" title="" style="font-size:12px; width:16px; text-align:center; flex-shrink:0;"></span>
     <input type="number" class="chapter-page-count-input" value="${task.page_count ?? ""}" placeholder="p" title="この章のページ数" style="width:56px; padding:2px 6px; font-size:0.78rem; background:rgba(0,0,0,0.2); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:4px;" />
     <button type="button" class="chapter-goto-task-btn" title="このタスクを編集" style="background:none;border:none;color:#818cf8;cursor:pointer;display:flex;align-items:center;padding:2px;flex-shrink:0;">
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
@@ -272,8 +273,60 @@ function renderBookChapterList(tasks) {
   });
 }
 
+// v2.21.34追加：章ごとのページ記録状況キャッシュ（handleBookChapterToggleの警告判定に使用）
+let chapterProgressCache = new Map();
+
+// v2.21.34追加：目次バッジの更新（記録済み✓／不足⚠️）
+async function refreshChapterProgressBadges(bookId) {
+  if (!bookId) return;
+  const { chapters } = await api(`/api/books/${bookId}/progress`);
+  chapterProgressCache = new Map(
+    (chapters || []).map((c) => [String(c.taskId), c]),
+  );
+
+  chapterProgressCache.forEach((info, taskId) => {
+    const badge = document.querySelector(
+      `.book-chapter-item[data-task-id="${taskId}"] .chapter-progress-badge`,
+    );
+    if (!badge) return;
+
+    if (info.pageCount == null) {
+      badge.textContent = "";
+      badge.title = "";
+      return;
+    }
+    if (info.isShort) {
+      badge.textContent = "⚠️";
+      badge.title = `記録 ${info.logged}p ／ 全 ${info.pageCount}p（あと${info.pageCount - info.logged}p未記録）`;
+      badge.style.color = "";
+    } else {
+      badge.textContent = "✓";
+      badge.title = `記録 ${info.logged}p ／ 全 ${info.pageCount}p`;
+      badge.style.color = "#4ade80";
+    }
+  });
+}
+
 // チェック操作でタスクのステータスを更新
 async function handleBookChapterToggle(taskId, checked) {
+  // v2.21.34追加：完了にする際、ページ記録が足りていなければ確認する
+  if (checked) {
+    const info = chapterProgressCache.get(String(taskId));
+    if (info && info.pageCount != null && info.isShort) {
+      const shortage = info.pageCount - info.logged;
+      const proceed = confirm(
+        `この章はまだ ${shortage}p 分、学習ログが記録されていません（記録済み ${info.logged}p ／ 全 ${info.pageCount}p）。\nこのまま完了にしますか？`,
+      );
+      if (!proceed) {
+        const checkboxEl = document.querySelector(
+          `.book-chapter-item[data-task-id="${taskId}"] .chapter-check`,
+        );
+        if (checkboxEl) checkboxEl.checked = false;
+        return;
+      }
+    }
+  }
+
   const newStatus = checked ? "完了" : "未着手";
   try {
     await api(`/api/tasks/${taskId}`, "PUT", { status: newStatus });
@@ -326,6 +379,9 @@ async function renderBookPagesSummary(bookId) {
   }
   el.textContent = text;
   el.style.color = isMismatched ? "#f59e0b" : "";
+
+  // v2.21.34追加：目次の記録状況バッジも同時に更新
+  refreshChapterProgressBadges(bookId);
 }
 
 function closeBookModal() {

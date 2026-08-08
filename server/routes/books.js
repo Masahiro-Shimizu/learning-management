@@ -56,6 +56,34 @@ router.get("/:id/progress", async (req, res, next) => {
       [req.params.id],
     );
 
+    // v2.21.34追加：章（タスク）ごとのページ数記録状況
+    // 「完了」かつ page_count 設定済みの章で、study_logs合計が page_count 未満のものを
+    // isShort=true として返す（下回りのみ警告方針。超過・page_count未設定は対象外）
+    const [chapterRows] = await db.query(
+      `SELECT
+         t.id AS taskId,
+         t.page_count AS pageCount,
+         t.status AS status,
+         COALESCE(SUM(sl.progress_value), 0) AS logged
+       FROM tasks t
+       LEFT JOIN study_logs sl ON sl.task_id = t.id
+       WHERE t.book_id = ?
+       GROUP BY t.id`,
+      [req.params.id],
+    );
+    const chapters = chapterRows.map((row) => {
+      const pageCount = row.pageCount != null ? Number(row.pageCount) : null;
+      const logged = Number(row.logged);
+      const isShort =
+        row.status === "完了" && pageCount != null && logged < pageCount;
+      return {
+        taskId: row.taskId,
+        pageCount,
+        logged,
+        isShort,
+      };
+    });
+
     const totalPages = book.total_pages;
     res.json({
       totalPages,
@@ -66,6 +94,7 @@ router.get("/:id/progress", async (req, res, next) => {
         totalPages != null
           ? Math.max(totalPages - Number(pagesCompleted), 0)
           : null,
+      chapters,
     });
   } catch (err) {
     next(err);
