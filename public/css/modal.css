@@ -81,8 +81,7 @@
 
 .step-item {
   display: flex;
-  align-items: center;
-  gap: var(--space-8);
+  flex-direction: column;
   padding: 6px 10px;
   border-radius: 6px;
   background-color: #27272a;

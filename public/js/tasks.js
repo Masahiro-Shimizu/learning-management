@@ -1,5 +1,16 @@
 "use strict";
 
+// 追加：HTMLエスケープ用のヘルパー関数
+function escapeHtml(str) {
+  if (str == null) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function minutesToHours(minutes) {
   if (!minutes) return "0.0";
   return (Math.round((Number(minutes) / 60) * 10) / 10).toFixed(1);
@@ -541,10 +552,10 @@ function createStepItemHtml(step) {
 
   return `
     <li class="step-item ${completed}" data-step-id="${step.id}" data-original-study-time="${step.study_time || 0}" data-original-end-date="${step.end_date || ""}">
-      <div class="step-item-row" style="display:flex;align-items:center;gap:8px;">
+      <div class="step-item-row" style="display:flex;align-items:center;gap:8px;width:100%;">
         <input type="checkbox" ${checked} aria-label="ステップ完了" />
         <div style="flex:1;min-width:0;">
-          <span class="step-item-title">${step.title}</span>
+        <span class="step-item-title">${escapeHtml(step.title)}</span>
           ${metaHtml}
         </div>
         <button type="button" class="btn-step-expand" aria-label="詳細を展開" title="日付・時間を編集">▼</button>
