@@ -16,7 +16,6 @@ function minutesToHours(minutes) {
   return (Math.round((Number(minutes) / 60) * 10) / 10).toFixed(1);
 }
 
-// new_str
 const CALENDAR_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
 const CLOCK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>`;
 
@@ -258,7 +257,6 @@ function createStepBadgeHtml(steps) {
 function createStepMiniItemHtml(step) {
   const completed = step.is_completed ? "completed" : "";
   const metaParts = [];
-  // new_str
   if (step.start_planned_date || step.end_planned_date) {
     const s = step.start_planned_date ? formatDateShort(step.start_planned_date) : "";
     const e = step.end_planned_date ? formatDateShort(step.end_planned_date) : "";
@@ -511,7 +509,6 @@ function createStepItemHtml(step) {
     const e = step.end_planned_date
       ? formatDateShort(step.end_planned_date)
       : "";
-    // new_str
     metaParts.push(`<span class="mini-meta-icon">${CALENDAR_ICON}</span>${s && e ? `${s}〜${e}` : s || e}`);
   }
 

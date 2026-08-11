@@ -15,6 +15,7 @@ let chartCategoryProgress = null;
 
 const PERIOD_STORAGE_KEY = "dashboardPeriod";
 const VALID_PERIODS = ["week", "month", "year", "all"];
+const GOAL_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`;
 
 function loadSavedPeriod() {
   const saved = localStorage.getItem(PERIOD_STORAGE_KEY);
@@ -1271,11 +1272,11 @@ async function loadAndShowCurrentPeriodGoal(period) {
   if (btnEl) {
     btnEl.style.display = "inline-block";
     const btnLabels = {
-      week: "🎯 今週の目標を設定",
-      month: "🎯 今月の目標を設定",
-      year: "🎯 今年の目標を設定",
+      week: "今週の目標を設定",
+      month: "今月の目標を設定",
+      year: "今年の目標を設定",
     };
-    btnEl.textContent = btnLabels[period] || "🎯 目標を設定";
+    btnEl.innerHTML = `<span class="icon-btn-inline">${GOAL_ICON}</span>${btnLabels[period] || "目標を設定"}`;
   }
 
   // 3. 選択されている期間の日付範囲を取得してAPIからレビュー（目標）データを取得
@@ -1331,7 +1332,7 @@ function openGoalModal() {
   const titleEl = document.querySelector("#goal-modal h3");
   const periodTitles = { week: "今週", month: "今月", year: "今年" };
   if (titleEl)
-    titleEl.textContent = `🎯 ${periodTitles[currentPeriod] || ""}の目標`;
+    titleEl.innerHTML = `<span class="icon-btn-inline">${GOAL_ICON}</span>${periodTitles[currentPeriod] || ""}の目標`;
 
   // 期間ラベル
   const periodEl = document.getElementById("goal-modal-period");
