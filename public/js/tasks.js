@@ -275,7 +275,7 @@ function createStepMiniItemHtml(step) {
   return `
     <li class="task-card-step-mini-item ${completed}">
       <span class="task-card-step-mini-dot"></span>
-      <span class="task-card-step-mini-title">${step.title}</span>
+      <span class="task-card-step-mini-title">${escapeHtml(step.title)}</span>
       ${metaHtml}
     </li>
   `;
@@ -311,7 +311,7 @@ function createTaskCardHtml(task, steps = []) {
         <span class="task-type-badge task-type-badge--${typeInfo.class}">${typeInfo.label}</span>
         ${categoryBadgeHtml}
       </div>
-      <p class="task-card-title">${task.title}</p>
+      <p class="task-card-title">${escapeHtml(task.title)}</p>
       <div class="task-card-meta">
         ${dateHtml}
         ${timeHtml}
@@ -411,7 +411,7 @@ function createGroupCardHtml(group, childTasks, stepsByTaskId, status) {
     <div class="group-card group-card--${modifierClass}" data-group-id="${group.id}">
       <div class="group-card-header">
         <div style="flex: 1; min-width: 0;">
-          <p class="group-card-title">${group.title}</p>
+          <p class="group-card-title">${escapeHtml(group.title)}</p>
           ${progressHTML}
         </div>
         <button type="button" class="btn-edit-group" data-group-id="${group.id}" aria-label="親タスクを編集">編集</button>
@@ -1192,7 +1192,7 @@ function createGroupRowHtml(group, childCount, status) {
       <tr class="group-row group-row--${modifierClass}" data-group-id="${group.id}" data-parent-status="${status}">
         <td colspan="7">
           <span class="group-row-toggle">▾</span>
-          ${group.title}（${childCount}件）
+          ${escapeHtml(group.title)}（${childCount}件）
         </td>
         <td>
           <div style="display:flex;gap:4px;justify-content:flex-end;align-items:center;">
@@ -1213,7 +1213,7 @@ function createStepTableRowHtml(step, taskId) {
 
   return `
     <tr class="step-row hidden" data-task-id="${taskId}" data-step-id="${step.id}">
-      <td class="task-table-dim" style="padding-left: 44px;">└ ${step.title}</td>
+      <td class="task-table-dim" style="padding-left: 44px;">└ ${escapeHtml(step.title)}</td>
       <td class="task-table-dim">ステップ</td>
       <td>
         <span class="task-table-status">
@@ -1271,7 +1271,7 @@ function createTaskRowHtml(task, steps, status) {
 
   return `
       <tr class="task-row" data-task-id="${task.id}" data-parent-status="${status}" data-child-of-group="${task.group_id}" tabindex="0">
-        <td>${stepToggleHtml}${task.title}</td>
+        <td>${stepToggleHtml}${escapeHtml(task.title)}</td>
         <td>
           <div class="task-table-badges">
             <span class="task-type-badge task-type-badge--${typeInfo.class}">${typeInfo.label}</span>
@@ -1938,7 +1938,7 @@ function renderCalendar(data) {
               gap: 6px;
             ">
               ${categoryBadgeHtml}
-              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">${task.title}</span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">${escapeHtml(task.title)}</span>
               ${stepBadge}
             </div>
           `,
@@ -2002,7 +2002,7 @@ function renderCalendar(data) {
                     gap: 4px;
                   ">
                     <span style="font-size: 10px; opacity: 0.75; flex-shrink: 0;">実</span>
-                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">${task.title}</span>
+                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">${escapeHtml(task.title)}</span>
                   </div>
                 `,
           );
@@ -2056,7 +2056,7 @@ function renderCalendar(data) {
 
           layer.insertAdjacentHTML(
             "beforeend",
-            `<div class="calendar-task-bar calendar-task-bar--step ${isActualStep ? "calendar-task-bar--step-actual" : "calendar-task-bar--step-planned"}" data-task-id="${task.id}" title="${(step.title || "").replace(/"/g, "&quot;")}" style="
+            `<div class="calendar-task-bar calendar-task-bar--step ${isActualStep ? "calendar-task-bar--step-actual" : "calendar-task-bar--step-planned"}" data-task-id="${task.id}" title="${escapeHtml(step.title)}" style="
               position:absolute;
               left: calc(${leftPct}% + 6px);
               width: calc(${widthPct}% - 10px);
@@ -2073,7 +2073,7 @@ function renderCalendar(data) {
               box-sizing: border-box;
               display:flex;
               align-items:center;
-            ">└ ${step.title}</div>`,
+            ">└ ${escapeHtml(step.title)}</div>`,
           );
           stepTop += BAR_STEP_H + TASK_GAP;
         });
@@ -2674,14 +2674,13 @@ function renderTimeline(data) {
         if (showPlanned) {
           barsHtml += `<div class="timeline-bar timeline-bar--planned" data-task-id="${task.id}" style="left: ${plannedPos.leftPercent}%; width: ${plannedPos.widthPercent}%; top: ${laneTop}px;">
                   ${categoryBadgeHtml}
-                  <span class="timeline-bar-title">${task.title}</span>
+                  <span class="timeline-bar-title">${escapeHtml(task.title)}</span>
                 </div>`;
         }
-
         if (showActual) {
           const actualTop = displayMode === "actual" ? laneTop : laneTop + 22;
           barsHtml += `<div class="timeline-bar timeline-bar--actual" data-task-id="${task.id}" style="left: ${actualPos.leftPercent}%; width: ${actualPos.widthPercent}%; top: ${actualTop}px;">
-                  <span class="timeline-bar-title">${task.title}</span>
+                  <span class="timeline-bar-title">${escapeHtml(task.title)}</span>
                 </div>`;
         }
 
@@ -2711,8 +2710,8 @@ function renderTimeline(data) {
             laneCounter++;
             const stepLaneTop = (laneCounter - 1) * LANE_HEIGHT + 4;
 
-            barsHtml += `<div class="timeline-bar timeline-bar--step" data-task-id="${task.id}" data-step-id="${step.id}" title="${(step.title || "").replace(/"/g, "&quot;")}" style="left: ${pos.leftPercent}%; width: ${pos.widthPercent}%; top: ${stepLaneTop}px;">
-                  <span class="timeline-bar-title">└ ${step.title}</span>
+            barsHtml += `<div class="timeline-bar timeline-bar--step" data-task-id="${task.id}" data-step-id="${step.id}" title="${escapeHtml(step.title)}" style="left: ${pos.leftPercent}%; width: ${pos.widthPercent}%; top: ${stepLaneTop}px;">
+                  <span class="timeline-bar-title">└ ${escapeHtml(step.title)}</span>
                 </div>`;
           });
         }
@@ -2737,7 +2736,7 @@ function renderTimeline(data) {
      `<div class="timeline-row">
         <div class="timeline-row-header ${headerStateClass}">
           <button type="button" class="timeline-group-toggle" data-group-id="${group.id}" aria-label="子タスクの表示切替">${groupArrow}</button>
-          <span class="timeline-row-header-title">${group.title}（${childTasks.length}件）</span>
+          <span class="timeline-row-header-title">${escapeHtml(group.title)}（${childTasks.length}件）</span>
         </div>
         <div class="timeline-track" data-group-id="${group.id}" style="min-height: ${trackHeight}px;">
           ${currentTodayLineHtml}
