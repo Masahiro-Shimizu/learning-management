@@ -4,9 +4,11 @@
 // createMetaIconBadgeHtml()/createMetaIconButtonsHtml()を共通利用する
 
 let studyLogsTaskMap = {};
+let studyLogsStepMap = {};
 let studyLogsGroupMap = {};
 let allTasksForLog = [];
 let allBooksForLog = [];
+let allStepsForLog = [];
 
 // v2.21.32追加：ダッシュボードと同じ 週/月/年/全 の期間管理に変更
 // （dashboard.jsのcurrentPeriod/viewDateと名前が被らないようlogsプレフィックスを付ける）
@@ -26,7 +28,8 @@ function formatLogDate(dateStr) {
 }
 
 function createStudyLogRowHtml(log) {
-  const taskTitle = studyLogsTaskMap[log.task_id] || (log.task_id ? `#${log.task_id}` : "－");
+  const taskTitle = escapeHtml(studyLogsTaskMap[log.task_id] || (log.task_id ? `#${log.task_id}` : "－"));
+  const stepTitle = log.step_id ? escapeHtml(studyLogsStepMap[log.step_id] || `#${log.step_id}`) : "";
   // 変更： / 60 を削除して、そのままの数値を小数点第1位で表示
   const hours = Number(log.study_time || 0).toFixed(1);
   const difficultyHtml = log.difficulty ? createMetaIconBadgeHtml("difficulty", log.difficulty) : "－";
@@ -34,7 +37,10 @@ function createStudyLogRowHtml(log) {
 
   return `
   <td>${formatLogDate(log.log_date)}</td>
-      <td>${taskTitle}</td>
+      <td>
+        <div>${taskTitle}</div>
+        ${stepTitle ? `<div class="task-table-dim" style="font-size:0.75rem;margin-top:2px;">${stepTitle}</div>` : ""}
+      </td>
       <td>${hours} h</td>
       <td>${log.progress_value != null ? Number(log.progress_value) : "－"}</td>
       <td>${difficultyHtml}</td>
@@ -200,14 +206,20 @@ async function renderStudyLogsTable() {
   const tbody = document.getElementById("study-logs-table-body");
   if (!tbody) return;
 
-  const [logs, tasks] = await Promise.all([
+  const [logs, tasks, steps] = await Promise.all([
     api("/api/study-logs"),
     api("/api/tasks"),
+    api("/api/steps"),
   ]);
 
   studyLogsTaskMap = {};
   tasks.forEach((t) => {
     studyLogsTaskMap[t.id] = t.title;
+  });
+
+  studyLogsStepMap = {};
+  steps.forEach((s) => {
+    studyLogsStepMap[s.id] = s.title;
   });
 
   // v2.21.32修正：週/月/年/全のトグルに対応した期間範囲フィルタリングに変更
@@ -286,6 +298,7 @@ document.addEventListener("click", async (e) => {
     await loadSelectOptionsForLog();
 
     document.getElementById("add-log-task-id").value = "";
+    document.getElementById("add-log-step-id").value = ""; // loadSelectOptionsForLog()内で空リスト化済み
     document.getElementById("add-log-book-id").value = "";
     document.getElementById("add-log-time").value = "";
     document.getElementById("add-log-progress").value = "";
@@ -325,6 +338,9 @@ document.addEventListener("click", async (e) => {
         syncLogSelectFilters("task");
       }
 
+      // 保存済みのステップ紐づきを復元（子タスクに属するステップ一覧に絞り込んでから選択状態にする）
+      renderStepOptionsForLog(log.task_id || null, log.step_id || "");
+
       // 変更： 小数点や0も正しく表示されるように ?? を使用
       document.getElementById("add-log-time").value = log.study_time ?? "";
       document.getElementById("add-log-progress").value = log.progress_value || "";
@@ -351,6 +367,7 @@ document.addEventListener("click", async (e) => {
   if (btnSave) {
     const logDate = document.getElementById("add-log-date").value;
     const taskId = document.getElementById("add-log-task-id").value;
+    const stepId = document.getElementById("add-log-step-id").value;
     const bookId = document.getElementById("add-log-book-id").value;
     // 変更： 小数点を受け取るために parseFloat に変更
     const studyTime = parseFloat(document.getElementById("add-log-time").value);
@@ -374,7 +391,7 @@ document.addEventListener("click", async (e) => {
       const body = {
         log_date: logDate,
         task_id: taskId ? parseInt(taskId, 10) : null,
-        step_id: null,
+        step_id: stepId ? parseInt(stepId, 10) : null,
         book_id: bookId ? parseInt(bookId, 10) : null,
         study_time: studyTime,
         progress_value: progressValue,
@@ -402,10 +419,11 @@ document.addEventListener("click", async (e) => {
 
 async function loadSelectOptionsForLog() {
   try {
-    const [groups, tasks, books] = await Promise.all([
+    const [groups, tasks, books, steps] = await Promise.all([
       api("/api/groups"),
       api("/api/tasks"),
-      api("/api/books")
+      api("/api/books"),
+      api("/api/steps")
     ]);
 
     studyLogsGroupMap = {};
@@ -413,9 +431,11 @@ async function loadSelectOptionsForLog() {
 
     allTasksForLog = tasks;
     allBooksForLog = books;
+    allStepsForLog = steps;
 
     renderTaskOptionsForLog(null, "");
     renderBookOptionsForLog(null, "");
+    renderStepOptionsForLog(null, "");
   } catch (err) {
     console.error("セレクトボックスのデータ取得に失敗しました:", err);
   }
@@ -465,6 +485,28 @@ function renderBookOptionsForLog(filterBookId, selectedValue) {
   bookSelect.value = stillValid ? selectedValue : "";
 }
 
+// 💡 子タスク→ステップの絞り込み（ステップは選択中の子タスクに従属する一方向絞り込み）
+// filterTaskId が無い場合は「（ステップに紐づけない）」のみの空リストにする
+function renderStepOptionsForLog(filterTaskId, selectedValue) {
+  const stepSelect = document.getElementById("add-log-step-id");
+  if (!stepSelect) return;
+
+  const list = filterTaskId
+    ? allStepsForLog.filter(s => String(s.task_id) === String(filterTaskId))
+    : [];
+
+  stepSelect.innerHTML = '<option value="">（ステップに紐づけない）</option>';
+  list.forEach(step => {
+    const option = document.createElement("option");
+    option.value = step.id;
+    option.textContent = step.title;
+    stepSelect.appendChild(option);
+  });
+
+  const stillValid = selectedValue && list.some(s => String(s.id) === String(selectedValue));
+  stepSelect.value = stillValid ? selectedValue : "";
+}
+
 // 子タスク選択 or 書籍選択の変更をもう片方に反映する
 function syncLogSelectFilters(source) {
   const taskSelect = document.getElementById("add-log-task-id");
@@ -473,6 +515,9 @@ function syncLogSelectFilters(source) {
 
   if (source === "task") {
     const taskId = taskSelect.value;
+    // 子タスクが変わったら、紐づくステップの選択肢を再構築する（選択状態はリセット）
+    renderStepOptionsForLog(taskId || null, "");
+
     if (!taskId) {
       renderBookOptionsForLog(null, bookSelect.value);
       return;
@@ -486,6 +531,9 @@ function syncLogSelectFilters(source) {
   } else if (source === "book") {
     const bookId = bookSelect.value;
     renderTaskOptionsForLog(bookId || null, taskSelect.value);
+    // 書籍側からタスクが変わった可能性があるため、ステップもあわせて再絞り込みする
+    const newTaskId = document.getElementById("add-log-task-id").value;
+    renderStepOptionsForLog(newTaskId || null, "");
   }
 }
 
