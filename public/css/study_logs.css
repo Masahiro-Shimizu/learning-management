@@ -4,51 +4,83 @@
 
 /* v2.21.34追加：タイトル行＋期間トグル行をまとめてsticky追従させるラッパー */
 .study-logs-page-header {
-    padding-bottom: var(--space-8, 8px);
-  }
-  
-  /* 💡 テーブルのラッパー */
-  .study-logs-table-wrapper {
-  margin-top: var(--space-8, 8px);
-  overflow-x: auto;
+  padding-bottom: var(--space-8, 8px);
+}
+
+/* 💡 テーブルのラッパー（v2.21.37：modal.css側の重複定義を統合して一本化） */
+/* overflow: hidden だとthのposition: stickyがmain（実際のスクロール親）ではなく
+   この要素自身を基準に計算されてしまい追従しなくなるため、visibleにしている
+   （border-radiusの内側にきれいに収まらなくなるトレードオフはあるが実害は軽微） */
+.study-logs-table-wrapper {
+margin-top: var(--space-16, 16px);
+border: 1px solid rgb(255 255 255 / 0.06);
+border-radius: 10px;
+overflow: visible;
+}
+
+.study-logs-table {
+width: 100%;
+font-size: 0.85rem;
+/* border-collapse: collapse だとth要素へのposition: stickyがブラウザ側で
+   正しく機能しないため、separateにする（task-table側の既存実装と同じ対処） */
+border-collapse: separate;
+border-spacing: 0;
+}
+
+/* テーブルヘッダーのスクロール追従 */
+.study-logs-table th {
+text-align: left;
+padding: 10px 12px;
+font-weight: 600;
+color: var(--color-text-secondary);
+background-color: var(--color-bg-sidebar);
+position: sticky;
+top: 0;
+z-index: 100;
+}
+
+.study-logs-table td {
+padding: 10px 12px;
+border-top: 1px solid rgb(255 255 255 / 0.06);
+color: var(--color-text-primary);
 }
 
 /* v2.21.33修正：リザルト画面の絞り込みタブと同じコンパクトサイズに調整 */
 .btn-log-period {
-    padding: 4px 14px !important;
-    font-size: 0.8rem !important;
-    font-weight: 600 !important;
-    background-color: var(--color-bg-card);
-    color: var(--color-text-secondary);
-    border: 1px solid rgb(255 255 255 / 0.1);
-  }
-  
-  .btn-log-period.active {
-    background-color: var(--color-accent-primary);
-    color: var(--color-text-primary);
-  }
-  
-  /* 前後移動ボタンも合わせて少し小さく */
-  .study-logs-period-row .btn-period-nav {
-    width: 28px;
-    height: 28px;
-    font-size: 12px;
-  }
-  
-  .study-logs-period-row .period-label {
-    font-size: 0.8rem;
-    min-width: 90px;
-  }
+  padding: 4px 14px !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  background-color: var(--color-bg-card);
+  color: var(--color-text-secondary);
+  border: 1px solid rgb(255 255 255 / 0.1);
+}
 
-  /* v2.21.33追加：期間トグルをヘッダー2行目・右寄せに配置 */
+.btn-log-period.active {
+  background-color: var(--color-accent-primary);
+  color: var(--color-text-primary);
+}
+
+/* 前後移動ボタンも合わせて少し小さく */
+.study-logs-period-row .btn-period-nav {
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+}
+
+.study-logs-period-row .period-label {
+  font-size: 0.8rem;
+  min-width: 90px;
+}
+
+/* v2.21.33追加：期間トグルをヘッダー2行目・右寄せに配置 */
 .study-logs-period-row {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: var(--space-16, 16px);
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--space-16, 16px);
+}
+
+@media (max-width: 768px) {
+  .study-logs-period-row {
+    justify-content: flex-start;
   }
-  
-  @media (max-width: 768px) {
-    .study-logs-period-row {
-      justify-content: flex-start;
-    }
-  }
+}

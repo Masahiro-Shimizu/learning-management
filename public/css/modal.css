@@ -901,30 +901,5 @@
   height: 14px;
 }
 
-/* v2.21.28追加：学習ログページのテーブル */
-.study-logs-table-wrapper {
-  margin-top: var(--space-16);
-  border: 1px solid rgb(255 255 255 / 0.06);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.study-logs-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.85rem;
-}
-
-.study-logs-table th {
-  text-align: left;
-  padding: 10px 12px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  background-color: var(--color-bg-sidebar);
-}
-
-.study-logs-table td {
-  padding: 10px 12px;
-  border-top: 1px solid rgb(255 255 255 / 0.06);
-  color: var(--color-text-primary);
-}
+/* v2.21.28で追加した学習ログページのテーブルスタイルは、
+   study_logs.css側と重複・競合していたためstudy_logs.cssへ一本化して削除した（v2.21.37） */

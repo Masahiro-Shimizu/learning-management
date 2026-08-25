@@ -200,6 +200,42 @@ function openLogsPeriodPicker() {
 
 
 // =================================================================
+// 💡 ページヘッダー（.study-logs-page-header）とテーブルヘッダーの
+//    sticky位置の重なり調整
+//
+//    app.js の showPage() が .study-logs-page-header に対して
+//    position: sticky; top: 0; z-index: 999; を自動付与しているため
+//    （タイトル行＋期間トグル行をビューポートスクロールに追従させる仕組み）、
+//    .study-logs-table th 側も同じ top: 0 で sticky させると、
+//    両方が画面上端で完全に重なり、z-indexが高いページヘッダーの背後に
+//    テーブルヘッダーが隠れて見えなくなってしまう。
+//    タスク一覧画面（tasks.js の syncTaskViewHeights()）と同じ考え方で、
+//    ページヘッダーの実測高さ分だけテーブルヘッダーのtopをずらす。
+// =================================================================
+function syncStudyLogsTableHeaderTop() {
+  const pageHeader = document.querySelector(".study-logs-page-header");
+  const headerHeight = pageHeader ? pageHeader.getBoundingClientRect().height : 0;
+  document.querySelectorAll(".study-logs-table th").forEach((th) => {
+    th.style.setProperty("top", `${headerHeight}px`, "important");
+  });
+}
+
+// .study-logs-page-header の高さは、app.js側のsticky付与タイミングや
+// フォント読み込み等により初期化直後は変動しうるため、一度きりの計測ではなく
+// ResizeObserver で高さの変化そのものを継続的に監視し、変化するたびに
+// テーブルヘッダーのtopを再計算する（最も確実な方法）
+let studyLogsHeaderResizeObserver = null;
+function observeStudyLogsPageHeaderResize() {
+  const pageHeader = document.querySelector(".study-logs-page-header");
+  if (!pageHeader || typeof ResizeObserver === "undefined") return;
+  if (studyLogsHeaderResizeObserver) return; // 二重登録防止
+  studyLogsHeaderResizeObserver = new ResizeObserver(() => {
+    syncStudyLogsTableHeaderTop();
+  });
+  studyLogsHeaderResizeObserver.observe(pageHeader);
+}
+
+// =================================================================
 // 💡 テーブル描画とカレンダー/期間フィルタリング処理
 // =================================================================
 async function renderStudyLogsTable() {
@@ -243,6 +279,9 @@ async function renderStudyLogsTable() {
       tbody.innerHTML = "";
       if (filteredLogs.length === 0) {
         tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--color-text-tertiary);padding:var(--space-24);">該当する記録がありません</td></tr>`;
+        syncStudyLogsTableHeaderTop();
+        observeStudyLogsPageHeaderResize();
+        setTimeout(syncStudyLogsTableHeaderTop, 150);
         return;
       }
     
@@ -258,6 +297,14 @@ async function renderStudyLogsTable() {
       await renderStudyLogsTable();
     });
   });
+
+  syncStudyLogsTableHeaderTop();
+  observeStudyLogsPageHeaderResize();
+  // 保険：app.js の showPage() が .study-logs-page-header に position: sticky を
+  // 付与する処理は setTimeout(..., 100) 経由のため、初回表示直後はまだ反映前の
+  // 可能性がある。高さ自体はsticky化の前後で変わらないはずだが、フォント読み込み等
+  // による微妙なレイアウトのズレに備えて少し遅らせて再計算しておく
+  setTimeout(syncStudyLogsTableHeaderTop, 150);
 }
 
 async function initStudyLogsPage() {

@@ -252,7 +252,19 @@ nav a.active::before {
 main {
   flex: 1;
   margin-left: 240px; /* 200px → 240px に戻す */
-  min-height: 100vh;
+  /* 修正：min-height: 100vh だとコンテンツがビューポートより長い場合にmain自体が
+     どこまでも伸びてしまい、overflow-y: autoが実質機能せず（内部で何もあふれない）、
+     結果としてページ全体（body/html）がスクロールする形になっていた。
+     これにより sticky 要素（テーブルヘッダー等）の基準がmainになっているにも関わらず、
+     main自体が真のスクロールコンテナとして機能しないため追従しない不具合が発生していた。
+     height: 100vh に変更し、mainの高さを常にビューポート基準に固定することで、
+     overflow-y: auto が実際に機能する（main内部でスクロールする）ようにした。
+     さらに、flexアイテムには「中身に必要な最小サイズより小さくならない」という
+     暗黙のデフォルト（min-height: auto）がかかるため、height: 100vh を指定しただけでは
+     中身の高さが優先されてmain自体が伸び続けてしまう。min-height: 0 で明示的にこの
+     自動最小サイズを解除し、height: 100vh が正しく効くようにした */
+  height: 100vh;
+  min-height: 0;
   overflow-y: auto;
 }
 
