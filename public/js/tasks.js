@@ -884,7 +884,8 @@ document.getElementById("step-list")?.addEventListener("click", async (e) => {
     const todayStr = `${y}-${m}-${d}`;
     
     // 💡 【改修ポイント】終了日(aed)が無ければ開始日(asd)、それも無ければ「今日」を採用
-    const targetLogDate = aed || asd || todayStr;
+    //const targetLogDate = aed || asd || todayStr;
+    const targetLogDate = todayStr;
 
     // v2.21.30変更：ページ管理モードのタスクは、ページ数が実際に入力された場合のみ記録する
     const shouldLog = pageTrackingEnabled ? enteredProgress != null : delta > 0;
@@ -3004,13 +3005,38 @@ document
     }
 
     // v2.21.27追加：ステップを持たないタスクのみ、study_logsへ増分記録
+    // const stepCountForLog = document.querySelectorAll("#step-list .step-item").length;
+    // if (stepCountForLog === 0 && body.study_time && body.end_date) {
+    //   const originalStudyTime = Number(document.getElementById("task-modal").dataset.originalStudyTime) || 0;
+    //   const delta = body.study_time - originalStudyTime;
+    //   if (delta > 0) {
+    //     await api("/api/study-logs", "POST", {
+    //       log_date: body.end_date,
+    //       task_id: savedTaskId || null,
+    //       book_id: body.book_id || null,
+    //       // study_logs.study_time は「時間(h)」で保持するため、分単位のdeltaを変換する
+    //       study_time: Math.round((delta / 60) * 100) / 100,
+    //       progress_value: 1,
+    //     });
+    //   }
+    // }
+
+    // Gemini版　(信用ならないので仮置き)v2.21.27追加：ステップを持たないタスクのみ、study_logsへ増分記録
     const stepCountForLog = document.querySelectorAll("#step-list .step-item").length;
-    if (stepCountForLog === 0 && body.study_time && body.end_date) {
+    // 💡【修正】実績終了日(end_date)の有無に関係なく、学習時間があれば判定に進む
+    if (stepCountForLog === 0 && body.study_time) {
       const originalStudyTime = Number(document.getElementById("task-modal").dataset.originalStudyTime) || 0;
       const delta = body.study_time - originalStudyTime;
       if (delta > 0) {
+        // 💡 ここで「今日の日付」を生成
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        const todayStr = `${y}-${m}-${d}`;
+
         await api("/api/study-logs", "POST", {
-          log_date: body.end_date,
+          log_date: todayStr, // 💡 実績終了日ではなく「今日」を記録！
           task_id: savedTaskId || null,
           book_id: body.book_id || null,
           // study_logs.study_time は「時間(h)」で保持するため、分単位のdeltaを変換する
