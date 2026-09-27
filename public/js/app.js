@@ -76,9 +76,6 @@ document.getElementById("btn-sidebar-show")?.addEventListener("click", () => {
       // v2.21.24修正：#page-tasks の .tasks-header と .view-tabs は
       // tasks.css / tasks.js（syncTaskViewHeights）側で実測値をもとに
       // sticky位置を正確に管理しているため、ここでの対象から除外する。
-      // 以前はここで .view-tabs の top を固定75pxで強制上書きしており、
-      // ページ再訪問のたびに tasks.js 側の正しい計算結果を踏みつぶして
-      // ヘッダー上の空白・曜日ズレ・追従不良を引き起こしていた。
       const mainHeaders = [
         ".mandala-header",
         ".results-page-header",
@@ -127,14 +124,11 @@ document.getElementById("btn-sidebar-show")?.addEventListener("click", () => {
     }
   }
 
-  // 変更後
   if (pageId === "page-dashboard") {
     if (!dashboardInitialized) {
       initDashboard();
       dashboardInitialized = true;
     } else {
-      // v2.21.20追加：books/resultsページと同様、2回目以降の表示時に
-      // データを再取得して再描画する
       if (typeof refreshDashboard === "function") {
         refreshDashboard();
       }
@@ -159,37 +153,27 @@ document.getElementById("btn-sidebar-show")?.addEventListener("click", () => {
       renderStudyLogsTable();
     }
   }
-  // 【完全同期】文字列を「page-results」へ厳格に修正し、リザルト初期化を確実に呼び出します
+
   if (pageId === "page-results") {
     if (!resultsInitialized) {
       initResults();
       resultsInitialized = true;
     } else {
-      // 2回目以降の表示の際は、現在アクティブになっているカプセルボタンに合わせたカードの表示状態を正しく復元します
+      // 🔴 v2.21.38修正：2回目以降の表示の際、現在アクティブなタブに合わせて
+      // カードの表示状態を復元する処理。以前は「週次」「月次」「年次」「すべて（全）」
+      // という旧仕様の文字列とタブのtextContentを比較していたが、実際のタブ表記は
+      // 「週」「月」「年」「全」（results.jsのinitResultsPageFilter()と同一）のため
+      // 一致条件に一度もマッチせず、全カードがdisplay:noneになってリザルトページに
+      // 戻ると画面が真っ白になる不具合があった。tabのdata-filter属性と
+      // カードのresult-type-*クラスを直接突き合わせる方式に修正し解消。
       const activeTab = document.querySelector(".results-filter-tab.active");
-      const filterText = activeTab ? activeTab.textContent.trim() : "週次";
+      const filterKey = activeTab ? activeTab.dataset.filter : "week";
       const cards = document.querySelectorAll(".result-page-card");
       cards.forEach((card) => {
-        if (filterText === "すべて（全）") {
-          card.style.display = "block";
-        } else if (
-          filterText === "週次" &&
-          card.classList.contains("result-type-week")
-        ) {
-          card.style.display = "block";
-        } else if (
-          filterText === "月次" &&
-          card.classList.contains("result-type-month")
-        ) {
-          card.style.display = "block";
-        } else if (
-          filterText === "年次" &&
-          card.classList.contains("result-type-year")
-        ) {
-          card.style.display = "block";
-        } else {
-          card.style.display = "none";
-        }
+        const isMatch =
+          filterKey === "all" ||
+          card.classList.contains(`result-type-${filterKey}`);
+        card.style.display = isMatch ? "block" : "none";
       });
     }
   }
