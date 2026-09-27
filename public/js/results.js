@@ -99,7 +99,6 @@ function getPendingResults() {
 }
 
 // 期間内のタスクを絞り込む
-// 変更後
 function filterTasksByPeriod(tasks, startDate, endDate) {
   const start = new Date(startDate);
   start.setHours(0, 0, 0, 0);
@@ -107,9 +106,6 @@ function filterTasksByPeriod(tasks, startDate, endDate) {
   end.setHours(23, 59, 59, 999);
 
   return tasks.filter((t) => {
-    // v2.21.18修正：dashboard.jsと判定基準を統一。ステータスに関わらず
-    // 実績終了日(end_date)があれば最優先する（進行中タスクでもステップの
-    // 実績日ロールアップ（v2.21.17）でend_dateが確定していれば期間判定に使う）
     const targetDateStr =
       t.end_date || t.end_planned_date || t.start_planned_date;
     if (!targetDateStr) return false;
@@ -177,30 +173,23 @@ function buildDiffBadgeHtml(current, prev, unit = "") {
     `;
 }
 
-// ===== グラフ描画（個別独立生成ロジック） =====
-
-// const RESULT_CHART_COLORS = [
-//   "#4d7fd4",
-//   "#e6a817",
-//   "#3a9d6e",
-//   "#e05c5c",
-//   "#9b6fd4",
-//   "#4dc4d4",
-//   "#d46f9b",
-//   "#7fd46f",
-// ];
-
 // ===== グラフ描画（個別独立生成ロジック：アニメーション対応版） =====
 
-function createBarChart(canvasEl, filteredTasks) {
+function createBarChart(canvasEl, filteredLogs, allTasks) {
   if (!canvasEl) return null;
+  
+  // 💡 タスクIDからカテゴリ名を引けるようにマップ化
+  const taskCategoryMap = new Map((allTasks || []).map((t) => [t.id, t.category_name]));
   const categoryMap = new Map();
-  filteredTasks.forEach((t) => {
-    const name = t.category_name || "(言語不問)";
-    categoryMap.set(name, (categoryMap.get(name) || 0) + (t.study_time || 0));
+  
+  // 💡 study_logs は既に「時間（h）」で記録されているためそのまま合算
+  filteredLogs.forEach((log) => {
+    const name = taskCategoryMap.get(log.task_id) || "(言語不問)";
+    categoryMap.set(name, (categoryMap.get(name) || 0) + Number(log.study_time || 0));
   });
+
   const catNames = [...categoryMap.keys()];
-  const catHours = catNames.map((n) => minutesToHours(categoryMap.get(n)));
+  const catHours = catNames.map((n) => Math.round(categoryMap.get(n) * 10) / 10);
 
   // 1. 本来のデータを退避し、最初はすべて0のダミーデータを用意
   const originalData = catHours.length > 0 ? catHours : [];
@@ -292,51 +281,67 @@ function createDoughnutChart(canvasEl, filteredTasks) {
 
   return chart;
 }
+
 // ===== コンテンツHTML生成（モーダル・ページ共通） =====
 
-function buildResultContent(result, tasks, allTasks, prefix = "") {
-  const filtered = filterTasksByPeriod(tasks, result.startDate, result.endDate);
-  const totalMinutes = filtered.reduce((s, t) => s + (t.study_time || 0), 0);
-  const studyHours = minutesToHours(totalMinutes);
-  const doneCount = filtered.filter((t) => t.status === "完了").length;
+function buildResultContent(result, tasks, studyLogs, prefix = "") {
+  // ① タスク側の集計（完了数・進捗率用）
+  const filteredTasks = filterTasksByPeriod(tasks, result.startDate, result.endDate);
+  const doneCount = filteredTasks.filter((t) => t.status === "完了").length;
+  const totalInPeriod = filteredTasks.length;
+  const progressRate = totalInPeriod > 0 ? Math.round((doneCount / totalInPeriod) * 100) : 0;
 
-  const totalInPeriod = filtered.length;
-  const progressRate =
-    totalInPeriod > 0 ? Math.round((doneCount / totalInPeriod) * 100) : 0;
+  // ② 学習ログ側の集計（学習時間用）💡 
+  const start = new Date(result.startDate);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(result.endDate);
+  end.setHours(23, 59, 59, 999);
+  
+  const filteredLogs = (studyLogs || []).filter(log => {
+    if (!log.log_date) return false;
+    const d = new Date(log.log_date);
+    return d >= start && d <= end;
+  });
+  
+  // 💡 study_logs は既に「時間」なので、そのまま合算して小数第1位で丸める
+  const totalHours = filteredLogs.reduce((s, log) => s + Number(log.study_time || 0), 0);
+  const studyHours = Math.round(totalHours * 10) / 10;
 
+  // ③ 前期間との比較
   const prevPeriod = getPrevPeriod(result);
   let prevStudyHours = null;
   let prevDoneCount = null;
   let prevProgressRate = null;
 
   if (prevPeriod) {
-    const prevFiltered = filterTasksByPeriod(
-      tasks,
-      prevPeriod.startDate,
-      prevPeriod.endDate,
-    );
-    if (prevFiltered.length > 0) {
-      prevStudyHours = minutesToHours(
-        prevFiltered.reduce((s, t) => s + (t.study_time || 0), 0),
-      );
-      prevDoneCount = prevFiltered.filter((t) => t.status === "完了").length;
-      prevProgressRate = Math.round(
-        (prevDoneCount / prevFiltered.length) * 100,
-      );
+    const prevStart = new Date(prevPeriod.startDate);
+    prevStart.setHours(0, 0, 0, 0);
+    const prevEnd = new Date(prevPeriod.endDate);
+    prevEnd.setHours(23, 59, 59, 999);
+
+    const prevFilteredLogs = (studyLogs || []).filter(log => {
+      if (!log.log_date) return false;
+      const d = new Date(log.log_date);
+      return d >= prevStart && d <= prevEnd;
+    });
+    
+    const prevFilteredTasks = filterTasksByPeriod(tasks, prevPeriod.startDate, prevPeriod.endDate);
+
+    if (prevFilteredTasks.length > 0 || prevFilteredLogs.length > 0) {
+      prevStudyHours = Math.round(prevFilteredLogs.reduce((s, log) => s + Number(log.study_time || 0), 0) * 10) / 10;
+      prevDoneCount = prevFilteredTasks.filter((t) => t.status === "完了").length;
+      prevProgressRate = prevFilteredTasks.length > 0 ? Math.round((prevDoneCount / prevFilteredTasks.length) * 100) : 0;
     }
   }
 
   const hasPrevData = prevStudyHours !== null;
-  const typeIcon =
-    result.type === "week" ? "📅" : result.type === "month" ? "🗓️" : "🏆";
+  const typeIcon = result.type === "week" ? "📅" : result.type === "month" ? "🗓️" : "🏆";
 
   const barId = `${prefix}result-chart-bar-${result.id}`;
   const doughnutId = `${prefix}result-chart-doughnut-${result.id}`;
 
-  // v2.18.0: 振り返りセクションを追加
   const reviewHtml = buildReviewSectionHtml(result, prefix);
 
-  // ★統合修正：カード全体も、振り返りセクションも個別に▼で閉じられる構造にします
   return {
     html: `
           <details class="result-card-accordion" open>
@@ -389,7 +394,8 @@ function buildResultContent(result, tasks, allTasks, prefix = "") {
         `,
     barId,
     doughnutId,
-    filtered,
+    filteredTasks,
+    filteredLogs,
   };
 }
 
@@ -398,11 +404,13 @@ function buildResultContent(result, tasks, allTasks, prefix = "") {
 let pendingResults = [];
 let currentResultIndex = 0;
 let allTasksCache = [];
+let allStudyLogsCache = [];
 
-function showResultModal(results, tasks) {
+function showResultModal(results, tasks, studyLogs) {
   pendingResults = results;
   currentResultIndex = 0;
   allTasksCache = tasks;
+  allStudyLogsCache = studyLogs;
 
   const modalEl = document.getElementById("result-modal");
   if (!modalEl) return;
@@ -414,10 +422,10 @@ function showResultModal(results, tasks) {
 function renderResultModalSlide() {
   const result = pendingResults[currentResultIndex];
   const total = pendingResults.length;
-  const { html, barId, doughnutId, filtered } = buildResultContent(
+  const { html, barId, doughnutId, filteredTasks, filteredLogs } = buildResultContent(
     result,
     allTasksCache,
-    allTasksCache,
+    allStudyLogsCache,
     "modal-",
   );
 
@@ -445,11 +453,8 @@ function renderResultModalSlide() {
     if (modalChartBar) modalChartBar.destroy();
     if (modalChartDoughnut) modalChartDoughnut.destroy();
 
-    modalChartBar = createBarChart(document.getElementById(barId), filtered);
-    modalChartDoughnut = createDoughnutChart(
-      document.getElementById(doughnutId),
-      filtered,
-    );
+    modalChartBar = createBarChart(document.getElementById(barId), filteredLogs, allTasksCache);
+    modalChartDoughnut = createDoughnutChart(document.getElementById(doughnutId), filteredTasks);
   }, 50);
 }
 
@@ -477,16 +482,19 @@ function closeResultModal() {
 
 let resultsPageInitialized = false;
 
-// v2.18.0: loadReviewsCache() を先頭で呼ぶ
 async function initResults() {
   if (resultsPageInitialized) return;
   resultsPageInitialized = true;
   await loadReviewsCache();
-  const tasks = await api("/api/tasks");
-  renderResultsPage(tasks);
+  // 💡 tasksとstudy_logsを同時に取得
+  const [tasks, studyLogs] = await Promise.all([
+    api("/api/tasks"),
+    api("/api/study-logs")
+  ]);
+  renderResultsPage(tasks, studyLogs);
   initResultsPageFilter();
 }
-// ===== リザルト画面：タブ切り替えとアニメーション再発火 =====
+
 function initResultsPageFilter() {
   const tabs = document.querySelectorAll(".results-filter-tab");
   if (tabs.length === 0) return;
@@ -554,7 +562,7 @@ function initResultsPageFilter() {
   });
 }
 
-function renderResultsPage(tasks) {
+function renderResultsPage(tasks, studyLogs) {
   const container = document.getElementById("results-page-body");
   if (!container) return;
   container.innerHTML = "";
@@ -566,10 +574,10 @@ function renderResultsPage(tasks) {
   }
 
   periods.forEach((result, idx) => {
-    const { html, barId, doughnutId, filtered } = buildResultContent(
+    const { html, barId, doughnutId, filteredTasks, filteredLogs } = buildResultContent(
       result,
       tasks,
-      tasks,
+      studyLogs, // 💡 studyLogs を渡す
       `page-${idx}-`,
     );
     const card = document.createElement("div");
@@ -587,15 +595,15 @@ function renderResultsPage(tasks) {
           el.style.animationDelay = `${0.1 + i * 0.08}s`;
           el.classList.add("result-diff--visible");
         });
-        createBarChart(document.getElementById(barId), filtered);
-        createDoughnutChart(document.getElementById(doughnutId), filtered);
+        // 💡 棒グラフ（学習時間）には filteredLogs とタスクを渡す
+        createBarChart(document.getElementById(barId), filteredLogs, tasks);
+        createDoughnutChart(document.getElementById(doughnutId), filteredTasks);
       },
       100 * (idx + 1),
     );
   });
 }
 
-/* ーーー【完全復活】削ぎ落とされていた、本来の約100行に及ぶ全自動期間生成ロジック ーーー */
 function generatePastPeriods() {
   const periods = [];
   const today = new Date();
@@ -649,14 +657,13 @@ function generatePastPeriods() {
     endDate.setHours(23, 59, 59, 999);
 
     periods.push({
-      // 今月の場合は、特別なIDを付与する
       id: m === 0 ? "month-page-current" : `month-page-${d.getFullYear()}-${d.getMonth() + 1}`,
       type: "month",
       label: `${d.getFullYear()}年${d.getMonth() + 1}月`,
-      periodLabel: m === 0 ? "今月" : `${m}ヶ月前`, // m=0なら「今月」にする
+      periodLabel: m === 0 ? "今月" : `${m}ヶ月前`,
       startDate,
       endDate,
-      isCurrent: m === 0, // 今月のカードであることを明示
+      isCurrent: m === 0,
     });
   }
 
@@ -671,22 +678,24 @@ function generatePastPeriods() {
       periodLabel: y === 0 ? "今年" : "昨年",
       startDate: new Date(targetYear, 0, 1),
       endDate: new Date(targetYear, 11, 31, 23, 59, 59, 999),
-      isCurrent: y === 0, // 今年のカードであることを明示
+      isCurrent: y === 0,
     });
   }
 
   return periods;
 }
-/* ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー */
 
-// v2.18.0: loadReviewsCache() を先頭で呼ぶ
 async function checkAndShowResultPopup() {
   const pending = getPendingResults();
   if (pending.length === 0) return;
   if (!document.getElementById("result-modal")) return;
   await loadReviewsCache();
-  const tasks = await api("/api/tasks");
-  showResultModal(pending, tasks);
+  // 💡 tasksとstudy_logsを同時に取得
+  const [tasks, studyLogs] = await Promise.all([
+    api("/api/tasks"),
+    api("/api/study-logs")
+  ]);
+  showResultModal(pending, tasks, studyLogs);
 }
 
 function initResultModal() {
@@ -751,9 +760,6 @@ function findReview(periodType, startDate, endDate) {
   );
 }
 
-// 月の振り返りを書く際に参考表示する「その月に含まれる週次振り返り」、
-// 年の振り返りを書く際に参考表示する「その年に含まれる月次振り返り」を取得する
-// （あくまで閲覧用の参考表示であり、自動集約・自動転記は行わない）
 function findChildReviews(result) {
   if (result.type === "month") {
     return reviewsCache.filter((r) => {
